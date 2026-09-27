@@ -90,6 +90,11 @@ function ToolModal({ wid, tool, docs, preselect, onClose }: { wid: string; tool:
   const doc = docs.find((d) => d.id === docId);
   const title = TOOLS.find((t) => t.key === tool)!.title;
 
+  // The document list can arrive after the modal opens; pick a default once it does.
+  useEffect(() => {
+    if (!docId && docs.length) setDocId(preselect && docs.some((d) => d.id === preselect) ? preselect : docs[0].id);
+  }, [docs, docId, preselect]);
+
   useEffect(() => {
     if (tool === "metadata" && doc) setMeta({ title: doc.name.replace(/\.pdf$/i, ""), author: "", subject: "" });
     if (tool === "organize" && doc) setOrganize(Array.from({ length: doc.pageCount }, (_, i) => ({ index: i, rotate: 0, deleted: false })));
