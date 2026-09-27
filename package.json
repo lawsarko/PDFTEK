@@ -1,0 +1,48 @@
+{
+  "name": "pdftek",
+  "version": "1.0.0",
+  "private": true,
+  "description": "pdftek — the document workbench for professional teams",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "postinstall": "node scripts/copy-pdf-worker.mjs",
+    "prebuild": "node scripts/copy-pdf-worker.mjs",
+    "predev": "node scripts/copy-pdf-worker.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.128.0",
+    "@pdf-lib/fontkit": "^1.1.1",
+    "diff": "^9.0.0",
+    "docx": "^9.7.2",
+    "jszip": "^3.10.2",
+    "next": "^15.5.26",
+    "nodemailer": "^10.0.10",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^4.10.38",
+    "pptxgenjs": "^4.0.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "server-only": "^0.0.1",
+    "tesseract.js": "^7.0.0",
+    "utif2": "^4.1.0",
+    "xlsx": "^0.18.5",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "@types/nodemailer": "^8.0.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^15.5.26",
+    "playwright": "1.56",
+    "typescript": "^6.0.3"
+  }
+}
