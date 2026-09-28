@@ -84,12 +84,11 @@ export function DocumentPane() {
     try {
       const b = active.name.replace(/\.pdf$/i, "");
       if (kind === "docx") {
-        if (info.capabilities.serverOffice) {
-          const blob = await api<Blob>(`/api/documents/${active.id}/convert?to=docx`).catch(() => null);
-          if (blob) {
-            download(blob, `${b}.docx`);
-            return;
-          }
+        const blob = await api<Blob>(`/api/documents/${active.id}/convert?to=docx`).catch(() => null);
+        if (blob) {
+          download(blob, `${b}.docx`);
+          toast("Conversion complete", "success");
+          return;
         }
         download(await toDocx(pdf, active.name, onProgress), `${b}.docx`);
       } else if (kind === "xlsx") download(await toXlsx(pdf, onProgress), `${b}.xlsx`);

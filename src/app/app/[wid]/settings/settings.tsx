@@ -111,7 +111,7 @@ function WorkspaceTab({ wid, info, reload }: { wid: string; info: WorkspaceInfo;
           {[
             [caps.ai, "AI assistant (chat, extraction, automations)", "Set ANTHROPIC_API_KEY on the server to enable."],
             [caps.email, "Outbound email (invites, signatures, requests, digests)", "Set SMTP_URL to send email. Until then, share links manually."],
-            [caps.serverOffice, "High-fidelity Office conversion (LibreOffice)", "Install LibreOffice on the server for Office → PDF uploads and higher-fidelity PDF → Word."],
+            [caps.serverOffice, "Office uploads (LibreOffice)", "Install LibreOffice on the server to accept Word, Excel and PowerPoint uploads."],
             [caps.billing, "Online billing (Stripe)", "Set STRIPE_SECRET_KEY and price IDs to sell subscriptions."],
           ].map(([ok, label, hint]) => (
             <div key={label as string} className="row" style={{ alignItems: "flex-start" }}>

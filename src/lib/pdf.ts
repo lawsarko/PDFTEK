@@ -151,34 +151,6 @@ export async function officeToPdf(data: Buffer, ext: string): Promise<Buffer> {
   }
 }
 
-/** Converts a PDF to an Office format with LibreOffice. */
-export async function pdfToOffice(data: Buffer, target: "docx"): Promise<Buffer> {
-  const bin = await sofficePath();
-  if (!bin) throw badRequest("Server-side conversion isn't available.");
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "pdftek-"));
-  try {
-    const input = path.join(dir, "input.pdf");
-    await fs.writeFile(input, data);
-    await execFileAsync(
-      bin,
-      [
-        `-env:UserInstallation=file://${path.join(dir, "profile")}`,
-        "--headless",
-        "--infilter=writer_pdf_import",
-        "--convert-to",
-        `${target}:MS Word 2007 XML`,
-        "--outdir",
-        dir,
-        input,
-      ],
-      { timeout: 180_000 },
-    );
-    return await fs.readFile(path.join(dir, `input.${target}`));
-  } finally {
-    await fs.rm(dir, { recursive: true, force: true });
-  }
-}
-
 let officeProbe: Promise<boolean> | null = null;
 /** True only when LibreOffice can actually open documents (core-only installs can't). */
 export function hasServerOffice(): Promise<boolean> {
