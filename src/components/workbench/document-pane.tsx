@@ -91,8 +91,10 @@ export function DocumentPane() {
           return;
         }
         download(await toDocx(pdf, active.name, onProgress), `${b}.docx`);
-      } else if (kind === "xlsx") download(await toXlsx(pdf, onProgress), `${b}.xlsx`);
-      else if (kind === "pptx") download(await toPptx(pdf, active.name, onProgress), `${b}.pptx`);
+      } else if (kind === "xlsx") {
+        const blob = await api<Blob>(`/api/documents/${active.id}/convert?to=xlsx`).catch(() => null);
+        download(blob ?? (await toXlsx(pdf, onProgress)), `${b}.xlsx`);
+      } else if (kind === "pptx") download(await toPptx(pdf, active.name, onProgress), `${b}.pptx`);
       else if (kind === "txt") download(await toText(pdf, onProgress), `${b}.txt`);
       else {
         const list = pages ?? Array.from({ length: pdf.numPages }, (_, i) => i + 1);
