@@ -4,6 +4,12 @@ import {
   BorderStyle,
   Document,
   ExternalHyperlink,
+  FrameAnchorType,
+  HeightRule,
+  HorizontalPositionRelativeFrom,
+  ImageRun,
+  TextWrappingType,
+  VerticalPositionRelativeFrom,
   Packer,
   LineRuleType,
   Paragraph,
@@ -47,13 +53,15 @@ function section(page: PageLayout): ISectionOptions {
     right: Math.round(Math.max(18, page.width - page.rightEdge) * PT),
   };
   const size = { width: Math.round(page.width * PT), height: Math.round(page.height * PT) };
+  if (page.background) return framedSection(page, size);
+  const children = page.blocks.map((b) => paragraph(b, page));
   if (!page.blocks.length) {
     return {
       properties: { page: { size, margin } },
       children: [new Paragraph({ children: [new TextRun({ text: `[Page ${page.number} has no text layer. Run OCR in pdftek, then convert again.]`, italics: true, color: "888888" })] })],
     };
   }
-  return { properties: { page: { size, margin } }, children: page.blocks.map((b) => paragraph(b, page)) };
+  return { properties: { page: { size, margin } }, children };
 }
 
 function border(r: Rule): IBorderOptions {
@@ -75,9 +83,9 @@ function runsOf(list: Piece[]): ParagraphChild[] {
   return out;
 }
 
-function paragraph(b: Block, page: PageLayout): Paragraph {
+function paragraph(b: Block, page: PageLayout, leading: ParagraphChild[] = []): Paragraph {
   const textWidth = page.rightEdge - page.leftMargin;
-  const children: ParagraphChild[] = [];
+  const children: ParagraphChild[] = [...leading];
   const tabStops: { type: (typeof TabStopType)[keyof typeof TabStopType]; position: number }[] = [];
   const addSegs = (segs: Seg[], firstSeg: Seg, lineIndex: number) => {
     segs.forEach((seg, si) => {
@@ -119,4 +127,72 @@ function paragraph(b: Block, page: PageLayout): Paragraph {
     spacing: { before: Math.round(b.spaceBefore * PT), after: 0, line: Math.round(b.lineHeight * PT), lineRule: LineRuleType.EXACT },
     border: b.ruleBelow || b.ruleAbove ? { bottom: b.ruleBelow ? border(b.ruleBelow) : undefined, top: b.ruleAbove ? border(b.ruleAbove) : undefined } : undefined,
   });
+}
+
+
+// ---------- positioned layout for OCR'd pages ----------
+
+type FrameGroup = { x: number; end: number; size: number; lines: { y: number; seg: Seg }[] };
+
+/**
+ * OCR'd pages keep their graphics as a background image, so the text must land exactly where it
+ * was. Each column block becomes an absolutely positioned, fully editable frame (w:framePr), with
+ * the original line breaks and line pitch; the background image sits behind everything.
+ */
+function framedSection(page: PageLayout, size: { width: number; height: number }): ISectionOptions {
+  const segs = page.lines.flatMap((l) => l.segs.map((seg) => ({ y: l.y, seg, size: Math.max(...seg.runs.map((r) => r.size)) })));
+  segs.sort((a, b) => a.y - b.y || a.seg.x - b.seg.x);
+  const groups: FrameGroup[] = [];
+  for (const s of segs) {
+    const g = groups.find((g) => {
+      const last = g.lines[g.lines.length - 1];
+      return Math.abs(g.x - s.seg.x) < Math.max(2, s.size * 0.6) && s.y - last.y > 0 && s.y - last.y <= s.size * 2 && Math.abs(g.size - s.size) < 0.6;
+    });
+    if (g) {
+      g.lines.push({ y: s.y, seg: s.seg });
+      g.end = Math.max(g.end, s.seg.end);
+    } else groups.push({ x: s.seg.x, end: s.seg.end, size: s.size, lines: [{ y: s.y, seg: s.seg }] });
+  }
+
+  const bg = new ImageRun({
+    type: page.background!.type,
+    data: page.background!.data,
+    transformation: { width: Math.round((page.width * 96) / 72), height: Math.round((page.height * 96) / 72) },
+    floating: {
+      horizontalPosition: { relative: HorizontalPositionRelativeFrom.PAGE, offset: 0 },
+      verticalPosition: { relative: VerticalPositionRelativeFrom.PAGE, offset: 0 },
+      behindDocument: true,
+      allowOverlap: true,
+      wrap: { type: TextWrappingType.NONE },
+    },
+  });
+
+  const children: Paragraph[] = [new Paragraph({ children: [bg], spacing: { before: 0, after: 0, line: 20, lineRule: LineRuleType.EXACT } })];
+  for (const g of groups) {
+    const pitch = g.lines.length > 1 ? (g.lines[g.lines.length - 1].y - g.lines[0].y) / (g.lines.length - 1) : g.size * 1.25;
+    const lineHeight = Math.max(pitch, g.size * 1.05);
+    const runs: ParagraphChild[] = [];
+    g.lines.forEach((l, i) => {
+      if (i > 0) runs.push(new TextRun({ break: 1 }));
+      runs.push(...runsOf(pieces(l.seg, { trimStart: true })));
+    });
+    // With exact line spacing, the baseline sits about 80% down the line box.
+    const top = g.lines[0].y - lineHeight * 0.8;
+    const width = (g.end - g.x) * 1.12 + g.size; // slack for font metric differences, so lines never re-wrap
+    children.push(
+      new Paragraph({
+        children: runs,
+        frame: {
+          type: "absolute",
+          position: { x: Math.round(g.x * PT), y: Math.round(top * PT) },
+          width: Math.round(Math.min(width, page.width - g.x) * PT),
+          height: Math.round(lineHeight * g.lines.length * PT),
+          anchor: { horizontal: FrameAnchorType.PAGE, vertical: FrameAnchorType.PAGE },
+          rule: HeightRule.ATLEAST,
+        },
+        spacing: { before: 0, after: 0, line: Math.round(lineHeight * PT), lineRule: LineRuleType.EXACT },
+      }),
+    );
+  }
+  return { properties: { page: { size, margin: { top: 0, bottom: 0, left: 0, right: 0 } } }, children };
 }

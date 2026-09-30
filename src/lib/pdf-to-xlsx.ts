@@ -1,6 +1,6 @@
 import "server-only";
 import ExcelJS from "exceljs";
-import { analyzePdf, bulletRest, isRightAligned, linkFor, lineText, pieces, segText, type Block, type Line, type PageLayout, type Piece, type Seg } from "./pdf-layout";
+import { analyzePdf, bulletRest, findLinks, isRightAligned, linkFor, lineText, pieces, segText, type Block, type Line, type PageLayout, type Piece, type Seg } from "./pdf-layout";
 
 /**
  * PDF → Excel that keeps the look of the document.
@@ -31,9 +31,15 @@ export async function pdfToXlsx(bytes: Uint8Array, title: string): Promise<Buffe
   wb.creator = "pdftek";
   wb.title = title;
 
-  const textPages = pages.filter((p) => !p.tabular);
-  if (textPages.length) documentSheet(wb, textPages, pages.length > 1 && textPages.length !== pages.length ? "Text" : "Document");
-  for (const p of pages.filter((pg) => pg.tabular)) tableSheet(wb, p);
+  // Simple flowing documents (letters, résumés) → one tidy sheet of paragraphs. Multi-column
+  // layouts (receipts, forms, OCR'd scans) → positioned layout sheets. Tables → numeric grids.
+  const kind = (p: PageLayout) => (p.tabular ? "table" : p.ocr || isMultiColumn(p) ? "layout" : "text");
+  const textPages = pages.filter((p) => kind(p) === "text");
+  if (textPages.length) documentSheet(wb, textPages, textPages.length !== pages.length ? "Text" : "Document");
+  for (const p of pages) {
+    if (kind(p) === "layout") layoutSheet(wb, p, pages.length > 1 ? `Page ${p.number}` : "Document");
+    else if (kind(p) === "table") tableSheet(wb, p);
+  }
   if (!pages.some((p) => p.blocks.length)) {
     const ws = wb.worksheets[0] ?? wb.addWorksheet("Document");
     ws.getCell("A1").value = "This PDF has no text layer. Run OCR in pdftek, then convert again.";
@@ -209,3 +215,72 @@ function tableSheet(wb: ExcelJS.Workbook, page: PageLayout) {
   ws.columns = widths.map((w) => ({ width: Math.min(80, w) }));
   if (!page.lines.length) ws.getCell("A1").value = lineText({ y: 0, size: 0, segs: [], left: 0, right: 0 }) || "(empty page)";
 }
+
+
+// ---------- positioned layouts (receipts, forms, OCR'd pages) ----------
+
+/** Many lines split into side-by-side columns that aren't just a right-aligned date. */
+function isMultiColumn(p: PageLayout) {
+  const multi = p.lines.filter((l) => l.segs.length >= 2 && !(l.segs.length === 2 && isRightAligned(l.segs[1], p))).length;
+  return p.lines.length >= 6 && multi / p.lines.length >= 0.2;
+}
+
+function layoutSheet(wb: ExcelJS.Workbook, page: PageLayout, name: string) {
+  const ws = wb.addWorksheet(name, { views: [{ showGridLines: false }] });
+  if (!page.lines.length) {
+    ws.getCell("A1").value = "This page has no recognizable text.";
+    return;
+  }
+  // Column boundaries at every distinct segment start across the page.
+  const xs = page.lines.flatMap((l) => l.segs.map((s) => s.x)).sort((a, b) => a - b);
+  const anchors: number[] = [];
+  for (const x of xs) if (!anchors.length || x - anchors[anchors.length - 1] > 10) anchors.push(x);
+  const left = Math.min(anchors[0], page.leftMargin);
+  const bounds = [left, ...anchors.slice(1), Math.max(page.rightEdge, anchors[anchors.length - 1] + 20)];
+  ws.columns = bounds.slice(0, -1).map((b, i) => ({ width: widthChars(bounds[i + 1] - b) }));
+  const colOf = (x: number) => {
+    let idx = 0;
+    for (let i = 1; i < bounds.length - 1; i++) if (bounds[i] <= x + 3) idx = i;
+    return idx + 1;
+  };
+
+  ws.pageSetup = {
+    paperSize: (Math.abs(page.width - 595) < 8 ? 9 : undefined) as ExcelJS.PaperSize | undefined,
+    orientation: page.width > page.height ? "landscape" : "portrait",
+    fitToPage: true,
+    fitToWidth: 1,
+    fitToHeight: 0,
+    margins: { left: left / 72, right: Math.max(0.25, (page.width - page.rightEdge) / 72), top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 },
+  };
+
+  let prevY = page.lines[0].y - page.lines[0].size * 1.3;
+  page.lines.forEach((line, i) => {
+    const row = ws.getRow(i + 1);
+    // Row height reproduces the distance from the previous baseline.
+    row.height = Math.min(409, Math.max(line.size * 1.15, Math.round((line.y - prevY) * 4) / 4));
+    prevY = line.y;
+    for (const seg of line.segs) {
+      const cell = row.getCell(colOf(seg.x));
+      const p = pieces(seg);
+      const text = p.map((x) => x.text).join("");
+      // Link only cells that are themselves an address; spreadsheet apps restyle hyperlink cells.
+      const found = findLinks(text)[0];
+      const url = found?.url;
+      const useLink = found && found.end - found.start >= text.trim().length * 0.6;
+      cell.value = useLink ? ({ text: { richText: rich(p) }, hyperlink: url } as unknown as ExcelJS.CellHyperlinkValue) : { richText: rich(p) };
+      cell.alignment = { vertical: "bottom", wrapText: false };
+      const bg = seg.runs.find((r) => r.bg)?.bg;
+      if (bg && !isLight(bg)) {
+        // Colored band behind the text (e.g. a dark header bar): fill the whole row across the page.
+        for (let c = 1; c < bounds.length; c++) row.getCell(c).fill = { type: "pattern", pattern: "solid", fgColor: { argb: `FF${bg.toUpperCase()}` } };
+      }
+    }
+    const rule = page.rules.find((r) => r.y > line.y && r.y < (page.lines[i + 1]?.y ?? Infinity) - (page.lines[i + 1]?.size ?? 0) * 0.6);
+    if (rule) for (let c = colOf(rule.x0); c <= colOf(rule.x1); c++) row.getCell(c).border = { bottom: { style: "thin", color: { argb: `FF${rule.color.toUpperCase()}` } } };
+  });
+}
+
+const isLight = (hex: string) => {
+  const n = parseInt(hex, 16);
+  return ((n >> 16) & 255) + ((n >> 8) & 255) + (n & 255) > 600;
+};

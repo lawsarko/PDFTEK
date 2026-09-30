@@ -2,7 +2,17 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  serverExternalPackages: ["pdfjs-dist", "nodemailer"],
+  serverExternalPackages: ["pdfjs-dist", "nodemailer", "tesseract.js", "@napi-rs/canvas"],
+  // OCR (for scans and outlined-text PDFs) loads its engine and English model at runtime.
+  outputFileTracingIncludes: {
+    "/api/documents/[id]/convert": [
+      "./node_modules/@tesseract.js-data/eng/4.0.0_best_int/**",
+      "./node_modules/tesseract.js/**",
+      "./node_modules/tesseract.js-core/**",
+      "./node_modules/@napi-rs/**",
+      "./node_modules/pdfjs-dist/standard_fonts/**",
+    ],
+  },
   experimental: {
     serverActions: { bodySizeLimit: "60mb" },
   },

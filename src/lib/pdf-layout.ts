@@ -10,7 +10,7 @@ import path from "node:path";
  * at the top-left (y grows downward).
  */
 
-export type Run = { str: string; x: number; y: number; w: number; size: number; font: string; bold: boolean; italic: boolean; color: string };
+export type Run = { str: string; x: number; y: number; w: number; size: number; font: string; bold: boolean; italic: boolean; color: string; /** Background color behind the text (OCR pages). */ bg?: string };
 export type Seg = { x: number; end: number; runs: Run[] };
 export type Line = { y: number; size: number; segs: Seg[]; left: number; right: number };
 export type Rule = { x0: number; x1: number; y: number; thickness: number; color: string };
@@ -51,6 +51,9 @@ export type PageLayout = {
   lineRatio: number;
   /** Most lines have three or more aligned columns (statements, schedules, tables). */
   tabular: boolean;
+  /** For OCR'd pages: the page image with recognized text erased (graphics, boxes, logos). */
+  background?: { data: Buffer; type: "jpg" };
+  ocr?: boolean;
 };
 
 /** Vertical room a divider takes when rendered as a paragraph border (border spacing + line). */
@@ -59,7 +62,10 @@ export const RULE_ROOM = 2;
 const BULLET_START = /^[•●▪◦‣■□►▶✓✔➢➤❖♦◆◇○◉⦿→·*]/;
 const SYMBOL_FONT = /symbol|wingding|dingbat|webding/i;
 
-export async function analyzePdf(bytes: Uint8Array): Promise<PageLayout[]> {
+const MAX_OCR_PAGES = 40;
+
+export async function analyzePdf(bytes: Uint8Array, opts: { ocr?: boolean } = {}): Promise<PageLayout[]> {
+  let ocrBudget = opts.ocr === false ? 0 : MAX_OCR_PAGES;
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   const OPS = pdfjs.OPS;
   const doc = await pdfjs.getDocument({
@@ -186,6 +192,26 @@ export async function analyzePdf(bytes: Uint8Array): Promise<PageLayout[]> {
         links.push({ x0: Math.min(x0, x1), y0: Math.min(y0, y1), x1: Math.max(x0, x1), y1: Math.max(y0, y1), url: ann.url });
       }
 
+      // No usable text layer (a scan, or text exported as vector outlines): recognize it.
+      const visibleChars = runs.reduce((n, r) => n + r.str.trim().length, 0);
+      if (visibleChars < 4 && ocrBudget > 0 && (ops.fnArray.length > 20 || rules.length)) {
+        ocrBudget--;
+        try {
+          const { ocrPage } = await import("./pdf-ocr");
+          const ocr = await ocrPage(doc, p);
+          {
+            // Rules, boxes and logos live in the background image, so no border rules here.
+            const layout = layoutPage(p, vp.width, vp.height, ocr.runs, [], links);
+            layout.background = { data: ocr.background, type: ocr.backgroundType };
+            layout.ocr = true;
+            pages.push(layout);
+            page.cleanup();
+            continue;
+          }
+        } catch (err) {
+          console.error("[pdftek] OCR failed", err);
+        }
+      }
       pages.push(layoutPage(p, vp.width, vp.height, runs, dedupeRules(rules), links));
       page.cleanup();
     }
@@ -443,7 +469,8 @@ function layoutPage(number: number, width: number, height: number, runs: Run[], 
       centered,
       firstIndent,
       indent: Math.max(0, (g.length > 1 ? g[1].left : first.left) - leftMargin),
-      spaceBefore: i === 0 ? 0 : clamp(gap, 0, 72),
+      // Keep large gaps: they carry the layout (and must line up with background graphics on OCR pages).
+      spaceBefore: i === 0 ? 0 : clamp(gap, 0, height),
       lineHeight,
     };
     if (startsBullet(first) && !centered) {
