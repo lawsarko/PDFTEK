@@ -2,6 +2,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PageViewport } from "pdfjs-dist";
 import { PDFDocument, StandardFonts, rgb, type PDFFont } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
+import { cssStack, isSerif } from "@/lib/font-names";
 import { api, errMsg } from "@/lib/client/api";
 import type { Doc } from "@/lib/client/types";
 import { loadPdf, pageToCanvas, textRuns, type TextRun } from "@/lib/client/pdf";
@@ -10,8 +12,21 @@ import { PdfViewer, type PageInfo } from "../pdf-viewer";
 import { I } from "../icons";
 import { useToast } from "../toast";
 
-type Style = { size: number; bold: boolean; italic: boolean; underline: boolean; serif: boolean; color: string };
-type TextOp = { id: string; type: "text" | "replace"; page: number; x: number; y: number; text: string; original?: string; ow?: number } & Style;
+type Style = { size: number; bold: boolean; italic: boolean; underline: boolean; serif: boolean; color: string; /** Real font family (e.g. "EB Garamond"); serif/sans fallback when absent. */ family?: string };
+type TextOp = {
+  id: string;
+  type: "text" | "replace";
+  page: number;
+  x: number;
+  y: number;
+  text: string;
+  /** Replace ops: the original segment's text, width and glyph extents (for the cover-up box). */
+  original?: string;
+  ow?: number;
+  ascent?: number;
+  descent?: number;
+  origFamily?: string;
+} & Style;
 type ImageOp = { id: string; type: "image"; page: number; x: number; y: number; w: number; h: number; dataUrl: string };
 type RectOp = { id: string; type: "highlight" | "whiteout" | "redact"; page: number; x: number; y: number; w: number; h: number };
 type Op = TextOp | ImageOp | RectOp;
@@ -20,6 +35,38 @@ type Tool = "select" | "text" | "image" | "highlight" | "whiteout" | "redact";
 const isRect = (o: Op): o is RectOp => o.type === "highlight" || o.type === "whiteout" || o.type === "redact";
 const uid = () => Math.random().toString(36).slice(2, 10);
 const DEFAULT_STYLE: Style = { size: 11, bold: false, italic: false, underline: false, serif: false, color: "#111111" };
+const TEXT_COLOR = "#171717";
+const FONT_CHOICES = ["Arial", "Calibri", "Times New Roman", "Georgia", "Garamond", "EB Garamond", "Cambria"];
+
+/** Box that hides the original text of a replaced segment (PDF units, bottom-left origin). */
+function coverRect(op: { x: number; y: number; size: number; ow?: number; ascent?: number; descent?: number }) {
+  const asc = op.ascent ?? 0.9;
+  const desc = op.descent ?? -0.25;
+  const bottom = op.y + desc * op.size * 1.15 - 0.6;
+  const top = op.y + asc * op.size + 0.6;
+  return { x: op.x - 1.2, y: bottom, w: (op.ow ?? 0) + 2.4, h: top - bottom };
+}
+
+// ---------- fonts: the document's own typeface, fetched once per face ----------
+
+const fontBytes = new Map<string, Promise<ArrayBuffer | null>>();
+function loadFontBytes(family: string, bold: boolean, italic: boolean): Promise<ArrayBuffer | null> {
+  const key = `${family}|${bold ? 1 : 0}|${italic ? 1 : 0}`;
+  let p = fontBytes.get(key);
+  if (!p) {
+    p = fetch(`/api/fonts?family=${encodeURIComponent(family)}&bold=${bold ? 1 : 0}&italic=${italic ? 1 : 0}`)
+      .then((r) => (r.ok ? r.arrayBuffer() : null))
+      .catch(() => null);
+    fontBytes.set(key, p);
+    // Register for on-screen previews under the document's family name.
+    p.then((buf) => {
+      if (!buf || typeof FontFace === "undefined") return;
+      const face = new FontFace(family, buf.slice(0), { weight: bold ? "700" : "400", style: italic ? "italic" : "normal" });
+      face.load().then((f) => document.fonts.add(f)).catch(() => {});
+    });
+  }
+  return p;
+}
 
 export function Editor({ doc, onExit }: { doc: Doc; onExit: (saved: Doc | null) => void }) {
   const toast = useToast();
@@ -234,9 +281,18 @@ export function Editor({ doc, onExit }: { doc: Doc; onExit: (saved: Doc | null) 
         <button className={`tool-btn ${shownStyle.underline ? "active" : ""}`} onClick={() => applyStyle({ underline: !shownStyle.underline })} aria-label="Underline" style={{ textDecoration: "underline" }}>
           U
         </button>
-        <select className="select input-sm" style={{ width: 86 }} value={shownStyle.serif ? "serif" : "sans"} onChange={(e) => applyStyle({ serif: e.target.value === "serif" })} aria-label="Font">
-          <option value="sans">Sans</option>
-          <option value="serif">Serif</option>
+        <select
+          className="select input-sm"
+          style={{ width: 150 }}
+          value={shownStyle.family ?? (shownStyle.serif ? "Times New Roman" : "Arial")}
+          onChange={(e) => applyStyle({ family: e.target.value, serif: isSerif(e.target.value) })}
+          aria-label="Font"
+        >
+          {[...new Set([sel && "origFamily" in sel ? sel.origFamily : undefined, shownStyle.family, ...FONT_CHOICES].filter(Boolean) as string[])].map((f) => (
+            <option key={f} value={f}>
+              {f}
+            </option>
+          ))}
         </select>
         <input className="input input-sm" type="number" min={5} max={96} style={{ width: 62 }} value={Math.round(shownStyle.size)} onChange={(e) => applyStyle({ size: Math.max(5, Math.min(96, Number(e.target.value) || 11)) })} aria-label="Font size" />
         <input type="color" value={shownStyle.color} onChange={(e) => applyStyle({ color: e.target.value })} aria-label="Text color" style={{ width: 30, height: 28, border: "1px solid var(--line)", background: "transparent", borderRadius: 6, padding: 2 }} />
@@ -333,6 +389,19 @@ function EditLayer({
     };
   }, [src, info.page]);
 
+  // The page's main typeface: new text boxes default to it.
+  const pageFamily = (() => {
+    const counts = new Map<string, number>();
+    for (const r of runs) counts.set(r.family, (counts.get(r.family) ?? 0) + r.str.length);
+    return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  })();
+
+  // Preload the faces used by text being edited so previews already look right.
+  useEffect(() => {
+    for (const o of ops) if ((o.type === "text" || o.type === "replace") && o.family) void loadFontBytes(o.family, o.bold, o.italic);
+    if (editing?.style.family) void loadFontBytes(editing.style.family, editing.style.bold, editing.style.italic);
+  }, [ops, editing]);
+
   const toCss = (x: number, y: number) => vp.convertToViewportPoint(x, y) as [number, number];
   const toPdf = (px: number, py: number) => vp.convertToPdfPoint(px, py) as [number, number];
   const rectCss = (x: number, y: number, w: number, h: number) => {
@@ -390,11 +459,30 @@ function EditLayer({
       if (text !== r.str) {
         commit((o) => [
           ...o,
-          { id: uid(), type: "replace", page: info.page, x: r.x, y: r.y, text, original: r.str, ow: r.w, size: r.size, bold: r.bold, italic: r.italic, underline: false, serif: r.serif, color: "#111111" },
+          {
+            id: uid(),
+            type: "replace",
+            page: info.page,
+            x: r.x,
+            y: r.y,
+            text,
+            original: r.str,
+            ow: r.w,
+            ascent: r.ascent,
+            descent: r.descent,
+            size: r.size,
+            bold: editing.style.bold,
+            italic: editing.style.italic,
+            underline: editing.style.underline,
+            serif: r.serif,
+            family: editing.style.family ?? r.family,
+            origFamily: r.family,
+            color: TEXT_COLOR,
+          },
         ]);
       }
     } else if (text.trim()) {
-      commit((o) => [...o, { id: uid(), type: "text", page: info.page, x: editing.x, y: editing.y, text, ...editing.style }]);
+      commit((o) => [...o, { id: uid(), type: "text", page: info.page, x: editing.x, y: editing.y, text, ...editing.style, family: editing.style.family ?? pageFamily }]);
     }
     setEditing(null);
   };
@@ -446,7 +534,7 @@ function EditLayer({
   };
 
   const fontCss = (s: Style) => ({
-    fontFamily: s.serif ? "Times New Roman, Times, serif" : "Helvetica, Arial, sans-serif",
+    fontFamily: cssStack(s.family, s.serif),
     fontWeight: s.bold ? 700 : 400,
     fontStyle: s.italic ? "italic" : "normal",
     textDecoration: s.underline ? "underline" : "none",
@@ -469,17 +557,19 @@ function EditLayer({
         runs
           .filter((r) => !replaced.has(`${r.x.toFixed(1)}:${r.y.toFixed(1)}`))
           .map((r, i) => {
-            const box = rectCss(r.x, r.y - r.size * 0.22, r.w, r.size * 1.1);
+            const c = coverRect({ ...r, ow: r.w });
+            const box = rectCss(c.x, c.y, c.w, c.h);
             return (
               <div
                 key={i}
                 className="edit-run"
+                data-text={r.str}
                 style={box}
                 title="Click to edit"
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setEditing({ run: r, x: r.x, y: r.y, text: r.str, style: { ...DEFAULT_STYLE, size: r.size, bold: r.bold, italic: r.italic, serif: r.serif } });
+                  setEditing({ run: r, x: r.x, y: r.y, text: r.str, style: { ...DEFAULT_STYLE, size: r.size, bold: r.bold, italic: r.italic, serif: r.serif, family: r.family, color: TEXT_COLOR } });
                 }}
               />
             );
@@ -512,7 +602,10 @@ function EditLayer({
         const fs = op.size * info.scale;
         return (
           <div key={op.id} style={{ position: "absolute", left: 0, top: 0 }}>
-            {op.type === "replace" && op.ow && <div style={{ position: "absolute", ...rectCss(op.x - 1, op.y - op.size * 0.28, op.ow + 2, op.size * 1.25), background: "#fff" }} />}
+            {op.type === "replace" && op.ow && (() => {
+              const c = coverRect(op);
+              return <div style={{ position: "absolute", ...rectCss(c.x, c.y, c.w, c.h), background: "#fff" }} />;
+            })()}
             <div
               className={`edit-op ${selected === op.id ? "selected" : ""}`}
               style={{ left: px, top: py - fs * 0.82, ...fontCss(op), cursor: "move", padding: "0 1px" }}
@@ -531,7 +624,10 @@ function EditLayer({
 
       {editing && (
         <>
-          {editing.run && <div style={{ position: "absolute", ...rectCss(editing.run.x - 1, editing.run.y - editing.run.size * 0.28, editing.run.w + 2, editing.run.size * 1.25), background: "#fff" }} />}
+          {editing.run && (() => {
+            const c = coverRect({ ...editing.run, ow: editing.run.w });
+            return <div style={{ position: "absolute", ...rectCss(c.x, c.y, c.w, c.h), background: "#fff" }} />;
+          })()}
           <input
             className="edit-input"
             autoFocus
@@ -601,8 +697,25 @@ function hexToRgb(hex: string) {
 async function buildPdf(src: string, ops: Op[]): Promise<Uint8Array> {
   const original = new Uint8Array(await (await fetch(src)).arrayBuffer());
   const pdf = await PDFDocument.load(original);
+  pdf.registerFontkit(fontkit);
   const fontCache = new Map<string, PDFFont>();
   const font = async (s: Style) => {
+    // Prefer the document's own typeface (or a metric-compatible open equivalent).
+    if (s.family) {
+      const k = `${s.family}|${s.bold}|${s.italic}`;
+      if (!fontCache.has(k)) {
+        const bytes = await loadFontBytes(s.family, s.bold, s.italic);
+        if (bytes) {
+          try {
+            // Full embed without ligatures: pdf-lib's subsetter drops glyphs from many Google Fonts TTFs, and
+            // ligature glyphs ("fi") get the wrong advance, leaving a gap after them.
+            fontCache.set(k, await pdf.embedFont(bytes, { subset: false, features: { liga: false, clig: false, dlig: false } }));
+          } catch {}
+        }
+      }
+      const f = fontCache.get(k);
+      if (f) return f;
+    }
     const key = `${s.serif ? "T" : "H"}${s.bold ? "B" : ""}${s.italic ? "I" : ""}`;
     const name: Record<string, StandardFonts> = {
       H: StandardFonts.Helvetica,
@@ -617,7 +730,7 @@ async function buildPdf(src: string, ops: Op[]): Promise<Uint8Array> {
     if (!fontCache.has(key)) fontCache.set(key, await pdf.embedFont(name[key]));
     return fontCache.get(key)!;
   };
-  // Standard PDF fonts only cover Latin-1; replace anything else rather than failing the save.
+  // A font may lack some characters (standard fonts only cover Latin-1); replace them rather than failing.
   const safe = (f: PDFFont, text: string) =>
     [...text]
       .map((ch) => {
@@ -642,7 +755,10 @@ async function buildPdf(src: string, ops: Op[]): Promise<Uint8Array> {
       page.drawImage(img, { x: op.x, y: op.y, width: op.w, height: op.h });
     } else {
       const f = await font(op);
-      if (op.type === "replace" && op.ow) page.drawRectangle({ x: op.x - 1, y: op.y - op.size * 0.28, width: op.ow + 2, height: op.size * 1.25, color: rgb(1, 1, 1) });
+      if (op.type === "replace" && op.ow) {
+        const c = coverRect(op);
+        page.drawRectangle({ x: c.x, y: c.y, width: c.w, height: c.h, color: rgb(1, 1, 1) });
+      }
       const text = safe(f, op.text);
       const color = hexToRgb(op.color);
       page.drawText(text, { x: op.x, y: op.y, size: op.size, font: f, color });

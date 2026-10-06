@@ -1,5 +1,6 @@
 "use client";
 import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
+import { isSerif, parseFontName } from "../font-names";
 
 type PdfJs = typeof import("pdfjs-dist");
 let libPromise: Promise<PdfJs> | null = null;
@@ -69,30 +70,94 @@ export function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality?: 
   return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Encoding failed"))), type, quality));
 }
 
-export type TextRun = { str: string; x: number; y: number; w: number; h: number; size: number; font: string; serif: boolean; bold: boolean; italic: boolean };
+export type TextRun = {
+  str: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  size: number;
+  /** Real font family from the embedded font name, e.g. "EB Garamond". */
+  family: string;
+  serif: boolean;
+  bold: boolean;
+  italic: boolean;
+  /** Glyph extent above/below the baseline, as fractions of the font size. */
+  ascent: number;
+  descent: number;
+};
 
-/** Returns text runs in PDF user-space coordinates (origin bottom-left). */
+type Item = { str: string; x: number; y: number; w: number; size: number; family: string; bold: boolean; italic: boolean; ascent: number; descent: number };
+
+/**
+ * Returns editable text segments in PDF user space (origin bottom-left). Fragments that pdf.js
+ * reports separately are joined into whole segments: the same line, the same font/style/size,
+ * and no column-sized gap. Editing a whole segment avoids overlaps when text changes length.
+ */
 export async function textRuns(page: PDFPageProxy): Promise<TextRun[]> {
+  await page.getOperatorList(); // loads fonts so their real names are available
   const content = await page.getTextContent();
-  const styles = content.styles as Record<string, { fontFamily: string }>;
-  const runs: TextRun[] = [];
+  const styles = content.styles as Record<string, { fontFamily: string; ascent?: number; descent?: number }>;
+  const items: Item[] = [];
   for (const item of content.items) {
-    if (!("str" in item) || !item.str.trim()) continue;
+    if (!("str" in item) || !item.str) continue;
     const t = item.transform as number[];
     const size = Math.hypot(t[2], t[3]) || item.height || 10;
-    const fam = `${item.fontName} ${styles[item.fontName]?.fontFamily ?? ""}`.toLowerCase();
-    runs.push({
+    let raw = "";
+    try {
+      raw = (page.commonObjs.get(item.fontName) as { name?: string } | null)?.name ?? "";
+    } catch {}
+    const face = parseFontName(raw || styles[item.fontName]?.fontFamily || "");
+    const st = styles[item.fontName];
+    const visible = item.str.trimEnd().length;
+    items.push({
       str: item.str,
       x: t[4],
       y: t[5],
-      w: item.width,
-      h: item.height || size,
+      w: visible ? (item.width * visible) / item.str.length : 0,
       size,
-      font: item.fontName,
-      serif: /serif|times|georgia|garamond|roman|cambria|book/.test(fam) && !/sans/.test(fam),
-      bold: /bold|black|heavy|semibold/.test(fam),
-      italic: /italic|oblique/.test(fam),
+      family: face.family,
+      bold: face.bold,
+      italic: face.italic,
+      ascent: st?.ascent && Number.isFinite(st.ascent) ? st.ascent : 0.9,
+      descent: st?.descent && Number.isFinite(st.descent) ? st.descent : -0.25,
     });
   }
-  return runs;
+
+  items.sort((a, b) => b.y - a.y || a.x - b.x);
+  const out: TextRun[] = [];
+  let cur: (TextRun & { end: number }) | null = null;
+  const flush = () => {
+    if (cur && cur.str.trim()) {
+      cur.str = cur.str.replace(/\s+/g, " ").replace(/[\uFB00-\uFB06]/g, (l) => l.normalize("NFKC")).trim();
+      cur.w = cur.end - cur.x;
+      const { end: _end, ...run } = cur;
+      out.push(run);
+    }
+    cur = null;
+  };
+  for (const it of items) {
+    const blank = !it.str.trim();
+    if (cur) {
+      const c: TextRun & { end: number } = cur;
+      const sameLine = Math.abs(it.y - c.y) < Math.max(1.5, c.size * 0.3);
+      const gap = it.x - c.end;
+      const sameStyle = it.family === c.family && it.bold === c.bold && it.italic === c.italic && Math.abs(it.size - c.size) < 0.6;
+      if (sameLine && (blank || (sameStyle && gap < c.size * 1.2 && gap > -c.size))) {
+        if (!blank) {
+          if (gap > c.size * 0.15 && !c.str.endsWith(" ") && !it.str.startsWith(" ")) c.str += " ";
+          c.str += it.str;
+          c.end = Math.max(c.end, it.x + it.w);
+          c.ascent = Math.max(c.ascent, it.ascent);
+          c.descent = Math.min(c.descent, it.descent);
+        } else if (!c.str.endsWith(" ")) c.str += " ";
+        continue;
+      }
+      flush();
+    }
+    if (blank) continue;
+    cur = { str: it.str, x: it.x, y: it.y, w: it.w, h: it.size, size: it.size, family: it.family, serif: isSerif(it.family), bold: it.bold, italic: it.italic, ascent: it.ascent, descent: it.descent, end: it.x + it.w };
+  }
+  flush();
+  return out;
 }
