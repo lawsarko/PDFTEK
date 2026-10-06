@@ -82,6 +82,8 @@ h1, h2, h3, h4 { font-family: var(--font-display); margin: 0; line-height: 1.2; 
 }
 .tool-btn:hover { border-color: var(--steel); color: var(--text-hi); }
 .tool-btn.active { border-color: var(--amber); color: var(--amber); background: var(--amber-soft); }
+.tool-btn-primary { border-color: var(--amber); color: var(--amber); background: var(--amber-soft); text-decoration: none; }
+.tool-btn-primary:hover { color: var(--text-hi); border-color: var(--amber); }
 .tool-btn:disabled { opacity: .45; cursor: not-allowed; }
 .icon-btn { background: transparent; border: none; color: var(--text-lo); cursor: pointer; padding: 6px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; }
 .icon-btn:hover { color: var(--text-hi); background: var(--panel); }

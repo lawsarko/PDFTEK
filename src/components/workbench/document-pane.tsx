@@ -144,6 +144,9 @@ export function DocumentPane() {
           </div>
         </div>
         <div className="viewer-tools">
+          <a className="tool-btn tool-btn-primary" href={`/api/documents/${active.id}/file?download=1`} title="Download the latest version as PDF">
+            <I.download size={13} /> Download
+          </a>
           <div className="menu-wrap">
             <button className="tool-btn" onClick={() => setConvertOpen((v) => !v)} disabled={!pdf}>
               <I.convert size={13} /> Convert <I.chevron size={12} />
