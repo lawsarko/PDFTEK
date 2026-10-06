@@ -143,7 +143,9 @@ export function ChatPanel() {
           <div className="msg msg-ai muted">
             {scope === "doc" && active
               ? `I've indexed ${active.name}. Ask anything about its terms — every answer links back to the exact page.`
-              : `Ask across ${info.stats.docs === 1 ? "the 1 document" : `all ${info.stats.docs} documents`} in ${info.workspace.name}. I'll find the relevant pages and cite them.`}
+              : info.stats.docs === 0
+                ? `Upload documents to ${info.workspace.name}, then ask questions across all of them. I'll find the relevant pages and cite them.`
+                : `Ask across ${info.stats.docs === 1 ? "the 1 document" : `all ${info.stats.docs} documents`} in ${info.workspace.name}. I'll find the relevant pages and cite them.`}
           </div>
         )}
         {messages?.map((m) =>

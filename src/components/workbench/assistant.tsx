@@ -35,7 +35,7 @@ export function Assistant() {
 export function AiUnavailable() {
   return (
     <div className="notice notice-info small">
-      AI features are off on this server. An administrator can enable them by setting <span className="mono">ANTHROPIC_API_KEY</span>.
+      AI features are off: the server running pdftek doesn’t have an Anthropic API key. Add <span className="mono">ANTHROPIC_API_KEY=…</span> to the server’s <span className="mono">.env</span> file (or its hosting environment variables), then restart the server.
     </div>
   );
 }
