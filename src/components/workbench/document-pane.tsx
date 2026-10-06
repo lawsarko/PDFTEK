@@ -152,7 +152,9 @@ export function DocumentPane() {
               <I.convert size={13} /> Convert <I.chevron size={12} />
             </button>
             <Menu open={convertOpen} onClose={() => setConvertOpen(false)}>
-              <div className="menu-label">Documents</div>
+              <div className="menu-label">To PDF</div>
+              <Link className="menu-item" href={`/app/${wid}/tools?tool=topdf`}>📥 Word / Excel / PowerPoint → PDF…</Link>
+              <div className="menu-label">PDF to documents</div>
               <button className="menu-item" onClick={() => convert("docx")}>📝 Word (.docx)</button>
               <button className="menu-item" onClick={() => convert("xlsx")}>📊 Excel (.xlsx) <span className="sub">tables → cells</span></button>
               <button className="menu-item" onClick={() => convert("pptx")}>📽️ PowerPoint (.pptx)</button>

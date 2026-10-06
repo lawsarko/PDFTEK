@@ -11,7 +11,8 @@
 | **Library & knowledge base** | Multi-workspace document library with tags, trash and restore. Every page is indexed with SQLite FTS5, so you can search by file name or full text across all documents, with hit snippets that jump to the page. |
 | **Upload anything** | PDF, DOCX/PPTX/XLSX/ODT/RTF (via LibreOffice), TXT/MD/CSV, JPG/PNG/WEBP/HEIC/TIFF, and **camera scanning** with auto-crop and enhance. Also **images → PDF** with drag-to-reorder. |
 | **Viewer** | pdf.js rendering with a selectable text layer, lazy page loading, zoom, and citation/search highlighting. |
-| **Convert** | PDF to Word, Excel, PowerPoint, plain text, and JPG/PNG/WEBP/TIFF for all pages or just the current one. Word and Excel exports keep the document's formatting: original fonts (mapped to Office equivalents), sizes, bold/italic, color, centered headings, indents and bullets, right-aligned dates via tab stops or a right-hand column, divider lines, clickable links, line spacing, and page size and margins. Table pages become real Excel grids with numeric cells. |
+| **Convert to PDF** | Word (DOC/DOCX/ODT/RTF), Excel (XLS/XLSX/ODS/CSV), PowerPoint (PPT/PPTX/ODP), HTML, text and images to PDF from **Tools → Convert to PDF** or the Convert menu. Several files can be combined into one PDF. Uses LibreOffice with metric-compatible fonts (Carlito for Calibri, Caladea for Cambria, Liberation for Arial/Times), so pages break where they do in Office. |
+| **Convert from PDF** | PDF to Word, Excel, PowerPoint, plain text, and JPG/PNG/WEBP/TIFF for all pages or just the current one. Word and Excel exports keep the document's formatting: original fonts (mapped to Office equivalents), sizes, bold/italic, color, centered headings, indents and bullets, right-aligned dates via tab stops or a right-hand column, divider lines, clickable links, line spacing, and page size and margins. Table pages become real Excel grids with numeric cells. |
 | **Scans & outlined text** | PDFs without a real text layer (scans, or text exported as vector outlines) are recognized with server-side OCR (Tesseract, English model bundled). Word output places editable text frames exactly over a background of the page's graphics (logos, bands, boxes, rules), with measured sizes, colors and bold; Excel output reproduces the column layout with colored bands as cell fills. |
 | **Edit (Pro)** | Click any line to rewrite it in its original typeface (embedded fonts are matched to the same family or a metric-compatible open font), keeping size, bold and italic. Add styled text (font, bold/italic/underline, size, color), place and resize images, highlight, white out, and **truly redact**: redacted pages are flattened to images so the hidden text is gone. Undo/redo, draft autosave, and each save becomes a new version. |
 | **AI assistant** | Chat with a document or the **whole library**. Answers stream in with clickable page citations. **Extract** key terms, dates and deadlines, parties, obligations, financial figures, tables, custom fields, and **risk flags checked against your team playbook**. Results export to Excel/CSV. |
@@ -40,6 +41,10 @@ docker compose up -d --build
 ```
 
 The image includes LibreOffice for Office conversions. All state (the SQLite database and uploaded files) lives in the `/data` volume, so back that volume up.
+
+### Render
+
+Word/Excel/PowerPoint → PDF needs LibreOffice, which Render's plain Node runtime doesn't have, so deploy with Docker. Use **New → Blueprint** with this repository (it reads `render.yaml` and creates a Docker web service with a disk at `/data`), or create a **New → Web Service** with **Language: Docker** and add a **Disk** mounted at `/data`. Set `APP_URL`, `DATA_DIR=/data` and `ANTHROPIC_API_KEY` under **Environment**. The **Server capabilities** card in the app's workspace settings shows whether Office conversion is available.
 
 ## Configuration
 

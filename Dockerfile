@@ -19,9 +19,10 @@ ENV NODE_ENV=production \
     PORT=3000 \
     HOSTNAME=0.0.0.0 \
     DATA_DIR=/data
-# LibreOffice powers Office -> PDF uploads and high-fidelity PDF -> Word.
+# LibreOffice powers Word/Excel/PowerPoint -> PDF. Carlito/Caladea/Liberation are metric-compatible with
+# Calibri/Cambria/Arial/Times, so converted documents keep their line breaks and page layout.
 RUN apt-get update \
- && apt-get install -y --no-install-recommends libreoffice-writer libreoffice-calc libreoffice-impress fonts-dejavu fonts-liberation fonts-noto-core \
+ && apt-get install -y --no-install-recommends libreoffice-writer libreoffice-calc libreoffice-impress fonts-dejavu fonts-liberation fonts-liberation2 fonts-crosextra-carlito fonts-crosextra-caladea fonts-noto-core fonts-noto-cjk \
  && rm -rf /var/lib/apt/lists/*
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static

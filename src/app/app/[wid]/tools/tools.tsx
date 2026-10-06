@@ -10,10 +10,13 @@ import { AppShell } from "@/components/app-shell";
 import { I } from "@/components/icons";
 import { Modal } from "@/components/modal";
 import { useToast } from "@/components/toast";
+import { ConvertToPdfModal } from "@/components/convert-to-pdf";
 
 type ToolKey = "merge" | "split" | "extract" | "organize" | "delete_pages" | "rotate" | "watermark" | "page_numbers" | "optimize" | "metadata";
 
-const TOOLS: { key: ToolKey | "images" | "scan" | "convert" | "ocr" | "compare"; title: string; desc: string; icon: React.ReactNode }[] = [
+const TOOLS: { key: ToolKey | "topdf" | "images" | "scan" | "convert" | "ocr" | "compare"; title: string; desc: string; icon: React.ReactNode }[] = [
+  { key: "topdf", title: "Convert to PDF", desc: "Word, Excel, PowerPoint, text and images to PDF.", icon: <I.file size={18} /> },
+  { key: "convert", title: "Convert PDF", desc: "To Word, Excel, PowerPoint, JPG, PNG, WEBP, TIFF.", icon: <I.convert size={18} /> },
   { key: "merge", title: "Merge PDFs", desc: "Combine several documents into one, in any order.", icon: <I.merge size={18} /> },
   { key: "split", title: "Split PDF", desc: "Break a document into parts by page ranges.", icon: <I.split size={18} /> },
   { key: "organize", title: "Organize pages", desc: "Drag to reorder, rotate or delete pages visually.", icon: <I.layers size={18} /> },
@@ -26,7 +29,6 @@ const TOOLS: { key: ToolKey | "images" | "scan" | "convert" | "ocr" | "compare";
   { key: "metadata", title: "Edit properties", desc: "Set title, author and subject metadata.", icon: <I.tag size={18} /> },
   { key: "images", title: "JPG/PNG → PDF", desc: "Combine images into a single PDF.", icon: <I.image size={18} /> },
   { key: "scan", title: "Scan to PDF", desc: "Use your camera with auto-crop and enhance.", icon: <I.camera size={18} /> },
-  { key: "convert", title: "Convert PDF", desc: "To Word, Excel, PowerPoint, JPG, PNG, WEBP, TIFF.", icon: <I.convert size={18} /> },
   { key: "ocr", title: "OCR", desc: "Make scanned documents searchable in 13 languages.", icon: <I.scan size={18} /> },
   { key: "compare", title: "Compare", desc: "Redline two documents or versions, with an AI summary.", icon: <I.compare size={18} /> },
 ];
@@ -37,13 +39,15 @@ export function Tools({ wid }: { wid: string }) {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [open, setOpen] = useState<ToolKey | null>(null);
   const preselect = params.get("doc");
+  const [toPdf, setToPdf] = useState(params.get("tool") === "topdf");
 
   useEffect(() => {
     api<{ documents: Doc[] }>(`/api/workspaces/${wid}/documents`).then((r) => setDocs(r.documents));
   }, [wid]);
 
   const click = (k: (typeof TOOLS)[number]["key"]) => {
-    if (k === "images" || k === "scan") router.push(`/app/${wid}?add=${k}`);
+    if (k === "topdf") setToPdf(true);
+    else if (k === "images" || k === "scan") router.push(`/app/${wid}?add=${k}`);
     else if (k === "convert" || k === "ocr") router.push(`/app/${wid}${preselect ? `?doc=${preselect}` : ""}`);
     else if (k === "compare") router.push(`/app/${wid}/compare${preselect ? `?a=${preselect}` : ""}`);
     else setOpen(k);
@@ -64,6 +68,7 @@ export function Tools({ wid }: { wid: string }) {
           ))}
         </div>
       </div>
+      {toPdf && <ConvertToPdfModal wid={wid} onClose={() => setToPdf(false)} />}
       {open && <ToolModal wid={wid} tool={open} docs={docs} preselect={preselect} onClose={() => setOpen(null)} />}
     </AppShell>
   );
