@@ -95,7 +95,16 @@ export function SendForSignature({ wid, docId }: { wid: string; docId: string })
     }
   };
 
-  const ready = title.trim() && signers.every((s) => s.name.trim() && /.+@.+\..+/.test(s.email)) && signers.every((s) => fields.some((f) => f.signerKey === s.key && f.kind === "signature"));
+  // What still blocks sending, in plain words, so the Send button never looks broken.
+  const missing: string[] = [];
+  if (!title.trim()) missing.push("Add an envelope title.");
+  signers.forEach((s, i) => {
+    const who = s.name.trim() || `Signer ${i + 1}`;
+    if (!s.name.trim()) missing.push(`Enter a name for Signer ${i + 1}.`);
+    if (!/.+@.+\..+/.test(s.email)) missing.push(`Enter a valid email for ${who}.`);
+    if (!fields.some((f) => f.signerKey === s.key && f.kind === "signature")) missing.push(`Place a Signature field for ${who}: select them, choose Signature, then click the document.`);
+  });
+  const ready = missing.length === 0;
 
   if (!doc || !info) return <div className="empty"><span className="spinner spinner-lg" /></div>;
 
@@ -104,7 +113,7 @@ export function SendForSignature({ wid, docId }: { wid: string; docId: string })
       wid={wid}
       title={`Request signatures · ${doc.name}`}
       actions={
-        <button className="btn btn-primary btn-sm" disabled={!ready || busy} onClick={send}>
+        <button className="btn btn-primary btn-sm" disabled={!ready || busy} onClick={send} title={missing[0]}>
           {busy && <span className="spinner" />} Send for signature
         </button>
       }
@@ -164,6 +173,19 @@ export function SendForSignature({ wid, docId }: { wid: string; docId: string })
               ))}
             </div>
             <p className="tiny faint mt-8">Click on the document to place a field. Drag to move, use the corner to resize, × to remove. Each signer needs at least one signature field.</p>
+          </div>
+          <div className="send-footer">
+            {missing.length > 0 && (
+              <ul className="send-missing">
+                {missing.slice(0, 4).map((m) => (
+                  <li key={m}>{m}</li>
+                ))}
+              </ul>
+            )}
+            <button className="btn btn-primary" style={{ width: "100%", justifyContent: "center" }} disabled={!ready || busy} onClick={send}>
+              {busy ? <span className="spinner" /> : <I.sign size={14} />} Send for signature
+            </button>
+            {ready && <div className="tiny faint mt-8">Signers get an email with a secure signing link{sequential ? ", one at a time in order" : ""}.</div>}
           </div>
         </aside>
         <section className="viewer">

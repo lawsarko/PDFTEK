@@ -126,6 +126,8 @@ button.chip:hover { border-color: var(--steel); color: var(--text-hi); }
 .notice { border: 1px solid var(--amber-line); background: var(--amber-soft); color: var(--text-hi); border-radius: 8px; padding: 10px 12px; font-size: 12.5px; }
 .notice-bad { border-color: rgba(224,106,92,.5); background: var(--bad-soft); }
 .notice-info { border-color: rgba(110,168,224,.45); background: var(--info-soft); }
+.send-footer { position: sticky; bottom: -16px; margin: auto -16px -16px; padding: 14px 16px 16px; background: var(--ink-2); border-top: 1px solid var(--line); }
+.send-missing { margin: 0 0 10px; padding-left: 18px; font-size: 12px; color: var(--amber); display: flex; flex-direction: column; gap: 4px; }
 .table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .table th { text-align: left; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--slate); padding: 8px 8px; border-bottom: 1px solid var(--line); font-weight: 500; }
 .table td { padding: 8px; border-bottom: 1px solid var(--line-soft); vertical-align: top; color: var(--text-hi); }
