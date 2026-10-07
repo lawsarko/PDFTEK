@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, errMsg, initials, timeAgo } from "@/lib/client/api";
-import { I, Logo } from "../icons";
+import { I, Logo, Wordmark } from "../icons";
 import { Menu, Modal } from "../modal";
 import { useToast } from "../toast";
 import { useWB } from "./context";
@@ -34,7 +34,7 @@ export function TopBar() {
     <header className="topbar">
       <Link href="/" className="brand" aria-label="pdftek home">
         <Logo />
-        <span className="hide-mobile">pdftek</span>
+        <span className="hide-mobile"><Wordmark /></span>
       </Link>
 
       {workspaces.length > 1 && workspaces.length <= 4 ? (

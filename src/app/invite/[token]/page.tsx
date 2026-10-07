@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { get } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
-import { Logo } from "@/components/icons";
+import { Logo, Wordmark } from "@/components/icons";
 import { AcceptInvite } from "./accept";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +23,7 @@ export default async function Invite({ params }: { params: Promise<{ token: stri
     <div className="auth-wrap">
       <div className="auth-card">
         <Link href="/" className="brand" style={{ marginBottom: 22 }}>
-          <Logo /> pdftek
+          <Logo /> <Wordmark />
         </Link>
         {!inv || inv.accepted_at ? (
           <>

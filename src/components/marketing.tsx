@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Logo } from "./icons";
+import { Logo, Wordmark } from "./icons";
 import { MarketingMenu } from "./marketing-menu";
 
 export function MarketingNav({ signedIn }: { signedIn: boolean }) {
@@ -7,7 +7,7 @@ export function MarketingNav({ signedIn }: { signedIn: boolean }) {
     <nav className="mk-nav">
       <div className="mk-nav-inner">
         <Link href="/" className="brand">
-          <Logo /> pdftek
+          <Logo /> <Wordmark />
         </Link>
         <MarketingMenu />
         <span className="grow" />
@@ -36,7 +36,7 @@ export function MarketingFooter() {
       <div className="mk-footer-inner">
         <div className="col gap-8">
           <span className="brand">
-            <Logo /> pdftek
+            <Logo /> <Wordmark />
           </span>
           <span>The document workbench for professional teams.</span>
         </div>

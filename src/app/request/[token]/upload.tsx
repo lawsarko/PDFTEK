@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { api, errMsg } from "@/lib/client/api";
-import { I, Logo } from "@/components/icons";
+import { I, Logo, Wordmark } from "@/components/icons";
 
 type Info = { title: string; message: string; recipientName: string; dueDate: string | null; status: string; workspaceName: string; requester: string };
 
@@ -37,7 +37,7 @@ export function RequestUpload({ token }: { token: string }) {
     <div className="auth-wrap">
       <div className="auth-card" style={{ maxWidth: 520 }}>
         <span className="brand" style={{ marginBottom: 20 }}>
-          <Logo /> pdftek
+          <Logo /> <Wordmark />
         </span>
         {!info && !error && <span className="spinner" />}
         {error && !info && (

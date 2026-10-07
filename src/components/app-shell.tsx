@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Logo, I } from "./icons";
+import { Logo, Wordmark, I } from "./icons";
 
 /** Header for full-page app screens (settings, tools, compare, signature setup). */
 export function AppShell({ wid, title, children, actions }: { wid: string; title: string; children: React.ReactNode; actions?: React.ReactNode }) {
@@ -9,7 +9,7 @@ export function AppShell({ wid, title, children, actions }: { wid: string; title
       <header className="topbar">
         <Link href="/" className="brand">
           <Logo />
-          <span className="hide-mobile">pdftek</span>
+          <span className="hide-mobile"><Wordmark /></span>
         </Link>
         <Link href={`/app/${wid}`} className="btn btn-ghost btn-sm">
           <I.left size={14} /> Workbench

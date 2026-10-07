@@ -520,3 +520,25 @@ button.chip:hover { border-color: var(--steel); color: var(--text-hi); }
 .mk-quick.accent { color: var(--amber); border-color: var(--amber-line); }
 .mk-quick:hover { text-decoration: none; border-color: var(--amber-line); }
 @media (max-width: 960px) { .mk-burger { display: inline-flex; } }
+
+/* brand: PDFTEK wordmark with a hover ripple */
+.brand { position: relative; gap: 9px; padding: 4px 8px 4px 4px; margin-left: -4px; border-radius: 10px; transition: background .25s; }
+.brand:hover { background: rgba(217,142,43,.07); }
+.wordmark { display: inline-flex; font-family: var(--font-display); font-weight: 700; font-size: 17px; letter-spacing: .14em; line-height: 1; text-transform: uppercase; }
+.wordmark > span { display: inline-block; transition: transform .35s cubic-bezier(.3,1.7,.5,1), color .25s, text-shadow .25s; transition-delay: calc(var(--i) * 35ms); }
+.wordmark .wm-accent { color: var(--amber); }
+.brand:hover .wordmark > span { transform: translateY(-3px); text-shadow: 0 6px 14px rgba(217,142,43,.45); }
+.brand:hover .wordmark > span:not(.wm-accent) { color: #fff; }
+.brand:active .wordmark > span { transform: translateY(0) scale(.96); transition-delay: 0s; }
+.brand::after { content: ""; position: absolute; left: 36px; right: 10px; bottom: 0; height: 2px; border-radius: 2px; background: linear-gradient(90deg, var(--amber), var(--amber-hi)); transform: scaleX(0); transform-origin: 0 50%; transition: transform .4s cubic-bezier(.2,.8,.2,1); }
+.brand:hover::after { transform: scaleX(1); }
+.logo { transition: transform .45s cubic-bezier(.3,1.6,.5,1), filter .3s; overflow: visible; }
+.brand:hover .logo { transform: rotate(-10deg) translateY(-2px) scale(1.08); filter: drop-shadow(0 4px 10px rgba(217,142,43,.5)); }
+.logo rect { transform-box: fill-box; transform-origin: 0 50%; transition: transform .35s ease; }
+.brand:hover .logo-l1 { animation: logo-line .6s ease; }
+.brand:hover .logo-l2 { animation: logo-line .6s .08s ease; }
+.brand:hover .logo-l3 { animation: logo-line .6s .16s ease; }
+@keyframes logo-line { 0% { transform: scaleX(1); } 40% { transform: scaleX(.2); } 100% { transform: scaleX(1); } }
+.logo-fold { transform-box: fill-box; transform-origin: 0 100%; transition: transform .35s ease; }
+.brand:hover .logo-fold { transform: scale(1.15); }
+@media (prefers-reduced-motion: reduce) { .wordmark > span, .logo, .logo rect, .brand::after { transition: none !important; animation: none !important; } }

@@ -74,12 +74,30 @@ export const I = {
 
 export function Logo({ size = 22 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden>
+    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden className="logo">
       <path d="M8 4h11l6 6v18H8z" fill="#f3f0e8" />
-      <path d="M19 4v6h6" fill="#cfc9b8" />
-      <rect x="11" y="14" width="10" height="2.2" rx="1" fill="#d98e2b" />
-      <rect x="11" y="18.5" width="7" height="2.2" rx="1" fill="#7d8aa0" />
-      <rect x="11" y="23" width="8.5" height="2.2" rx="1" fill="#7d8aa0" />
+      <path className="logo-fold" d="M19 4v6h6" fill="#cfc9b8" />
+      <rect className="logo-l1" x="11" y="14" width="10" height="2.2" rx="1" fill="#d98e2b" />
+      <rect className="logo-l2" x="11" y="18.5" width="7" height="2.2" rx="1" fill="#7d8aa0" />
+      <rect className="logo-l3" x="11" y="23" width="8.5" height="2.2" rx="1" fill="#7d8aa0" />
     </svg>
+  );
+}
+
+/** "PDFTEK" wordmark. Each letter is its own span so the brand link can ripple them on hover. */
+export function Wordmark() {
+  return (
+    <span className="wordmark" aria-label="PDFTEK">
+      {[..."PDF"].map((c, i) => (
+        <span key={i} aria-hidden style={{ "--i": i } as React.CSSProperties}>
+          {c}
+        </span>
+      ))}
+      {[..."TEK"].map((c, i) => (
+        <span key={i + 3} aria-hidden className="wm-accent" style={{ "--i": i + 3 } as React.CSSProperties}>
+          {c}
+        </span>
+      ))}
+    </span>
   );
 }

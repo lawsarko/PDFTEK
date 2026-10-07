@@ -210,7 +210,15 @@ export function Editor({ doc, onExit }: { doc: Doc; onExit: (saved: Doc | null) 
     if (!ops.length) return exit(null);
     setSaving(true);
     try {
-      const bytes = await buildPdf(src, ops);
+      let bytes: Uint8Array;
+      try {
+        bytes = await buildPdf(src, ops);
+      } catch (err) {
+        // Never lose an edit over a font problem: retry with the closest standard font.
+        console.warn("[pdftek] saving with the document's font failed; using a standard font", err);
+        bytes = await buildPdf(src, ops, true);
+        toast("Saved. The original font couldn't be embedded, so a similar standard font was used.", "info");
+      }
       const form = new FormData();
       form.append("file", new File([bytes as BlobPart], doc.name, { type: "application/pdf" }));
       form.append("kind", "edit");
@@ -694,14 +702,56 @@ function hexToRgb(hex: string) {
   return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
 }
 
-async function buildPdf(src: string, ops: Op[]): Promise<Uint8Array> {
+/**
+ * fontkit wrapper that tolerates malformed glyphs. Many Google Fonts builds (Arimo, Cousine, Carlito…)
+ * end with an empty glyph whose outline offset sits at the very end of the glyf table; fontkit reads
+ * past the buffer measuring it, and the whole save fails with "Trying to access beyond buffer length".
+ * Such glyphs get an empty box instead, which is what an empty glyph has anyway.
+ */
+type GlyphProto = { _getCBox: (...a: unknown[]) => unknown; _decode?: (...a: unknown[]) => unknown; __pdftekSafe?: boolean };
+const safeFontkit: typeof fontkit = {
+  ...fontkit,
+  create(...args: Parameters<typeof fontkit.create>) {
+    const font = fontkit.create(...args);
+    try {
+      const glyph = font.getGlyph(0) as unknown as object;
+      const BBox = (font.bbox as object).constructor as new (a: number, b: number, c: number, d: number) => unknown;
+      for (let proto = Object.getPrototypeOf(glyph) as GlyphProto | null; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
+        if (proto.__pdftekSafe || !Object.prototype.hasOwnProperty.call(proto, "_getCBox")) continue;
+        const cbox = proto._getCBox;
+        proto._getCBox = function (this: unknown, ...a: unknown[]) {
+          try {
+            return cbox.apply(this, a);
+          } catch {
+            return new BBox(0, 0, 0, 0);
+          }
+        };
+        const decode = Object.prototype.hasOwnProperty.call(proto, "_decode") ? proto._decode : undefined;
+        if (decode) {
+          proto._decode = function (this: unknown, ...a: unknown[]) {
+            try {
+              return decode.apply(this, a);
+            } catch {
+              return null;
+            }
+          };
+        }
+        proto.__pdftekSafe = true;
+      }
+    } catch {}
+    return font;
+  },
+};
+
+/** Builds the edited PDF. `standardFontsOnly` is the fallback when an embedded font can't be written. */
+async function buildPdf(src: string, ops: Op[], standardFontsOnly = false): Promise<Uint8Array> {
   const original = new Uint8Array(await (await fetch(src)).arrayBuffer());
   const pdf = await PDFDocument.load(original);
-  pdf.registerFontkit(fontkit);
+  pdf.registerFontkit(safeFontkit);
   const fontCache = new Map<string, PDFFont>();
   const font = async (s: Style) => {
     // Prefer the document's own typeface (or a metric-compatible open equivalent).
-    if (s.family) {
+    if (s.family && !standardFontsOnly) {
       const k = `${s.family}|${s.bold}|${s.italic}`;
       if (!fontCache.has(k)) {
         const bytes = await loadFontBytes(s.family, s.bold, s.italic);

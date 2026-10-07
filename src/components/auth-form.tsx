@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { api, errMsg } from "@/lib/client/api";
-import { Logo } from "./icons";
+import { Logo, Wordmark } from "./icons";
 
 export function AuthForm({ mode, inviteToken, inviteEmail, workspaceName }: { mode: "login" | "signup"; inviteToken?: string; inviteEmail?: string; workspaceName?: string }) {
   const params = useSearchParams();
@@ -38,7 +38,7 @@ export function AuthForm({ mode, inviteToken, inviteEmail, workspaceName }: { mo
     <div className="auth-wrap">
       <form className="auth-card" onSubmit={submit}>
         <Link href="/" className="brand" style={{ marginBottom: 22 }}>
-          <Logo /> pdftek
+          <Logo /> <Wordmark />
         </Link>
         <h1 style={{ fontSize: 22 }}>{mode === "login" ? "Welcome back" : workspaceName ? `Join ${workspaceName}` : "Create your workspace"}</h1>
         <p className="small muted" style={{ margin: "6px 0 20px" }}>

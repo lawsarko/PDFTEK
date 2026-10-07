@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api, errMsg } from "@/lib/client/api";
 import { PdfViewer } from "@/components/pdf-viewer";
 import { SignaturePad } from "@/components/signature-pad";
-import { I, Logo } from "@/components/icons";
+import { I, Logo, Wordmark } from "@/components/icons";
 import { Modal } from "@/components/modal";
 
 type Field = { id: string; page: number; x: number; y: number; w: number; h: number; kind: "signature" | "initials" | "date" | "name" | "text" };
@@ -235,7 +235,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     <div className="public-wrap">
       <header className="public-head">
         <span className="brand">
-          <Logo /> pdftek <span className="faint small" style={{ fontWeight: 400, fontFamily: "var(--font-body)" }}>e-sign</span>
+          <Logo /> <Wordmark /> <span className="faint small" style={{ fontWeight: 400, fontFamily: "var(--font-body)" }}>e-sign</span>
         </span>
         <span className="tiny faint mono">
           <I.lock size={11} /> Secure signing link
