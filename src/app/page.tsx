@@ -208,69 +208,6 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="mk-section" id="pricing">
-        <div className="eyebrow">Pricing</div>
-        <h2 className="mk-h2" style={{ marginTop: 10 }}>
-          Simple plans that grow with your team.
-        </h2>
-        <p className="mk-sub">Start free. Upgrade a workspace when your team needs editing, signatures and automations. Every paid plan includes a 14-day trial.</p>
-        <Reveal className="price-grid">
-          <div className="price">
-            <div className="eyebrow">Free</div>
-            <div className="amount">$0</div>
-            <div className="small muted">For individuals getting organized.</div>
-            <ul>
-              <li>Unlimited documents & versions</li>
-              <li>Convert Word, Excel & PowerPoint to PDF and back</li>
-              <li>Merge, split, organize, watermark</li>
-              <li>AI chat & extraction (30/day)</li>
-              <li>OCR, full-text search, read aloud</li>
-            </ul>
-            <Link href="/signup" className="btn btn-lg" style={{ marginTop: "auto" }}>
-              Get started
-            </Link>
-          </div>
-          <div className="price featured">
-            <div className="row between">
-              <div className="eyebrow" style={{ color: "var(--amber)" }}>Pro</div>
-              <span className="badge badge-warn">Most popular</span>
-            </div>
-            <div className="amount">
-              $19<span className="small muted" style={{ fontSize: 14, fontWeight: 400 }}> /user/mo</span>
-            </div>
-            <div className="small muted">For professionals running document workflows.</div>
-            <ul>
-              <li>Everything in Free</li>
-              <li>Click-to-edit text, images & true redaction</li>
-              <li>E-signatures with audit certificates</li>
-              <li>Document requests & reminders</li>
-              <li>Automations, digests & webhooks</li>
-              <li>AI chat & extraction (300/day)</li>
-            </ul>
-            <Link href="/signup" className="btn btn-primary btn-lg" style={{ marginTop: "auto" }}>
-              Start 14-day trial
-            </Link>
-          </div>
-          <div className="price">
-            <div className="eyebrow">Business</div>
-            <div className="amount">
-              $39<span className="small muted" style={{ fontSize: 14, fontWeight: 400 }}> /user/mo</span>
-            </div>
-            <div className="small muted">For legal, finance and research departments.</div>
-            <ul>
-              <li>Everything in Pro</li>
-              <li>Multiple workspaces per team</li>
-              <li>Admin roles & forced lock release</li>
-              <li>Self-hosting option</li>
-              <li>Priority support</li>
-            </ul>
-            <a href="mailto:sales@pdftek.app" className="btn btn-lg" style={{ marginTop: "auto" }}>
-              Talk to sales
-            </a>
-          </div>
-        </Reveal>
-      </section>
-
       <section className="mk-section faq" id="faq" style={{ maxWidth: 820 }}>
         <h2 className="mk-h2">Questions, answered</h2>
         {[

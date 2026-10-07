@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "./icons";
+import { MarketingMenu } from "./marketing-menu";
 
 export function MarketingNav({ signedIn }: { signedIn: boolean }) {
   return (
@@ -8,13 +9,7 @@ export function MarketingNav({ signedIn }: { signedIn: boolean }) {
         <Link href="/" className="brand">
           <Logo /> pdftek
         </Link>
-        <div className="mk-links">
-          <Link href="/#features">Features</Link>
-          <Link href="/#how">How it works</Link>
-          <Link href="/#security">Security</Link>
-          <Link href="/#pricing">Pricing</Link>
-          <Link href="/#faq">FAQ</Link>
-        </div>
+        <MarketingMenu />
         <span className="grow" />
         {signedIn ? (
           <Link className="btn btn-primary btn-sm" href="/app">
@@ -46,8 +41,11 @@ export function MarketingFooter() {
           <span>The document workbench for professional teams.</span>
         </div>
         <div className="row gap-24 wrap">
-          <Link href="/#pricing">Pricing</Link>
+          <Link href="/#convert">Convert</Link>
+          <Link href="/#features">Features</Link>
+          <Link href="/#how">How it works</Link>
           <Link href="/#security">Security</Link>
+          <Link href="/#faq">FAQ</Link>
           <Link href="/terms">Terms</Link>
           <Link href="/privacy">Privacy</Link>
           <a href="mailto:support@pdftek.app">Support</a>

@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import { api, errMsg } from "@/lib/client/api";
@@ -33,13 +33,99 @@ const TOOLS: { key: ToolKey | "topdf" | "images" | "scan" | "convert" | "ocr" | 
   { key: "compare", title: "Compare", desc: "Redline two documents or versions, with an AI summary.", icon: <I.compare size={18} /> },
 ];
 
+const NON_MODAL = ["topdf", "images", "scan", "convert", "ocr", "compare", "pick"];
+
+/** Uploads files to the workspace library and hands back the created documents. */
+function UploadButton({ wid, onDone, multiple = false, label = "Upload a PDF", accept = ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.rtf,.txt,.jpg,.jpeg,.png" }: { wid: string; onDone: (d: Doc[]) => void; multiple?: boolean; label?: string; accept?: string }) {
+  const toast = useToast();
+  const input = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const upload = async (files: FileList | null) => {
+    if (!files?.length) return;
+    setBusy(true);
+    try {
+      const form = new FormData();
+      for (const f of files) form.append("files", f);
+      const r = await api<{ documents: Doc[]; errors: { name: string; error: string }[] }>(`/api/workspaces/${wid}/documents`, { method: "POST", body: form });
+      r.errors.forEach((e) => toast(`${e.name}: ${e.error}`, "error"));
+      if (r.documents.length) onDone(r.documents);
+    } catch (e) {
+      toast(errMsg(e), "error");
+    } finally {
+      setBusy(false);
+      if (input.current) input.current.value = "";
+    }
+  };
+  return (
+    <>
+      <button className="btn btn-sm" disabled={busy} onClick={() => input.current?.click()}>
+        {busy ? <span className="spinner" /> : <I.upload size={13} />} {busy ? "Uploading…" : label}
+      </button>
+      <input ref={input} type="file" hidden multiple={multiple} accept={accept} onChange={(e) => void upload(e.target.files)} />
+    </>
+  );
+}
+
+const PICK_TASKS: Record<string, { title: string; hint: string }> = {
+  edit: { title: "Edit a PDF", hint: "Pick the document to edit. You can change text, add images, highlight and redact." },
+  sign: { title: "Request signatures", hint: "Pick the document people need to sign." },
+  ask: { title: "Ask AI about a document", hint: "Pick a document and ask anything. Every answer cites its page." },
+  ocr: { title: "Make a scan searchable", hint: "Pick a scanned PDF to run OCR on." },
+  "convert-docx": { title: "PDF to Word", hint: "Pick or upload the PDF to convert to an editable Word document." },
+  "convert-xlsx": { title: "PDF to Excel", hint: "Pick or upload the PDF to convert to an Excel workbook." },
+  "convert-pptx": { title: "PDF to PowerPoint", hint: "Pick or upload the PDF to turn into slides." },
+  "convert-jpg": { title: "PDF to JPG", hint: "Pick or upload the PDF to export as images." },
+};
+
+/** "Which document?" step for tasks that start from a single PDF (edit, sign, convert from PDF…). */
+function PickDocModal({ wid, task, docs, onUploaded, onClose }: { wid: string; task: string; docs: Doc[]; onUploaded: (d: Doc[]) => void; onClose: () => void }) {
+  const router = useRouter();
+  const t = PICK_TASKS[task] ?? { title: "Choose a document", hint: "Pick a document from your library or upload one." };
+  const go = (id: string) => router.push(task === "sign" ? `/app/${wid}/send/${id}` : `/app/${wid}?doc=${id}&do=${task}`);
+  return (
+    <Modal title={t.title} onClose={onClose}>
+      <div className="col gap-12">
+        <p className="small muted" style={{ margin: 0 }}>{t.hint}</p>
+        <div className="row">
+          <UploadButton
+            wid={wid}
+            label={docs.length ? "Upload a new file" : "Upload a file"}
+            onDone={(d) => {
+              onUploaded(d);
+              go(d[0].id);
+            }}
+          />
+        </div>
+        {docs.length > 0 && (
+          <>
+            <div className="label">Or choose from your library</div>
+            <div className="col gap-4" style={{ maxHeight: 340, overflowY: "auto" }}>
+              {docs.map((d) => (
+                <button key={d.id} className="menu-item" style={{ border: "1px solid var(--line)" }} onClick={() => go(d.id)}>
+                  <I.file size={14} />
+                  <span className="grow ellipsis">{d.name}</span>
+                  <span className="tiny faint mono">{d.pageCount} p</span>
+                  <I.right size={12} />
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
 export function Tools({ wid }: { wid: string }) {
   const router = useRouter();
   const params = useSearchParams();
   const [docs, setDocs] = useState<Doc[]>([]);
-  const [open, setOpen] = useState<ToolKey | null>(null);
+  const initial = params.get("tool");
+  const [open, setOpen] = useState<ToolKey | null>(() => (TOOLS.some((t) => t.key === initial) && !NON_MODAL.includes(initial!) ? (initial as ToolKey) : null));
   const preselect = params.get("doc");
-  const [toPdf, setToPdf] = useState(params.get("tool") === "topdf");
+  const [toPdf, setToPdf] = useState(initial === "topdf");
+  const [pick, setPick] = useState<string | null>(initial === "pick" ? params.get("do") : null);
+  const addDocs = (d: Doc[]) => setDocs((cur) => [...d, ...cur.filter((x) => !d.some((n) => n.id === x.id))]);
 
   useEffect(() => {
     api<{ documents: Doc[] }>(`/api/workspaces/${wid}/documents`).then((r) => setDocs(r.documents));
@@ -68,13 +154,14 @@ export function Tools({ wid }: { wid: string }) {
           ))}
         </div>
       </div>
+      {pick && <PickDocModal wid={wid} task={pick} docs={docs} onUploaded={addDocs} onClose={() => setPick(null)} />}
       {toPdf && <ConvertToPdfModal wid={wid} onClose={() => setToPdf(false)} />}
-      {open && <ToolModal wid={wid} tool={open} docs={docs} preselect={preselect} onClose={() => setOpen(null)} />}
+      {open && <ToolModal wid={wid} tool={open} docs={docs} onUploaded={addDocs} preselect={preselect} onClose={() => setOpen(null)} />}
     </AppShell>
   );
 }
 
-function ToolModal({ wid, tool, docs, preselect, onClose }: { wid: string; tool: ToolKey; docs: Doc[]; preselect: string | null; onClose: () => void }) {
+function ToolModal({ wid, tool, docs, onUploaded, preselect, onClose }: { wid: string; tool: ToolKey; docs: Doc[]; onUploaded: (d: Doc[]) => void; preselect: string | null; onClose: () => void }) {
   const toast = useToast();
   const [docId, setDocId] = useState(preselect && docs.some((d) => d.id === preselect) ? preselect : (docs[0]?.id ?? ""));
   const [mergeIds, setMergeIds] = useState<string[]>([]);
@@ -175,7 +262,10 @@ function ToolModal({ wid, tool, docs, preselect, onClose }: { wid: string; tool:
 
   const docPicker = (
     <div className="field">
-      <label>Document</label>
+      <div className="row between">
+        <label>Document</label>
+        <UploadButton wid={wid} label="Upload" onDone={(d) => { onUploaded(d); setDocId(d[0].id); }} />
+      </div>
       <select className="select" value={docId} onChange={(e) => setDocId(e.target.value)}>
         {docs.map((d) => (
           <option key={d.id} value={d.id}>
@@ -203,14 +293,31 @@ function ToolModal({ wid, tool, docs, preselect, onClose }: { wid: string; tool:
         </>
       }
     >
-      {docs.length === 0 && <div className="notice">Upload a document first.</div>}
-      {tool === "merge" && (
+      {docs.length === 0 && (
+        <div className="empty" style={{ padding: 24 }}>
+          <p className="small muted">Upload {tool === "merge" ? "the PDFs you want to combine" : "a PDF"} to get started.</p>
+          <UploadButton
+            wid={wid}
+            multiple={tool === "merge"}
+            label={tool === "merge" ? "Upload PDFs" : "Upload a PDF"}
+            onDone={(d) => {
+              onUploaded(d);
+              if (tool === "merge") setMergeIds(d.map((x) => x.id));
+              else setDocId(d[0].id);
+            }}
+          />
+        </div>
+      )}
+      {tool === "merge" && docs.length > 0 && (
         <div className="col gap-12">
           <div className="field">
             <label>New document name</label>
             <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
-          <div className="label">Select documents in the order they should appear</div>
+          <div className="row between">
+            <div className="label">Select documents in the order they should appear</div>
+            <UploadButton wid={wid} multiple label="Upload more" onDone={(d) => { onUploaded(d); setMergeIds((m) => [...m, ...d.map((x) => x.id)]); }} />
+          </div>
           <div className="col gap-4" style={{ maxHeight: 360, overflowY: "auto" }}>
             {docs.map((d) => {
               const idx = mergeIds.indexOf(d.id);

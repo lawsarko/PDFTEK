@@ -26,7 +26,7 @@ export function Workbench({ wid }: { wid: string }) {
     return add === "images" || add === "scan" || add === "upload" ? add : false;
   });
   const [pro, setPro] = useState<string | null>(null);
-  const [mobileView, setMobileView] = useState<"library" | "document" | "assistant">("library");
+  const [mobileView, setMobileView] = useState<"library" | "document" | "assistant">(() => (params.get("do") === "ask" ? "assistant" : "library"));
   const [assistantTab, setAssistantTab] = useState("chat");
   const activeId = params.get("doc");
 

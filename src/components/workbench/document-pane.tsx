@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import { api, bytes, download, errMsg, timeAgo } from "@/lib/client/api";
 import type { Doc, Member, Version } from "@/lib/client/types";
@@ -32,6 +33,17 @@ export function DocumentPane() {
   const [fitDone, setFitDone] = useState(false);
 
   const src = active ? `/api/documents/${active.id}/file?version=${active.versionId}` : "";
+
+  // Deep links (?do=edit|ocr|convert-docx|…) from the menu run their action once the PDF has loaded.
+  const router = useRouter();
+  const params = useSearchParams();
+  const doAction = params.get("do");
+  const actionRef = useRef<(a: string) => void>(undefined);
+  useEffect(() => {
+    if (!doAction || !pdf || !active) return;
+    router.replace(`/app/${wid}?doc=${active.id}`, { scroll: false });
+    actionRef.current?.(doAction);
+  }, [doAction, pdf, active, router, wid]);
 
   // Fit width on first load.
   const onLoaded = useCallback(
@@ -107,6 +119,15 @@ export function DocumentPane() {
     } finally {
       setProgress(null);
     }
+  };
+
+  actionRef.current = (a: string) => {
+    if (a === "edit") {
+      if (requirePro("Text editing")) setEditing(true);
+    } else if (a === "ocr") setOcrOpen(true);
+    else if (a === "read") setTts(true);
+    else if (a === "ask") document.querySelector<HTMLTextAreaElement>(".assistant textarea")?.focus();
+    else if (a.startsWith("convert-")) void convert(a.slice(8));
   };
 
   const print = async () => {
