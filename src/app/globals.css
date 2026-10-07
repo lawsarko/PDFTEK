@@ -515,7 +515,7 @@ button.chip:hover { border-color: var(--steel); color: var(--text-hi); }
 .mk-burger { display: none; background: none; border: 1px solid var(--line); color: var(--text-hi); border-radius: 8px; padding: 6px 8px; cursor: pointer; }
 .mk-sheet { position: fixed; inset: 0; z-index: 80; background: var(--ink); padding: 18px 16px 40px; overflow-y: auto; animation: mega-in .2s ease; }
 .mk-sheet .mega-cols { grid-template-columns: 1fr; }
-.mk-sheet-quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+.mk-sheet-quick { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
 .mk-quick { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 6px; border: 1px solid var(--line); border-radius: 12px; color: var(--text-hi); font-size: 13px; background: var(--ink-2); }
 .mk-quick.accent { color: var(--amber); border-color: var(--amber-line); }
 .mk-quick:hover { text-decoration: none; border-color: var(--amber-line); }

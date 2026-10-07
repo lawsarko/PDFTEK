@@ -135,6 +135,7 @@ const ENTRIES: Entry[] = [
   { label: "Edit", href: "/go/edit", icon: <I.edit size={14} /> },
   { label: "Sign", href: "/go/sign", icon: <I.sign size={14} /> },
   { label: "Organize", groups: ORGANIZE, icon: <I.layers size={14} /> },
+  { label: "Read aloud", href: "/go/read-aloud", icon: <I.speaker size={14} /> },
   {
     label: "Ask AI",
     href: "/go/ask",

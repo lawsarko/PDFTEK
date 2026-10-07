@@ -70,6 +70,7 @@ const PICK_TASKS: Record<string, { title: string; hint: string }> = {
   edit: { title: "Edit a PDF", hint: "Pick the document to edit. You can change text, add images, highlight and redact." },
   sign: { title: "Request signatures", hint: "Pick the document people need to sign." },
   ask: { title: "Ask AI about a document", hint: "Pick a document and ask anything. Every answer cites its page." },
+  read: { title: "Read aloud", hint: "Pick a document to listen to. Choose the voice, language and speed in the player." },
   ocr: { title: "Make a scan searchable", hint: "Pick a scanned PDF to run OCR on." },
   "convert-docx": { title: "PDF to Word", hint: "Pick or upload the PDF to convert to an editable Word document." },
   "convert-xlsx": { title: "PDF to Excel", hint: "Pick or upload the PDF to convert to an Excel workbook." },

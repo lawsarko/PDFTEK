@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { currentUser, firstWorkspaceFor, createWorkspace } from "@/lib/auth";
 
 /**
@@ -20,6 +19,7 @@ const TASKS: Record<string, string> = {
   edit: PICK("edit"),
   sign: PICK("sign"),
   ask: PICK("ask"),
+  "read-aloud": PICK("read"),
   ocr: PICK("ocr"),
   merge: "/tools?tool=merge",
   split: "/tools?tool=split",
@@ -31,14 +31,21 @@ const TASKS: Record<string, string> = {
   compare: "/compare",
 };
 
-export async function GET(req: Request, { params }: { params: Promise<{ tool: string }> }) {
+export async function GET(_req: Request, { params }: { params: Promise<{ tool: string }> }) {
   const { tool } = await params;
   const target = TASKS[tool];
-  // Relative to the request's own host, so it works behind proxies and on any domain.
-  const base = req.url;
-  if (!target) return NextResponse.redirect(new URL("/", base));
+  if (!target) return go("/");
   const user = await currentUser();
-  if (!user) return NextResponse.redirect(new URL(`/signup?next=${encodeURIComponent(`/go/${tool}`)}`, base));
+  if (!user) return go(`/signup?next=${encodeURIComponent(`/go/${tool}`)}`);
   const wid = firstWorkspaceFor(user.id) ?? createWorkspace(`${user.name.split(" ")[0]}'s workspace`, user.id);
-  return NextResponse.redirect(new URL(`/app/${wid}${target}`, base));
+  return go(`/app/${wid}${target}`);
+}
+
+/**
+ * Relative redirect: the browser resolves it against the address it is already on. Behind a host
+ * like Render, req.url is the internal address (http://0.0.0.0:10000), so absolute URLs built from
+ * it send visitors to an unreachable page.
+ */
+function go(path: string) {
+  return new Response(null, { status: 307, headers: { Location: path, "Cache-Control": "no-store" } });
 }
