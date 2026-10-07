@@ -2,8 +2,9 @@ import { z } from "zod";
 import { body, json, route, badRequest } from "@/lib/http";
 import { requireMember } from "@/lib/auth";
 import { addVersion, assertCanEdit, createDocument, getDocument, readCurrentPdf, serializeDoc } from "@/lib/documents";
-import { mergePdfs, optimize, pageNumbers, parseRanges, rebuildPages, setMetadata, watermark } from "@/lib/pdf";
+import { mergePdfs, pageNumbers, parseRanges, rebuildPages, setMetadata, watermark } from "@/lib/pdf";
 import { logActivity } from "@/lib/activity";
+import { compressPdf } from "@/lib/pdf-compress";
 
 type P = { params: Promise<{ wid: string }> };
 
@@ -22,7 +23,7 @@ const Input = z.discriminatedUnion("op", [
     format: z.string().max(40).default("Page {n} of {total}"),
     start: z.number().int().min(0).max(100000).default(1),
   }),
-  z.object({ op: z.literal("optimize"), docId: z.string() }),
+  z.object({ op: z.literal("optimize"), docId: z.string(), level: z.enum(["light", "recommended", "strong"]).default("recommended") }),
   z.object({ op: z.literal("metadata"), docId: z.string(), title: z.string().max(300), author: z.string().max(200), subject: z.string().max(300) }),
 ]);
 
@@ -102,10 +103,14 @@ export const POST = route<P>(async (req, { params }) => {
     }
     case "optimize": {
       const doc = getDocument(ctx, input.docId);
-      const before = doc.size;
-      const pdf = await optimize(await readCurrentPdf(doc));
-      if (pdf.length >= before) return json({ documents: [serializeDoc(doc)], message: "This file is already well optimized." });
-      return json({ documents: [await newVersion(doc.id, pdf, `Optimized (${Math.round((1 - pdf.length / before) * 100)}% smaller)`)] });
+      const r = await compressPdf(await readCurrentPdf(doc), input.level);
+      const saved = 1 - r.after / r.before;
+      if (saved < 0.02) {
+        return json({ documents: [serializeDoc(doc)], message: `This file is already compact (${mb(r.before)}). Its size comes from text and fonts, which can't shrink further without losing quality.`, before: r.before, after: r.before });
+      }
+      const pct = Math.round(saved * 100);
+      const updated = await newVersion(doc.id, r.pdf, `Compressed ${mb(r.before)} → ${mb(r.after)} (${pct}% smaller)`);
+      return json({ documents: [updated], message: `Compressed from ${mb(r.before)} to ${mb(r.after)} (${pct}% smaller).`, before: r.before, after: r.after });
     }
     case "metadata": {
       const doc = getDocument(ctx, input.docId);
@@ -114,3 +119,7 @@ export const POST = route<P>(async (req, { params }) => {
     }
   }
 });
+
+function mb(n: number) {
+  return n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`;
+}

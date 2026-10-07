@@ -199,7 +199,11 @@ export async function normalizeToPdf(name: string, data: Buffer): Promise<{ pdf:
       if (doc.getPageCount() === 0) throw badRequest("That PDF has no pages.");
     } catch (err) {
       if (err instanceof Error && /encrypt/i.test(err.message)) {
-        throw badRequest("That PDF is password-protected. Remove the password and upload it again.");
+        // PDFs that only restrict printing/copying open with an empty password: unlock them quietly.
+        const { unlockPdf } = await import("./pdf-security");
+        const unlocked = await unlockPdf(data, "").catch(() => null);
+        if (unlocked) return { pdf: unlocked, sourceType: "pdf" };
+        throw badRequest("That PDF is password-protected. Use Tools → Unlock PDF to remove the password, then upload it.");
       }
       if (err instanceof Error && "status" in err) throw err;
       throw badRequest("That file doesn't look like a valid PDF.");
@@ -304,14 +308,6 @@ export async function pageNumbers(
     page.drawText(label, { x, y, size, font, color: rgb(0.3, 0.3, 0.3) });
   });
   return Buffer.from(await doc.save());
-}
-
-/** Re-saves with object streams and drops metadata; helps for bloated PDFs produced by some tools. */
-export async function optimize(data: Uint8Array): Promise<Buffer> {
-  const doc = await PDFDocument.load(data, { updateMetadata: false });
-  doc.setProducer("pdftek");
-  doc.setCreator("pdftek");
-  return Buffer.from(await doc.save({ useObjectStreams: true }));
 }
 
 export async function setMetadata(data: Uint8Array, meta: { title?: string; author?: string; subject?: string }) {

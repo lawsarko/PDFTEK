@@ -244,6 +244,12 @@ export function DocumentPane() {
               <button className="menu-item" onClick={() => { setMoreOpen(false); setOcrOpen(true); }}>
                 <I.scan size={14} /> Run OCR (make searchable)
               </button>
+              <Link className="menu-item" href={`/app/${wid}/tools?tool=optimize&doc=${active.id}`}>
+                <I.zoomOut size={14} /> Compress
+              </Link>
+              <Link className="menu-item" href={`/app/${wid}/tools?tool=protect&doc=${active.id}`}>
+                <I.lock size={14} /> Protect with password
+              </Link>
               <Link className="menu-item" href={`/app/${wid}/tools?doc=${active.id}`}>
                 <I.tools size={14} /> Organize, split, watermark…
               </Link>

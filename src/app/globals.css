@@ -504,7 +504,7 @@ button.chip:hover { border-color: var(--steel); color: var(--text-hi); }
 .mega { position: absolute; top: calc(100% + 10px); left: -12px; background: var(--ink-2); border: 1px solid var(--line); border-radius: 14px; padding: 14px; box-shadow: 0 30px 60px -20px rgba(0,0,0,.7); animation: mega-in .18s ease; z-index: 50; }
 .mega::before { content: ""; position: absolute; top: -12px; left: 0; right: 0; height: 12px; }
 @keyframes mega-in { from { opacity: 0; transform: translateY(-6px); } }
-.mega-cols { display: grid; grid-template-columns: repeat(2, minmax(210px, 1fr)); gap: 8px 14px; }
+.mega-cols { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(200px, 1fr); gap: 8px 14px; }
 .mega-title { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--slate); padding: 4px 10px 8px; }
 .mega-item { display: flex; align-items: center; gap: 11px; padding: 8px 10px; border-radius: 9px; color: var(--text-hi); font-size: 13.5px; transition: background .12s; }
 .mega-item:hover { background: var(--panel); text-decoration: none; }
@@ -514,7 +514,7 @@ button.chip:hover { border-color: var(--steel); color: var(--text-hi); }
 .fmt-chip { font-family: var(--font-mono); font-size: 9px; font-weight: 700; color: #fff; border-radius: 5px; padding: 3px 4px; letter-spacing: .02em; }
 .mk-burger { display: none; background: none; border: 1px solid var(--line); color: var(--text-hi); border-radius: 8px; padding: 6px 8px; cursor: pointer; }
 .mk-sheet { position: fixed; inset: 0; z-index: 80; background: var(--ink); padding: 18px 16px 40px; overflow-y: auto; animation: mega-in .2s ease; }
-.mk-sheet .mega-cols { grid-template-columns: 1fr; }
+.mk-sheet .mega-cols { grid-auto-flow: row; grid-template-columns: 1fr; }
 .mk-sheet-quick { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
 .mk-quick { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 6px; border: 1px solid var(--line); border-radius: 12px; color: var(--text-hi); font-size: 13px; background: var(--ink-2); }
 .mk-quick.accent { color: var(--amber); border-color: var(--amber-line); }

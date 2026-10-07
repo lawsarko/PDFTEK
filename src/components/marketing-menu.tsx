@@ -121,6 +121,13 @@ const ORGANIZE: Group[] = [
       },
     ],
   },
+  {
+    title: "Secure",
+    items: [
+      { href: "/go/protect", label: "Protect PDF", sub: "Add a password", icon: <I.lock size={15} /> },
+      { href: "/go/unlock", label: "Unlock PDF", sub: "Remove a password", icon: <I.unlock size={15} /> },
+    ],
+  },
 ];
 
 type Entry = {

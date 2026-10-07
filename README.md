@@ -21,7 +21,7 @@
 | **Document requests (Pro)** | Collect files from clients through secure upload links, with due dates, reminders and status tracking (pending → viewed → complete). |
 | **Automations (Pro)** | Triggers: document uploaded, schedule (digest), renewal coming up (N days out), signature completed, request fulfilled. Actions: extract, summarize, tag, assign, notify, email, and HTTPS webhooks that are Slack-compatible and blocked from private hosts. Every run is logged. |
 | **Teams** | Invites, owner/admin/member roles, check-out locks against conflicting edits, hand-offs with notes, an activity feed, in-app notifications, and email. |
-| **Also** | Read aloud (Web Speech, 11 languages, speed control), in-browser OCR (Tesseract, 13 languages), merge, split, extract, delete, rotate, drag-to-organize pages, watermark, page and Bates numbering, optimize, metadata, version history with restore. |
+| **Also** | Read aloud (Web Speech, 11 languages, speed control), in-browser OCR (Tesseract, 13 languages), merge, split, extract, delete, rotate, drag-to-organize pages, watermark, page and Bates numbering, **compress** (downsamples and recompresses images; light / recommended / strong; Ghostscript used too when installed), **protect with a password** (AES-256, with print/copy/edit restrictions) and **unlock** password-protected PDFs, metadata, version history with restore. |
 | **Business** | Marketing site, pricing, Free/Pro/Business plans, a 14-day trial, and optional Stripe Checkout, Customer Portal and webhooks. |
 
 ## Quick start
