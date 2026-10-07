@@ -3,7 +3,7 @@ import "./globals.css";
 import { ToastProvider } from "@/components/toast";
 
 export const metadata: Metadata = {
-  title: { default: "pdftek — the document workbench for professional teams", template: "%s · pdftek" },
+  title: { default: "pdftek — Every document, handled.", template: "%s · pdftek" },
   description:
     "Upload, convert, edit, sign and understand documents in one workspace. AI answers with page citations, e-signatures, document requests and automations for legal, finance and research teams.",
   icons: { icon: "/icon.svg" },

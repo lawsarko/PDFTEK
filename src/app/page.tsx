@@ -25,15 +25,10 @@ export default async function Home() {
 
       <section className="mk-hero">
         <div className="mk-section" style={{ paddingTop: 0, paddingBottom: 0 }}>
-          <span className="chip">
-            <span className="dot" /> New · knowledge-base chat across your whole library
-          </span>
           <h1>
-            The document workbench for teams that <em>can’t afford to misread</em>.
+            Every document, <em>handled</em>.
           </h1>
-          <p className="lead">
-            pdftek puts converting, editing, signing and AI review of your documents in one secure workspace. Every answer cites its source page, so legal, finance and research teams can move fast and still check the work.
-          </p>
+          <p className="lead">Convert, edit, sign and understand your PDFs in one place.</p>
           <div className="mk-cta">
             <Link className="btn btn-primary btn-lg" href={user ? "/app" : "/signup"}>
               {user ? "Open your workbench" : "Start free — no card required"}
