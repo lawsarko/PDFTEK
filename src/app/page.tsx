@@ -2,8 +2,20 @@ import Link from "next/link";
 import { currentUser } from "@/lib/auth";
 import { I, Logo } from "@/components/icons";
 import { MarketingNav, MarketingFooter } from "@/components/marketing";
+import { ConvertDemo, CountUp, FlowSequence, LiveChat, Reveal, ScrollProgress, Spotlight, TiltOnScroll, Typewriter } from "@/components/motion";
 
 export const dynamic = "force-dynamic";
+
+const TYPED = ["converted.", "edited.", "signed.", "understood.", "handled."];
+
+const MARQUEE_A = [
+  ["PDF", "Word"], ["Word", "PDF"], ["PDF", "Excel"], ["Excel", "PDF"], ["PowerPoint", "PDF"], ["PDF", "PowerPoint"],
+  ["JPG", "PDF"], ["PDF", "PNG"], ["Scan", "searchable PDF"], ["HEIC", "PDF"], ["PDF", "TIFF"], ["Text", "PDF"],
+];
+const MARQUEE_B = [
+  "✍️ E-signatures", "🔍 OCR in 13 languages", "🤖 AI answers with page citations", "✂️ Split & merge", "🖍️ Click-to-edit text",
+  "⬛ True redaction", "🔔 Automations", "📥 Document requests", "🔊 Read aloud", "🧾 Extract to Excel", "🔒 Version history", "🧭 Compare & redline",
+];
 
 const FEATURES: { icon: React.ReactNode; title: string; body: string }[] = [
   { icon: <I.sparkle size={18} />, title: "Answers with receipts", body: "Ask anything about a contract, filing or report. Every answer links to the exact page and passage, highlighted in the document." },
@@ -23,67 +35,121 @@ export default async function Home() {
     <div className="mk">
       <MarketingNav signedIn={!!user} />
 
+      <ScrollProgress />
       <section className="mk-hero">
+        <div className="hero-bg" aria-hidden>
+          <span className="orb orb-a" />
+          <span className="orb orb-b" />
+          <span className="orb orb-c" />
+        </div>
         <div className="mk-section" style={{ paddingTop: 0, paddingBottom: 0 }}>
+          <span className="hero-kicker">
+            <span className="live" /> Convert · Edit · Sign · Ask AI
+          </span>
           <h1>
-            Every document, <em>handled</em>.
+            Every document,
+            <br />
+            <Typewriter className="tw-word" words={TYPED} />
           </h1>
           <p className="lead">Convert, edit, sign and understand your PDFs in one place.</p>
           <div className="mk-cta">
-            <Link className="btn btn-primary btn-lg" href={user ? "/app" : "/signup"}>
+            <Link className="btn btn-primary btn-lg btn-glow" href={user ? "/app" : "/signup"}>
               {user ? "Open your workbench" : "Start free — no card required"}
             </Link>
             <a className="btn btn-lg" href="#how">
               See how it works
             </a>
           </div>
-          <div className="mk-shot" aria-hidden>
-            <ProductShot />
-          </div>
+          <TiltOnScroll>
+            <div className="mk-shot" aria-hidden>
+              <ProductShot />
+            </div>
+          </TiltOnScroll>
         </div>
       </section>
 
+      <div className="marquee" aria-hidden style={{ marginTop: 40 }}>
+        <div className="marquee-track">
+          {[...MARQUEE_A, ...MARQUEE_A].map(([a, b], i) => (
+            <span key={i} className="marquee-item">
+              {a} <b>→</b> {b}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className="marquee rev" aria-hidden style={{ borderTop: 0 }}>
+        <div className="marquee-track">
+          {[...MARQUEE_B, ...MARQUEE_B].map((t, i) => (
+            <span key={i} className="marquee-item">
+              {t}
+            </span>
+          ))}
+        </div>
+      </div>
+
       <section className="mk-section" style={{ paddingTop: 48, paddingBottom: 48 }}>
         <div className="stat-row">
-          <div className="stat">
-            <b>1 page</b>
+          <Reveal className="stat" delay={0}>
+            <b><CountUp to={1} /> page</b>
             <span>Every AI answer points to its source page</span>
-          </div>
-          <div className="stat">
-            <b>12 formats</b>
+          </Reveal>
+          <Reveal className="stat" delay={120}>
+            <b><CountUp to={12} /> formats</b>
             <span>In and out: Office, images, scans and text</span>
-          </div>
-          <div className="stat">
-            <b>40+ languages</b>
+          </Reveal>
+          <Reveal className="stat" delay={240}>
+            <b><CountUp to={40} suffix="+" /> languages</b>
             <span>Searched, read aloud and understood</span>
-          </div>
-          <div className="stat">
+          </Reveal>
+          <Reveal className="stat" delay={360}>
             <b>0 re-keying</b>
             <span>Extract straight into Excel and CSV</span>
-          </div>
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="mk-section" id="convert">
+        <div className="mk-split">
+          <Reveal>
+            <div className="eyebrow">Convert</div>
+            <h2 className="mk-h2" style={{ marginTop: 10 }}>
+              Any format in. Any format out.
+            </h2>
+            <p className="mk-sub">Word, Excel and PowerPoint to PDF and back, with fonts, tables, bullets and spacing exactly where they were. Even scans and receipts come out editable.</p>
+            <div className="mk-cta" style={{ justifyContent: "flex-start" }}>
+              <Link className="btn btn-primary" href={user ? "/app" : "/signup"}>
+                Convert a file now
+              </Link>
+            </div>
+          </Reveal>
+          <Reveal delay={150} className="card" style={{ padding: 0 }}>
+            <ConvertDemo />
+          </Reveal>
         </div>
       </section>
 
       <section className="mk-section" id="features">
-        <div className="eyebrow">Features</div>
-        <h2 className="mk-h2" style={{ marginTop: 10 }}>
-          Everything a document goes through, in one place.
-        </h2>
-        <p className="mk-sub">Replace the converter tab, the e-sign subscription, the shared-drive scramble and the “which version is final?” email thread.</p>
-        <div className="mk-grid">
-          {FEATURES.map((f) => (
-            <div key={f.title} className="mk-card">
+        <Reveal>
+          <div className="eyebrow">Features</div>
+          <h2 className="mk-h2" style={{ marginTop: 10 }}>
+            Everything a document goes through, in one place.
+          </h2>
+          <p className="mk-sub">Replace the converter tab, the e-sign subscription, the shared-drive scramble and the “which version is final?” email thread.</p>
+        </Reveal>
+        <Spotlight className="mk-grid">
+          {FEATURES.map((f, i) => (
+            <Reveal key={f.title} className="mk-card" delay={(i % 3) * 110}>
               <div className="mk-ico">{f.icon}</div>
               <h3>{f.title}</h3>
               <p>{f.body}</p>
-            </div>
+            </Reveal>
           ))}
-        </div>
+        </Spotlight>
       </section>
 
       <section className="mk-section" id="how">
         <div className="mk-split">
-          <div>
+          <Reveal>
             <div className="eyebrow">How teams use pdftek</div>
             <h2 className="mk-h2" style={{ marginTop: 10 }}>
               From inbox to executed, without leaving the page.
@@ -95,39 +161,20 @@ export default async function Home() {
               <li>They hand it to Contracts, who sends it for signature in order. Reminders go out automatically.</li>
               <li>Once it&apos;s fully signed, key terms go to the tracker, and a renewal reminder is set for 60 days before expiry.</li>
             </ul>
-          </div>
-          <div className="card" style={{ padding: 20 }}>
-            <div className="flow-steps">
-              <span className="flow-step">📥 New PDF in library</span>
-              <span className="flow-arrow">→</span>
-              <span className="flow-step">🔍 Extract risk flags</span>
-              <span className="flow-arrow">→</span>
-              <span className="flow-step">🔔 Notify team</span>
-            </div>
-            <div className="tiny mono faint mt-8">Instant, on upload</div>
+          </Reveal>
+          <Reveal delay={150} className="card" style={{ padding: 20 }}>
+            <FlowSequence steps={["📥 New PDF in library", "🔍 Extract risk flags", "🔔 Notify team"]} note="Instant, on upload" />
             <hr className="divider" />
-            <div className="flow-steps">
-              <span className="flow-step">✍️ Contract fully signed</span>
-              <span className="flow-arrow">→</span>
-              <span className="flow-step">🔍 Extract key terms</span>
-              <span className="flow-arrow">→</span>
-              <span className="flow-step">🔗 Webhook → tracker</span>
-            </div>
-            <div className="tiny mono faint mt-8">Instant</div>
+            <FlowSequence steps={["✍️ Contract fully signed", "🔍 Extract key terms", "🔗 Webhook → tracker"]} note="Instant" />
             <hr className="divider" />
-            <div className="flow-steps">
-              <span className="flow-step">📅 Renewal in 60 days</span>
-              <span className="flow-arrow">→</span>
-              <span className="flow-step">✉️ Email reminder</span>
-            </div>
-            <div className="tiny mono faint mt-8">Daily check, 9:00 AM</div>
-          </div>
+            <FlowSequence steps={["📅 Renewal in 60 days", "✉️ Email reminder"]} note="Daily check, 9:00 AM" />
+          </Reveal>
         </div>
       </section>
 
       <section className="mk-section" id="security">
         <div className="mk-split">
-          <div className="card" style={{ padding: 24 }}>
+          <Reveal className="card" style={{ padding: 24 }}>
             <div className="col gap-12">
               {[
                 ["Workspace isolation", "Every request is authorized against workspace membership and role."],
@@ -148,8 +195,8 @@ export default async function Home() {
                 </div>
               ))}
             </div>
-          </div>
-          <div>
+          </Reveal>
+          <Reveal delay={150}>
             <div className="eyebrow">Security</div>
             <h2 className="mk-h2" style={{ marginTop: 10 }}>
               Built for documents you can&apos;t afford to leak.
@@ -157,7 +204,7 @@ export default async function Home() {
             <p className="mk-sub">
               Contracts, financials and patient records need more than a free converter site. pdftek keeps your files in your workspace, logs who touched what, and can run entirely on your own servers.
             </p>
-          </div>
+          </Reveal>
         </div>
       </section>
 
@@ -167,7 +214,7 @@ export default async function Home() {
           Simple plans that grow with your team.
         </h2>
         <p className="mk-sub">Start free. Upgrade a workspace when your team needs editing, signatures and automations. Every paid plan includes a 14-day trial.</p>
-        <div className="price-grid">
+        <Reveal className="price-grid">
           <div className="price">
             <div className="eyebrow">Free</div>
             <div className="amount">$0</div>
@@ -221,7 +268,7 @@ export default async function Home() {
               Talk to sales
             </a>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       <section className="mk-section faq" id="faq" style={{ maxWidth: 820 }}>
@@ -240,7 +287,7 @@ export default async function Home() {
         ))}
       </section>
 
-      <section className="mk-section" style={{ textAlign: "center", paddingTop: 40 }}>
+      <Reveal as="section" className="mk-section" style={{ textAlign: "center", paddingTop: 40 }}>
         <Logo size={40} />
         <h2 className="mk-h2" style={{ marginTop: 16 }}>
           Your documents, finally under control.
@@ -250,7 +297,7 @@ export default async function Home() {
             {user ? "Open your workbench" : "Create your free workspace"}
           </Link>
         </div>
-      </section>
+      </Reveal>
 
       <MarketingFooter />
     </div>
@@ -280,7 +327,7 @@ function ProductShot() {
             This Agreement shall commence on the Effective Date and continue for an initial term of twenty-four (24) months, automatically renewing unless either party provides notice at least sixty (60) days prior…
           </p>
           <p style={{ lineHeight: 1.7, margin: 0 }}>
-            <span style={{ background: "rgba(217,142,43,.28)", borderBottom: "1.5px solid #d98e2b" }}>Client may additionally terminate for convenience upon ninety (90) days&apos; written notice</span>, subject to the wind-down obligations set forth in Section 8.
+            <span className="hl-sweep">Client may additionally terminate for convenience upon ninety (90) days&apos; written notice</span>, subject to the wind-down obligations set forth in Section 8.
           </p>
         </div>
       </div>
@@ -290,12 +337,8 @@ function ProductShot() {
           <span className="chip">Extract</span>
           <span className="chip">Automate</span>
         </div>
-        <div className="msg msg-user" style={{ fontSize: 12 }}>What&apos;s our exit path if we just want out, no cause needed?</div>
-        <div className="msg msg-ai" style={{ fontSize: 12 }}>
-          You can terminate for convenience with <b>90 days&apos; written notice</b>. No breach is required. Sections 6, 9 and 11 survive termination.
-          <span className="cite">↳ p.2</span>
-        </div>
-        <div className="row gap-4 wrap">
+        <LiveChat />
+        <div className="row gap-4 wrap" style={{ marginTop: "auto" }}>
           <span className="chip">Compare to playbook</span>
           <span className="chip">Summarize §9</span>
         </div>
