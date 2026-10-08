@@ -1,14 +1,14 @@
 import { currentUser } from "@/lib/auth";
 import { MarketingNav, MarketingFooter } from "@/components/marketing";
 import { CreditPacks, PlanCards } from "@/components/pricing";
-import { PRICING_FAQ } from "@/lib/plans";
+import { FREE_LIMITS, PRICING_FAQ } from "@/lib/plans";
 import { Reveal } from "@/components/motion";
 
 export const metadata = { title: "Pricing", description: "Free PDF tools for everyone. Day Pass $1.99, Pro $5.99/month, pay-as-you-go AI credits." };
 export const dynamic = "force-dynamic";
 
 const ROWS: [string, string, string, string, string][] = [
-  ["Convert, merge, split, compress, protect…", "10–20 / day", "Unlimited", "Unlimited", "Unlimited"],
+  ["Convert, merge, split, compress, protect…", `${FREE_LIMITS.guest.tasksPerDay}–${FREE_LIMITS.free.tasksPerDay} / day`, "Unlimited", "Unlimited", "Unlimited"],
   ["Max file size", "20 MB", "100 MB", "100 MB", "100 MB"],
   ["Files at once", "5", "50", "50", "50"],
   ["Read and search PDFs", "✓", "✓", "✓", "✓"],

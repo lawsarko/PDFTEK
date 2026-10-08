@@ -4,8 +4,8 @@
  */
 
 export const FREE_LIMITS = {
-  guest: { tasksPerDay: 10, maxFileMb: 20, maxFiles: 5 },
-  free: { tasksPerDay: 20, maxFileMb: 20, maxFiles: 5 },
+  guest: { tasksPerDay: 5, maxFileMb: 20, maxFiles: 5 },
+  free: { tasksPerDay: 10, maxFileMb: 20, maxFiles: 5 },
 } as const;
 export const PAID_LIMITS = { tasksPerDay: 2000, maxFileMb: 100, maxFiles: 50 } as const; // fair use
 

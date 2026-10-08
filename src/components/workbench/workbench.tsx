@@ -13,6 +13,7 @@ import { DocumentPane } from "./document-pane";
 import { Assistant } from "./assistant";
 import { UploadModal } from "./upload-modal";
 import { notifyPaywall } from "../paywall";
+import { FREE_LIMITS } from "@/lib/plans";
 
 export function Workbench({ wid }: { wid: string }) {
   const router = useRouter();
@@ -168,7 +169,7 @@ function GuestBanner() {
     <div className="guest-banner">
       <I.clock size={14} />
       <span className="grow">
-        You&apos;re using pdftek without an account. Files are deleted after 24 hours. <b>Create a free account</b> to keep them and get 20 free tasks a day.
+        You&apos;re using pdftek without an account. Files are deleted after 24 hours. <b>Create a free account</b> to keep them and get {FREE_LIMITS.free.tasksPerDay} free tasks a day.
       </span>
       <a className="btn btn-sm btn-primary" href="/signup">Create free account</a>
       <a className="btn btn-sm btn-ghost hide-mobile" href="/login">Sign in</a>
