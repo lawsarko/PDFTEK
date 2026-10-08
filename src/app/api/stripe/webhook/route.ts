@@ -38,7 +38,9 @@ export async function POST(req: Request) {
     }
     case "invoice.paid": {
       // A renewal: the next monthly AI allowance is granted on the next request (see refillAllowance).
-      const sub = obj.subscription as string | undefined;
+      // Newer Stripe API versions (2025-03-31+) moved the subscription under invoice.parent.
+      const parent = obj.parent as { subscription_details?: { subscription?: string } } | undefined;
+      const sub = (obj.subscription as string | undefined) ?? parent?.subscription_details?.subscription;
       if (sub && obj.billing_reason === "subscription_cycle") {
         run("UPDATE workspaces SET allowance_expires_at = NULL WHERE stripe_subscription_id = ?", sub);
       }
