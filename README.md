@@ -22,7 +22,7 @@
 | **Automations (Pro)** | Triggers: document uploaded, schedule (digest), renewal coming up (N days out), signature completed, request fulfilled. Actions: extract, summarize, tag, assign, notify, email, and HTTPS webhooks that are Slack-compatible and blocked from private hosts. Every run is logged. |
 | **Teams** | Invites, owner/admin/member roles, check-out locks against conflicting edits, hand-offs with notes, an activity feed, in-app notifications, and email. |
 | **Also** | Read aloud (Web Speech, 11 languages, speed control), in-browser OCR (Tesseract, 13 languages), merge, split, extract, delete, rotate, drag-to-organize pages, watermark, page and Bates numbering, **compress** (downsamples and recompresses images; light / recommended / strong; Ghostscript used too when installed), **protect with a password** (AES-256, with print/copy/edit restrictions) and **unlock** password-protected PDFs, metadata, version history with restore. |
-| **Business** | Marketing site, pricing, Free/Pro/Business plans, a 14-day trial, and optional Stripe Checkout, Customer Portal and webhooks. |
+| **Business model** | Free tools for everyone, **no account needed** (guests get a temporary workspace; files are deleted after 24 hours). Daily free limit: 10 tasks without an account, 20 with one, files up to 20 MB, 5 at a time. Beyond that: **Day Pass** $1.99 (24 h of everything), **Pro** $5.99/mo or $47.99/yr, **Team** $14.99/mo (up to 5 people), and pay-as-you-go **credit packs** from $2.99. Editing, read aloud, e-signatures, document requests and automations need a pass or membership. **All AI is paid with credits, metered on actual API cost**; memberships include monthly credits. Stripe Checkout works with or without an account; signing up or in later keeps a guest's files and purchases. See `src/lib/plans.ts` and `src/lib/billing.ts`. |
 
 ## Quick start
 
@@ -53,9 +53,11 @@ Word/Excel/PowerPoint → PDF needs LibreOffice, which Render's plain Node runti
 | `APP_URL` | Public base URL, used in emails and share links. |
 | `DATA_DIR` | Where the database and files are stored (default `./data`). |
 | `ANTHROPIC_API_KEY` | Enables chat, extraction, summaries, compare insights and AI automation steps. |
-| `PDFTEK_AI_MODEL` | Overrides the model (default `claude-opus-5`). |
+| `PDFTEK_AI_MODEL` | Overrides the model (default `claude-opus-5-5`). AI is billed to users in credits at the model's API price. |
 | `SMTP_URL`, `MAIL_FROM` | Outbound email. Without them, emails are logged, and the UI offers copyable links instead. |
-| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_PRO`, `STRIPE_PRICE_BUSINESS` | Online billing. Point the Stripe webhook at `/api/stripe/webhook`. |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Payments. Prices are built in (`src/lib/plans.ts`). Point a Stripe webhook at `/api/stripe/webhook` for `checkout.session.completed`, `invoice.paid`, `customer.subscription.updated` and `customer.subscription.deleted`. |
+| `ADMIN_EMAILS` | Comma-separated account emails with unlimited use and free AI (the site owner). |
+| `PDFTEK_FAKE_PAYMENTS=1` | Development only: purchases complete instantly without Stripe. Ignored in production. |
 | `SOFFICE_PATH` | Custom LibreOffice binary path. It is auto-detected otherwise. |
 | `PDFTEK_DISABLE_SCHEDULER=1` | Turns off the in-process automation scheduler, e.g. on extra replicas. |
 

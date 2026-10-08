@@ -3,6 +3,7 @@ import { docAccess, readCurrentPdf } from "@/lib/documents";
 import { pdfToDocx } from "@/lib/pdf-to-docx";
 import { pdfToXlsx } from "@/lib/pdf-to-xlsx";
 import { logActivity } from "@/lib/activity";
+import { metered } from "@/lib/billing";
 
 type P = { params: Promise<{ id: string }> };
 
@@ -19,7 +20,7 @@ export const GET = route<P>(async (req, { params }) => {
   if (to !== "docx" && to !== "xlsx") throw badRequest("Unsupported target.");
   const title = doc.name.replace(/\.pdf$/i, "");
   const pdf = await readCurrentPdf(doc);
-  const out = to === "docx" ? await pdfToDocx(pdf, title) : await pdfToXlsx(pdf, title);
+  const out = await metered(ctx, req, to === "docx" ? "PDF to Word" : "PDF to Excel", () => (to === "docx" ? pdfToDocx(pdf, title) : pdfToXlsx(pdf, title)));
   logActivity({ workspaceId: ctx.workspace.id, userId: ctx.user.id, action: "converted", documentId: doc.id, meta: { to } });
   return new Response(new Uint8Array(out), {
     headers: { "content-type": TYPES[to], "content-disposition": `attachment; filename*=UTF-8''${encodeURIComponent(`${title}.${to}`)}` },

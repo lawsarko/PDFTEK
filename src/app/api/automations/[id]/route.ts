@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { all, get, run, update } from "@/lib/db";
 import { body, json, route, notFound } from "@/lib/http";
-import { requireMember, requirePlan } from "@/lib/auth";
+import { requireMember } from "@/lib/auth";
+import { requireMembership } from "@/lib/billing";
 import { ActionSchema, TriggerSchema, computeNextRun, runAutomationNow, type AutomationRow } from "@/lib/automations";
 import { validateActions, serializeAutomation } from "@/lib/automation-validate";
 
@@ -60,7 +61,7 @@ export const DELETE = route<P>(async (_req, { params }) => {
 export const POST = route<P>(async (req, { params }) => {
   const { id } = await params;
   const { a, ctx } = await load(id);
-  requirePlan(ctx, "Automations");
+  requireMembership(ctx, "Automations");
   const { documentId } = await body(req, z.object({ documentId: z.string().optional() }));
   if (documentId && !get("SELECT 1 FROM documents WHERE id = ? AND workspace_id = ?", documentId, a.workspace_id)) throw notFound("Document not found.");
   await runAutomationNow(a, documentId);

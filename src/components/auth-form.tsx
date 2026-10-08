@@ -82,6 +82,11 @@ export function AuthForm({ mode, inviteToken, inviteEmail, workspaceName }: { mo
             </>
           )}
         </p>
+        {!inviteToken && (
+          <p className="small" style={{ textAlign: "center", marginTop: 10 }}>
+            <Link prefetch={false} href="/go/start">Continue without an account →</Link>
+          </p>
+        )}
         {mode === "signup" && (
           <p className="tiny faint" style={{ textAlign: "center", marginTop: 8 }}>
             By creating an account you agree to the <Link href="/terms">Terms</Link> and <Link href="/privacy">Privacy Policy</Link>.

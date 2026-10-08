@@ -32,7 +32,9 @@ export function UploadModal({ onClose, initialTab = "upload" }: { onClose: () =>
 export function useUploader() {
   const { wid, upsertDoc, openDoc, reloadInfo } = useWB();
   const toast = useToast();
-  return async (files: File[], tags = "") => {
+  return async (files: File[], tags = "", task?: string) => {
+    // PDFs built in the browser (images, camera scans) count as one task before they're saved.
+    if (task) await api(`/api/workspaces/${wid}/usage`, { method: "POST", json: { action: "task", label: task } });
     const form = new FormData();
     // Formats the server can't read (webp/heic/…) are normalized to JPEG in the browser first.
     for (const f of files) {
@@ -153,7 +155,7 @@ function ImagesToPdf({ onDone }: { onDone: () => void }) {
     setBusy(true);
     try {
       const pdf = await imagesToPdf(images, size);
-      await upload([new File([pdf as BlobPart], `${name.trim() || "Images"}.pdf`, { type: "application/pdf" })]);
+      await upload([new File([pdf as BlobPart], `${name.trim() || "Images"}.pdf`, { type: "application/pdf" })], "", "JPG to PDF");
       toast("PDF created", "success");
       onDone();
     } catch (e) {
@@ -273,7 +275,7 @@ function Scanner({ onDone }: { onDone: () => void }) {
     try {
       const pdf = await imagesToPdf(pages, "fit");
       const stamp = new Date().toISOString().slice(0, 16).replace("T", " ").replace(":", ".");
-      await upload([new File([pdf as BlobPart], `Scan ${stamp}.pdf`, { type: "application/pdf" })], "scan");
+      await upload([new File([pdf as BlobPart], `Scan ${stamp}.pdf`, { type: "application/pdf" })], "scan", "Scan to PDF");
       toast("Scan saved — run OCR from the document toolbar to make it searchable", "success");
       stream?.getTracks().forEach((t) => t.stop());
       onDone();

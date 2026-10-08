@@ -2,7 +2,8 @@ import { z } from "zod";
 import { all, insert } from "@/lib/db";
 import { id, now } from "@/lib/ids";
 import { body, json, route } from "@/lib/http";
-import { requireMember, requirePlan } from "@/lib/auth";
+import { requireMember } from "@/lib/auth";
+import { requireMembership } from "@/lib/billing";
 import { ActionSchema, TriggerSchema, computeNextRun, type AutomationRow } from "@/lib/automations";
 import { validateActions, serializeAutomation } from "@/lib/automation-validate";
 
@@ -20,7 +21,7 @@ const Input = z.object({ name: z.string().trim().min(1).max(100), trigger: Trigg
 export const POST = route<P>(async (req, { params }) => {
   const { wid } = await params;
   const ctx = await requireMember(wid);
-  requirePlan(ctx, "Automations");
+  requireMembership(ctx, "Automations");
   const input = await body(req, Input);
   validateActions(input.actions);
   const row: AutomationRow = {

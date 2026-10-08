@@ -5,10 +5,11 @@ import { requireMember } from "@/lib/auth";
 import { aiConfigured } from "@/lib/ai";
 import { mailConfigured } from "@/lib/mail";
 import { hasServerOffice } from "@/lib/pdf";
+import { entitlements } from "@/lib/billing";
 
 type P = { params: Promise<{ wid: string }> };
 
-export const GET = route<P>(async (_req, { params }) => {
+export const GET = route<P>(async (req, { params }) => {
   const { wid } = await params;
   const ctx = await requireMember(wid);
   const stats = get<{ docs: number; pages: number }>(
@@ -28,6 +29,7 @@ export const GET = route<P>(async (_req, { params }) => {
     role: ctx.role,
     me: ctx.user,
     stats,
+    billing: entitlements(ctx, req),
     capabilities: {
       ai: aiConfigured(),
       email: mailConfigured(),

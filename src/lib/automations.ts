@@ -107,11 +107,19 @@ async function runActions(a: AutomationRow, ctx: RunContext) {
             log.push(`${action.type}: skipped (AI not configured)`);
             break;
           }
+          const { workspaceCanUseAi, chargeAiWorkspace } = await import("./billing");
+          if (!workspaceCanUseAi(a.workspace_id)) {
+            log.push(`${action.type}: skipped (out of AI credits)`);
+            status = "error";
+            break;
+          }
+          const onUsage = (model: string, usage: { input_tokens: number; output_tokens: number }) =>
+            void chargeAiWorkspace(a.workspace_id, model, usage, `Automation: ${a.name}`);
           const { readCurrentPdf, pageTexts } = await import("./documents");
           const pdf = await readCurrentPdf(doc);
           const source = { kind: "pdf" as const, title: doc.name, pdf, fallbackText: pageTexts(doc.id).map((p) => `[Page ${p.page}]\n${p.text}`).join("\n\n") };
           if (action.type === "extract") {
-            const result = await extract({ source, preset: action.preset, playbook: ws.playbook });
+            const result = await extract({ source, preset: action.preset, playbook: ws.playbook, onUsage });
             insert("extractions", {
               id: id("ext_"),
               document_id: doc.id,
@@ -130,6 +138,7 @@ async function runActions(a: AutomationRow, ctx: RunContext) {
               system: "Summarize business documents for a busy professional. 4-6 bullet points, plain text, lead with what matters most (parties, money, dates, obligations, risks).",
               sources: [source],
               prompt: "Summarize this document.",
+              onUsage,
             });
             insert("extractions", {
               id: id("ext_"),
@@ -333,11 +342,17 @@ export async function onEvent(
 }
 
 let ticking = false;
+let lastCleanup = 0;
 
 export async function tick() {
   if (ticking) return;
   ticking = true;
   try {
+    if (now() - lastCleanup > 3_600_000) {
+      lastCleanup = now();
+      const { cleanupGuests } = await import("./billing");
+      await cleanupGuests().catch((err) => console.error("[pdftek] guest cleanup failed", err));
+    }
     const due = all<AutomationRow>("SELECT * FROM automations WHERE enabled = 1 AND next_run_at IS NOT NULL AND next_run_at <= ?", now());
     for (const a of due) {
       const trigger = JSON.parse(a.trigger_json) as Trigger;

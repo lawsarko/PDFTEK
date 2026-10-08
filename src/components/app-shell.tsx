@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { Logo, Wordmark, I } from "./icons";
+import { UsageMeter } from "./paywall";
 
 /** Header for full-page app screens (settings, tools, compare, signature setup). */
 export function AppShell({ wid, title, children, actions }: { wid: string; title: string; children: React.ReactNode; actions?: React.ReactNode }) {
@@ -16,6 +17,7 @@ export function AppShell({ wid, title, children, actions }: { wid: string; title
         </Link>
         <span className="viewer-title ellipsis">{title}</span>
         <span className="grow" />
+        <UsageMeter wid={wid} />
         {actions}
         <Link href={`/app/${wid}/tools`} className="tool-btn hide-mobile">
           <I.tools size={13} /> Tools

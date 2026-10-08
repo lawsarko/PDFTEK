@@ -3,6 +3,7 @@ import { body, route } from "@/lib/http";
 import { docAccess, readCurrentPdf } from "@/lib/documents";
 import { protectPdf } from "@/lib/pdf-security";
 import { logActivity } from "@/lib/activity";
+import { metered } from "@/lib/billing";
 
 type P = { params: Promise<{ id: string }> };
 
@@ -21,7 +22,8 @@ export const POST = route<P>(async (req, { params }) => {
   const { id } = await params;
   const { ctx, doc } = await docAccess(id);
   const input = await body(req, Input);
-  const out = await protectPdf(await readCurrentPdf(doc), input.password, input);
+  const pdf = await readCurrentPdf(doc);
+  const out = await metered(ctx, req, "Protect PDF", () => protectPdf(pdf, input.password, input));
   logActivity({ workspaceId: ctx.workspace.id, userId: ctx.user.id, action: "protected", documentId: doc.id });
   const name = doc.name.replace(/\.pdf$/i, "") + " (protected).pdf";
   return new Response(new Uint8Array(out), {

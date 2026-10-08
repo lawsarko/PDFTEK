@@ -11,6 +11,9 @@ export function MarketingNav({ signedIn }: { signedIn: boolean }) {
         </Link>
         <MarketingMenu />
         <span className="grow" />
+        <Link href="/pricing" className="mk-link hide-mobile">
+          Pricing
+        </Link>
         {signedIn ? (
           <Link className="btn btn-primary btn-sm" href="/app">
             Open workbench
@@ -20,7 +23,7 @@ export function MarketingNav({ signedIn }: { signedIn: boolean }) {
             <Link className="btn btn-ghost btn-sm" href="/login">
               Sign in
             </Link>
-            <Link className="btn btn-primary btn-sm" href="/signup">
+            <Link prefetch={false} className="btn btn-primary btn-sm" href="/go/start">
               Start free
             </Link>
           </>
@@ -41,6 +44,7 @@ export function MarketingFooter() {
           <span>The document workbench for professional teams.</span>
         </div>
         <div className="row gap-24 wrap">
+          <Link href="/pricing">Pricing</Link>
           <Link href="/#convert">Convert</Link>
           <Link href="/#features">Features</Link>
           <Link href="/#how">How it works</Link>

@@ -6,6 +6,8 @@ import type { Member, WorkspaceInfo } from "@/lib/client/types";
 import { AppShell } from "@/components/app-shell";
 import { I } from "@/components/icons";
 import { useToast } from "@/components/toast";
+import { CreditPacks, PlanCards } from "@/components/pricing";
+import type { Entitlements } from "@/lib/plans";
 
 type Invite = { id: string; email: string; role: string; token: string; created_at: number };
 const TABS = [
@@ -112,7 +114,7 @@ function WorkspaceTab({ wid, info, reload }: { wid: string; info: WorkspaceInfo;
             [caps.ai, "AI assistant (chat, extraction, automations)", "Set ANTHROPIC_API_KEY on the server to enable."],
             [caps.email, "Outbound email (invites, signatures, requests, digests)", "Set SMTP_URL to send email. Until then, share links manually."],
             [caps.serverOffice, "Word, Excel & PowerPoint → PDF (LibreOffice)", "Deploy with the included Dockerfile (on Render: the render.yaml blueprint), which bundles LibreOffice."],
-            [caps.billing, "Online billing (Stripe)", "Set STRIPE_SECRET_KEY and price IDs to sell subscriptions."],
+            [caps.billing, "Online billing (Stripe)", "Set STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET to take payments. Prices are built in."],
           ].map(([ok, label, hint]) => (
             <div key={label as string} className="row" style={{ alignItems: "flex-start" }}>
               <span className={`badge ${ok ? "badge-good" : "badge-muted"}`} style={{ minWidth: 34, textAlign: "center" }}>
@@ -307,99 +309,114 @@ function Playbook({ wid, info }: { wid: string; info: WorkspaceInfo }) {
   );
 }
 
-function Billing({ wid, info, reload }: { wid: string; info: WorkspaceInfo; reload: () => Promise<void> }) {
+type BillingData = {
+  entitlements: Entitlements;
+  hasSubscription: boolean;
+  plan: string;
+  ledger: { id: string; delta: number; reason: string; created_at: number }[];
+  purchases: { id: string; name: string; amount_cents: number; created_at: number }[];
+};
+
+function Billing({ wid, info }: { wid: string; info: WorkspaceInfo; reload: () => Promise<void> }) {
   const toast = useToast();
-  const [busy, setBusy] = useState<string | null>(null);
-  const w = info.workspace;
+  const [data, setData] = useState<BillingData | null>(null);
+  const [busy, setBusy] = useState(false);
   const owner = info.role === "owner";
-  const trialActive = w.basePlan === "free" && w.trialEndsAt && w.trialEndsAt > Date.now();
-  const call = async (action: string, plan?: string) => {
-    setBusy(action + (plan ?? ""));
+  useEffect(() => {
+    const load = () => api<BillingData>(`/api/workspaces/${wid}/billing`).then(setData).catch((e) => toast(errMsg(e), "error"));
+    load();
+    window.addEventListener("pdftek:usage", load);
+    return () => window.removeEventListener("pdftek:usage", load);
+  }, [wid, toast]);
+  if (!data) return <div className="empty"><span className="spinner" /></div>;
+  const e = data.entitlements;
+  const portal = async () => {
+    setBusy(true);
     try {
-      const r = await api<{ url?: string }>(`/api/workspaces/${wid}/billing`, { method: "POST", json: { action, plan } });
-      if (r.url) window.location.href = r.url;
-      else {
-        toast("Trial started", "success");
-        await reload();
-      }
-    } catch (e) {
-      toast(errMsg(e), "error");
-    } finally {
-      setBusy(null);
+      const r = await api<{ url: string }>(`/api/workspaces/${wid}/billing`, { method: "POST", json: { action: "portal" } });
+      window.location.href = r.url;
+    } catch (err) {
+      toast(errMsg(err), "error");
+      setBusy(false);
     }
   };
+  const tierName = { guest: "Free (no account)", free: "Free", pass: "Day Pass", pro: "Pro", team: "Team", admin: "Admin" }[e.tier];
+  const current = e.tier === "team" ? "team" : e.tier === "pro" ? "pro" : e.tier === "pass" ? "pass" : e.tier === "admin" ? "" : "free";
   return (
     <div className="col gap-16">
       <div className="card">
-        <div className="row between">
+        <div className="row between wrap" style={{ gap: 12 }}>
           <div>
             <div className="eyebrow">Current plan</div>
-            <div style={{ fontFamily: "var(--font-display)", fontSize: 26, fontWeight: 700, textTransform: "capitalize", marginTop: 4 }}>{w.plan}</div>
+            <div style={{ fontFamily: "var(--font-display)", fontSize: 26, fontWeight: 700, marginTop: 4 }}>{tierName}</div>
+            <div className="small muted mt-8">
+              {e.taskLimit !== null
+                ? `${e.tasksToday} of ${e.taskLimit} free tasks used today · files up to ${e.maxFileMb} MB`
+                : e.passUntil
+                  ? `Unlimited tasks until ${new Date(e.passUntil).toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" })}`
+                  : "Unlimited tasks · files up to 100 MB"}
+            </div>
           </div>
-          {trialActive && <span className="badge badge-warn">Trial · {Math.ceil((w.trialEndsAt! - Date.now()) / 86_400_000)} days left</span>}
+          <div className="credit-balance">
+            <div className="eyebrow">AI credits</div>
+            <div className="credit-number"><I.sparkle size={16} /> {(e.credits + e.allowance).toLocaleString()}</div>
+            <div className="tiny muted">
+              {e.allowance ? `${e.allowance.toLocaleString()} monthly (renews ${new Date(e.allowanceExpiresAt!).toLocaleDateString()}) + ` : ""}
+              {e.credits.toLocaleString()} purchased
+            </div>
+          </div>
         </div>
-        {!owner && <p className="small muted mt-12">Only workspace owners can change the plan.</p>}
-        {owner && (
-          <div className="row wrap mt-16">
-            {w.basePlan === "free" && !w.trialEndsAt && (
-              <button className="btn btn-primary" disabled={!!busy} onClick={() => call("trial")}>
-                Start 14-day Pro trial
-              </button>
-            )}
-            {info.capabilities.billing && w.basePlan === "free" && (
-              <>
-                <button className="btn" disabled={!!busy} onClick={() => call("checkout", "pro")}>
-                  Upgrade to Pro — $19/user/mo
-                </button>
-                <button className="btn" disabled={!!busy} onClick={() => call("checkout", "business")}>
-                  Business — $39/user/mo
-                </button>
-              </>
-            )}
-            {w.hasSubscription && (
-              <button className="btn" disabled={!!busy} onClick={() => call("portal")}>
-                Manage subscription & invoices
-              </button>
-            )}
-            {!info.capabilities.billing && w.basePlan === "free" && (
-              <span className="small muted">Online checkout isn&apos;t configured on this server. Contact your administrator to upgrade.</span>
-            )}
+        {data.hasSubscription && owner && (
+          <div className="row mt-16">
+            <button className="btn" disabled={busy} onClick={portal}>
+              {busy && <span className="spinner" />} Manage subscription, card & invoices
+            </button>
           </div>
         )}
+        {!e.paymentsEnabled && <p className="small muted mt-12">Online payments aren&apos;t configured on this server yet (set STRIPE_SECRET_KEY).</p>}
       </div>
+
       <div className="card">
-        <h3 style={{ fontSize: 16 }}>What&apos;s included</h3>
-        <table className="table mt-12">
-          <thead>
-            <tr>
-              <th>Feature</th>
-              <th>Free</th>
-              <th>Pro</th>
-              <th>Business</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[
-              ["Library, versions, search, OCR, read aloud", "✓", "✓", "✓"],
-              ["Convert, merge, split, organize, watermark", "✓", "✓", "✓"],
-              ["AI chat & extraction", "30/day", "300/day", "300/day"],
-              ["Text editing & true redaction", "—", "✓", "✓"],
-              ["E-signatures with audit certificate", "—", "✓", "✓"],
-              ["Document requests", "—", "✓", "✓"],
-              ["Automations & webhooks", "—", "✓", "✓"],
-              ["Priority support", "—", "—", "✓"],
-            ].map((r) => (
-              <tr key={r[0]}>
-                {r.map((c, i) => (
-                  <td key={i} className={i ? "mono small" : ""}>
-                    {c}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <h3 style={{ fontSize: 16 }}>Plans</h3>
+        <div className="mt-12">
+          <PlanCards workspaceId={wid} current={current} yearly={false} />
+        </div>
       </div>
+
+      <div className="card">
+        <h3 style={{ fontSize: 16 }}>Top up AI credits</h3>
+        <p className="small muted" style={{ marginTop: 4 }}>For AI questions, summaries and extraction, and for tasks beyond the free daily limit. Credits never expire.</p>
+        <div className="mt-12">
+          <CreditPacks workspaceId={wid} />
+        </div>
+      </div>
+
+      {(data.ledger.length > 0 || data.purchases.length > 0) && (
+        <div className="card">
+          <h3 style={{ fontSize: 16 }}>History</h3>
+          <table className="table mt-12">
+            <tbody>
+              {data.purchases.map((p) => (
+                <tr key={p.id}>
+                  <td className="small">{new Date(p.created_at).toLocaleDateString()}</td>
+                  <td>{p.name}</td>
+                  <td className="mono small" style={{ textAlign: "right" }}>${(p.amount_cents / 100).toFixed(2)}</td>
+                </tr>
+              ))}
+              {data.ledger.map((l) => (
+                <tr key={l.id}>
+                  <td className="small">{new Date(l.created_at).toLocaleDateString()}</td>
+                  <td className="small">{l.reason}</td>
+                  <td className="mono small" style={{ textAlign: "right", color: l.delta > 0 ? "var(--good)" : undefined }}>
+                    {l.delta > 0 ? "+" : ""}
+                    {l.delta} credits
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

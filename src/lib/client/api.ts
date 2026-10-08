@@ -1,3 +1,5 @@
+const PAYWALL_CODES = new Set(["limit_reached", "membership_required", "credits_required", "file_too_large", "batch_limit"]);
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -23,11 +25,18 @@ export async function api<T = unknown>(url: string, init: RequestInit & { json?:
       msg = data.error ?? msg;
       code = data.code;
     } catch {}
+    // Plan limits open the upgrade modal (mounted in the root layout) instead of a dead end.
+    if (res.status === 402 && code && PAYWALL_CODES.has(code) && typeof window !== "undefined") {
+      (window as unknown as { __pdftekPaywall?: string }).__pdftekPaywall = msg;
+      window.dispatchEvent(new CustomEvent("pdftek:paywall", { detail: { code, message: msg } }));
+    }
     if (res.status === 401 && typeof window !== "undefined" && !url.includes("/api/auth/")) {
       window.location.href = `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
     }
     throw new ApiError(res.status, msg, code);
   }
+  // Any successful action may have used a task or credits: let usage meters refresh.
+  if ((rest.method ?? "GET") !== "GET" && typeof window !== "undefined") window.dispatchEvent(new Event("pdftek:usage"));
   const type = res.headers.get("content-type") ?? "";
   return (type.includes("application/json") ? res.json() : res.blob()) as Promise<T>;
 }

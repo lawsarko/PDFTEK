@@ -3,12 +3,12 @@ import crypto from "node:crypto";
 import { cookies } from "next/headers";
 import { get, run, insert } from "./db";
 import { id, sha256, token, now } from "./ids";
-import { forbidden, unauthorized, notFound, paymentRequired, HttpError } from "./http";
+import { forbidden, unauthorized, notFound, HttpError } from "./http";
 
 export const SESSION_COOKIE = "pdftek_session";
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
-export type User = { id: string; email: string; name: string; created_at: number };
+export type User = { id: string; email: string; name: string; created_at: number; is_guest: boolean };
 export type Role = "owner" | "admin" | "member";
 export type Plan = "free" | "pro" | "business";
 export type Workspace = {
@@ -74,14 +74,14 @@ export async function currentUser(): Promise<User | null> {
   const jar = await cookies();
   const raw = jar.get(SESSION_COOKIE)?.value;
   if (!raw) return null;
-  const row = get<User & { expires_at: number }>(
-    `SELECT u.id, u.email, u.name, u.created_at, s.expires_at
+  const row = get<Omit<User, "is_guest"> & { is_guest: number; expires_at: number }>(
+    `SELECT u.id, u.email, u.name, u.created_at, u.is_guest, s.expires_at
        FROM sessions s JOIN users u ON u.id = s.user_id
       WHERE s.id = ?`,
     sha256(raw),
   );
   if (!row || row.expires_at < now()) return null;
-  return { id: row.id, email: row.email, name: row.name, created_at: row.created_at };
+  return { id: row.id, email: row.email, name: row.name, created_at: row.created_at, is_guest: Boolean(row.is_guest) };
 }
 
 export async function requireUser(): Promise<User> {
@@ -119,12 +119,6 @@ export async function requireMember(workspaceId: string, minRole: Role = "member
   return { user, workspace, role: m.role, plan: effectivePlan(workspace) };
 }
 
-export function requirePlan(ctx: Ctx, feature: string) {
-  if (ctx.plan === "free") {
-    throw paymentRequired(`${feature} is a Pro feature. Start a free 14-day trial from Settings → Billing.`);
-  }
-}
-
 export function createWorkspace(name: string, ownerId: string): string {
   const wsId = id("ws_");
   insert("workspaces", { id: wsId, name, plan: "free", playbook: DEFAULT_PLAYBOOK, created_at: now() });
@@ -137,6 +131,61 @@ export function firstWorkspaceFor(userId: string): string | undefined {
     "SELECT workspace_id FROM memberships WHERE user_id = ? ORDER BY created_at LIMIT 1",
     userId,
   )?.workspace_id;
+}
+
+// ---------- guests ----------
+
+/**
+ * Visitors can use pdftek without an account: they get a guest user with its own workspace and a
+ * normal session cookie, so every tool works unchanged. Signing up later upgrades the same user
+ * (keeping files and purchases); signing in to an existing account merges the guest's work into it.
+ */
+export async function createGuest(req: Request): Promise<{ userId: string; workspaceId: string }> {
+  const { clientIp } = await import("./http");
+  rateLimit(`guest:${clientIp(req)}`, 30, 3600_000);
+  const userId = id("usr_");
+  insert("users", {
+    id: userId,
+    email: `guest-${userId.slice(4).toLowerCase()}@guest.pdftek.invalid`,
+    name: "Guest",
+    password_hash: "!", // can't sign in with a password
+    is_guest: 1,
+    created_at: now(),
+  });
+  const workspaceId = createWorkspace("My documents", userId);
+  await createSession(userId, req.headers.get("user-agent"));
+  return { userId, workspaceId };
+}
+
+/** Current user, creating a guest session when the visitor has none. */
+export async function currentOrGuest(req: Request): Promise<{ user: User; workspaceId: string }> {
+  const user = await currentUser();
+  if (user) return { user, workspaceId: firstWorkspaceFor(user.id) ?? createWorkspace(`${user.name.split(" ")[0]}'s workspace`, user.id) };
+  const g = await createGuest(req);
+  return { user: (await currentUser())!, workspaceId: g.workspaceId };
+}
+
+/** Moves a guest's documents, credits and Day Pass into an account's workspace, then deletes the guest. */
+export function mergeGuestInto(guestId: string, targetWorkspaceId: string, targetUserId: string) {
+  const ws = get<{ id: string; credits: number; pass_until: number | null }>(
+    `SELECT w.id, w.credits, w.pass_until FROM memberships m JOIN workspaces w ON w.id = m.workspace_id WHERE m.user_id = ? LIMIT 1`,
+    guestId,
+  );
+  if (ws && ws.id !== targetWorkspaceId) {
+    run("UPDATE documents SET workspace_id = ?, created_by = ? WHERE workspace_id = ?", targetWorkspaceId, targetUserId, ws.id);
+    run("UPDATE document_versions SET created_by = ? WHERE created_by = ?", targetUserId, guestId);
+    run("UPDATE page_text SET workspace_id = ? WHERE workspace_id = ?", targetWorkspaceId, ws.id);
+    run("UPDATE purchases SET workspace_id = ? WHERE workspace_id = ?", targetWorkspaceId, ws.id);
+    run("UPDATE credit_ledger SET workspace_id = ? WHERE workspace_id = ?", targetWorkspaceId, ws.id);
+    run(
+      "UPDATE workspaces SET credits = credits + ?, pass_until = MAX(COALESCE(pass_until, 0), ?) WHERE id = ?",
+      Math.max(0, ws.credits),
+      ws.pass_until ?? 0,
+      targetWorkspaceId,
+    );
+    run("DELETE FROM workspaces WHERE id = ?", ws.id);
+  }
+  run("DELETE FROM users WHERE id = ? AND is_guest = 1", guestId);
 }
 
 // ---------- rate limiting ----------

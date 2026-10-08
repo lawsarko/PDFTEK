@@ -1,4 +1,5 @@
 "use client";
+import { notifyPaywall, notifyUsage } from "../paywall";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, errMsg } from "@/lib/client/api";
 import type { ChatMessage, Citation, SourceRef } from "@/lib/client/types";
@@ -55,6 +56,7 @@ export function ChatPanel() {
         const res = await fetch(endpoint, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ question: q }) });
         if (!res.ok || !res.body) {
           const data = await res.json().catch(() => ({}));
+          if (res.status === 402) notifyPaywall({ code: data.code ?? "credits_required", message: data.error });
           throw new Error(data.error ?? "The assistant is unavailable.");
         }
         const reader = res.body.getReader();
@@ -87,7 +89,10 @@ export function ChatPanel() {
               });
             else if (ev.type === "refusal") patch((m) => ({ ...m, segments: [...m.segments, { text: ev.message, citations: [] }] }));
             else if (ev.type === "error") patch((m) => ({ ...m, error: ev.error }));
-            else if (ev.type === "done") patch((m) => ({ ...m, id: ev.id }));
+            else if (ev.type === "done") {
+              patch((m) => ({ ...m, id: ev.id }));
+              notifyUsage(); // the answer used credits
+            }
           }
         }
         patch((m) => ({ ...m, pending: false }));

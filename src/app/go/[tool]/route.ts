@@ -1,8 +1,8 @@
-import { currentUser, firstWorkspaceFor, createWorkspace } from "@/lib/auth";
+import { currentOrGuest } from "@/lib/auth";
 
 /**
  * Deep links from the marketing menu ("/go/pdf-to-word", "/go/sign", …) straight into the right
- * tool. Visitors who aren't signed in go through signup first and come back here afterwards.
+ * tool. Visitors without an account get a guest session, so free tools work without signing up.
  */
 const PICK = (action: string) => `/tools?tool=pick&do=${action}`;
 const TASKS: Record<string, string> = {
@@ -31,16 +31,15 @@ const TASKS: Record<string, string> = {
   watermark: "/tools?tool=watermark",
   "page-numbers": "/tools?tool=page_numbers",
   compare: "/compare",
+  start: "",
 };
 
-export async function GET(_req: Request, { params }: { params: Promise<{ tool: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ tool: string }> }) {
   const { tool } = await params;
   const target = TASKS[tool];
-  if (!target) return go("/");
-  const user = await currentUser();
-  if (!user) return go(`/signup?next=${encodeURIComponent(`/go/${tool}`)}`);
-  const wid = firstWorkspaceFor(user.id) ?? createWorkspace(`${user.name.split(" ")[0]}'s workspace`, user.id);
-  return go(`/app/${wid}${target}`);
+  if (target === undefined) return go("/");
+  const { workspaceId } = await currentOrGuest(req);
+  return go(`/app/${workspaceId}${target}`);
 }
 
 /**

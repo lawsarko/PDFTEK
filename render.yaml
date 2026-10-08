@@ -17,6 +17,12 @@ services:
         sync: false # e.g. https://pdftek.onrender.com
       - key: ANTHROPIC_API_KEY
         sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: ADMIN_EMAILS
+        sync: false # your own account email: unlimited use, free AI
     disk:
       name: pdftek-data
       mountPath: /data

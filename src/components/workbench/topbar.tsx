@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, errMsg, initials, timeAgo } from "@/lib/client/api";
 import { I, Logo, Wordmark } from "../icons";
+import { UsageMeter } from "../paywall";
 import { Menu, Modal } from "../modal";
 import { useToast } from "../toast";
 import { useWB } from "./context";
@@ -75,6 +76,7 @@ export function TopBar() {
       <GlobalSearch />
       <div className="grow hide-mobile" />
 
+      <UsageMeter wid={wid} />
       <Link href={`/app/${wid}/tools`} className="tool-btn hide-mobile" title="PDF tools">
         <I.tools size={14} /> Tools
       </Link>

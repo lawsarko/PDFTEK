@@ -542,3 +542,34 @@ button.chip:hover { border-color: var(--steel); color: var(--text-hi); }
 .logo-fold { transform-box: fill-box; transform-origin: 0 100%; transition: transform .35s ease; }
 .brand:hover .logo-fold { transform: scale(1.15); }
 @media (prefers-reduced-motion: reduce) { .wordmark > span, .logo, .logo rect, .brand::after { transition: none !important; animation: none !important; } }
+
+/* ---------- plans, paywall, usage ---------- */
+.plan-option { display: flex; align-items: center; gap: 14px; width: 100%; padding: 13px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--ink-2); color: var(--text-hi); font: inherit; cursor: pointer; transition: border-color .15s, background .15s, transform .15s; }
+.plan-option:hover:not(:disabled) { border-color: var(--amber-line); background: var(--panel); transform: translateY(-1px); }
+.plan-option.featured { border-color: var(--amber-line); background: linear-gradient(180deg, rgba(217,142,43,.10), rgba(217,142,43,.03)); }
+.plan-option:disabled { opacity: .7; cursor: wait; }
+.plan-option .col, .plan-option span.tiny { display: block; }
+.plan-price { font-family: var(--font-display); font-weight: 700; font-size: 20px; white-space: nowrap; }
+.credit-packs { display: grid; gap: 8px; }
+.usage-meter { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--ink-2); color: var(--text-lo); border-radius: 999px; padding: 4px 6px 4px 12px; font: 500 12px var(--font-body); cursor: pointer; white-space: nowrap; transition: border-color .15s; }
+.usage-meter:hover { border-color: var(--amber-line); color: var(--text-hi); }
+.usage-meter.paid { color: var(--text-hi); padding-right: 10px; }
+.usage-meter.low { border-color: var(--amber-line); }
+.usage-credits { display: inline-flex; align-items: center; gap: 3px; color: var(--amber); font-family: var(--font-mono); font-size: 11.5px; }
+.usage-upgrade { background: var(--amber); color: #1a1206; border-radius: 999px; padding: 2px 9px; font-weight: 600; font-size: 11.5px; }
+@media (max-width: 960px) { .usage-meter > span:first-child { display: none; } }
+.guest-banner { display: flex; align-items: center; gap: 10px; padding: 8px 16px; background: var(--amber-soft); border-bottom: 1px solid var(--amber-line); font-size: 13px; color: var(--text-hi); flex-wrap: wrap; }
+.billing-toggle { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: var(--ink-2); margin: 0 auto 22px; }
+.mk-section > div > .billing-toggle, .card .billing-toggle { display: flex; width: fit-content; }
+.billing-toggle button { border: 0; background: none; color: var(--text-lo); font: 500 13px var(--font-body); padding: 7px 16px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.billing-toggle button.on { background: var(--panel-2); color: var(--text-hi); }
+.price-grid.price-grid-4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 1100px) { .price-grid.price-grid-4 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .price-grid.price-grid-4 { grid-template-columns: 1fr; } }
+.credit-balance { text-align: right; }
+.credit-number { font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--amber); display: flex; align-items: center; gap: 6px; justify-content: flex-end; margin-top: 4px; }
+.table-wrap { overflow-x: auto; }
+.compare-table th:not(:first-child), .compare-table td:not(:first-child) { text-align: center; }
+.compare-table td:first-child { color: var(--text-hi); }
+.card .price-grid.price-grid-4 { grid-template-columns: repeat(2, 1fr); margin-top: 16px; }
+@media (max-width: 640px) { .card .price-grid.price-grid-4 { grid-template-columns: 1fr; } }

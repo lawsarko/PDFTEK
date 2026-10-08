@@ -240,7 +240,48 @@ CREATE TABLE IF NOT EXISTS rate_limits (
   count INTEGER NOT NULL,
   window_start INTEGER NOT NULL
 );
+
+-- Free-tier metering: completed tasks per subject (workspace or guest IP) per UTC day.
+CREATE TABLE IF NOT EXISTS usage_daily (
+  subject TEXT NOT NULL,
+  day TEXT NOT NULL,
+  tasks INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (subject, day)
+);
+
+-- Every completed payment, keyed by the Stripe Checkout session so fulfilment is idempotent.
+CREATE TABLE IF NOT EXISTS purchases (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL,
+  product TEXT NOT NULL,
+  amount_cents INTEGER NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'usd',
+  email TEXT,
+  stripe_session_id TEXT UNIQUE,
+  created_at INTEGER NOT NULL
+);
+
+-- Credit movements (purchases, monthly allowances, AI usage, extra tasks) for a transparent history.
+CREATE TABLE IF NOT EXISTS credit_ledger (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL,
+  delta INTEGER NOT NULL,
+  reason TEXT NOT NULL,
+  meta_json TEXT NOT NULL DEFAULT '{}',
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS credit_ledger_ws ON credit_ledger(workspace_id, created_at);
 `;
+
+/** Columns added after the first release; created on startup when missing. */
+const ADDED_COLUMNS: [table: string, column: string, ddl: string][] = [
+  ["users", "is_guest", "INTEGER NOT NULL DEFAULT 0"],
+  ["workspaces", "pass_until", "INTEGER"],
+  ["workspaces", "credits", "INTEGER NOT NULL DEFAULT 0"],
+  ["workspaces", "allowance_credits", "INTEGER NOT NULL DEFAULT 0"],
+  ["workspaces", "allowance_expires_at", "INTEGER"],
+  ["workspaces", "billing_interval", "TEXT"],
+];
 
 type GlobalWithDb = typeof globalThis & { __pdftekDb?: DatabaseSync };
 
@@ -249,6 +290,10 @@ function open(): DatabaseSync {
   const db = new DatabaseSync(path.join(DATA_DIR, "pdftek.db"));
   db.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;");
   db.exec(SCHEMA);
+  for (const [table, column, ddl] of ADDED_COLUMNS) {
+    const cols = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+    if (!cols.some((c) => c.name === column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddl}`);
+  }
   return db;
 }
 

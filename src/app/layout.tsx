@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ToastProvider } from "@/components/toast";
+import { PaywallHost } from "@/components/paywall";
 
 export const metadata: Metadata = {
   title: { default: "pdftek — Every document, handled.", template: "%s · pdftek" },
@@ -23,7 +24,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          {children}
+          <PaywallHost />
+        </ToastProvider>
       </body>
     </html>
   );

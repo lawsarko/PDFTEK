@@ -1,6 +1,6 @@
 import { get } from "@/lib/db";
 import { json, route, badRequest, notFound } from "@/lib/http";
-import { requirePlan } from "@/lib/auth";
+import { metered, requireMembership } from "@/lib/billing";
 import { addVersion, assertCanEdit, docAccess, listVersions, serializeDoc, getDocument, type VersionRow } from "@/lib/documents";
 import { readFile } from "@/lib/storage";
 import { PDFDocument } from "pdf-lib";
@@ -33,14 +33,16 @@ export const POST = route<P>(async (req, { params }) => {
     const kind = String(form.get("kind") ?? "edit");
     const note = String(form.get("note") ?? "Edited").slice(0, 200);
     if (!(file instanceof File)) throw badRequest("Missing file.");
-    if (kind === "edit") requirePlan(ctx, "Text editing");
+    if (kind === "edit") requireMembership(ctx, "Editing");
     const data = Buffer.from(await file.arrayBuffer());
     try {
       await PDFDocument.load(data, { updateMetadata: false });
     } catch {
       throw badRequest("The edited file isn't a valid PDF.");
     }
-    await addVersion({ doc, userId: ctx.user.id, pdf: data, note });
+    // Edits are covered by the membership; other in-browser tools (OCR) count as a task.
+    if (kind === "edit") await addVersion({ doc, userId: ctx.user.id, pdf: data, note });
+    else await metered(ctx, req, kind, () => addVersion({ doc, userId: ctx.user.id, pdf: data, note }));
   }
   const fresh = getDocument(ctx, id);
   return json({ document: serializeDoc(fresh), versions: listVersions(id) });

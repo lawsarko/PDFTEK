@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { assertAiCredits, chargeAi } from "@/lib/billing";
 import { all, insert, run } from "@/lib/db";
 import { id as newId, now } from "@/lib/ids";
 import { body, json, route } from "@/lib/http";
@@ -30,7 +31,8 @@ const Input = z.object({
 export const POST = route<P>(async (req, { params }) => {
   const { id } = await params;
   const { ctx, doc } = await docAccess(id);
-  rateLimit(`extract:${ctx.user.id}`, ctx.plan === "free" ? 10 : 200, 24 * 3600_000);
+  rateLimit(`extract:${ctx.user.id}`, 300, 24 * 3600_000); // abuse guard; cost is metered in credits
+  assertAiCredits(ctx);
   const input = await body(req, Input);
   const pdf = await readCurrentPdf(doc);
   const fallbackText = pageTexts(doc.id).map((p) => `[Page ${p.page}]\n${p.text}`).join("\n\n");
@@ -39,6 +41,7 @@ export const POST = route<P>(async (req, { params }) => {
     preset: input.preset,
     customFields: input.fields,
     playbook: ctx.workspace.playbook,
+    onUsage: (model, usage) => chargeAi(ctx, model, usage, "AI extraction"),
   });
   const title = input.preset === "custom" ? "Custom fields" : EXTRACT_PRESETS[input.preset].title;
   const row = { id: newId("ext_"), document_id: doc.id, preset: input.preset, title, result_json: JSON.stringify(result), created_by: ctx.user.id, created_at: now() };

@@ -2,6 +2,7 @@ import "server-only";
 import { all, insert, run } from "./db";
 import { id, now } from "./ids";
 import { describeAiError, streamChat, type Segment, type Source, type SourceRef } from "./ai";
+import type { AiUsage } from "./billing";
 
 export type StoredMessage = { id: string; role: "user" | "assistant"; segments: Segment[]; refs: SourceRef[]; createdAt: number };
 
@@ -33,6 +34,8 @@ export function chatResponse(opts: {
   sources: Source[];
   refs: SourceRef[];
   extraSystem?: string;
+  /** Bills the finished request; returns the credits spent. */
+  charge?: (model: string, usage: AiUsage) => number;
 }): Response {
   const prior = history(opts.workspaceId, opts.userId, opts.documentId).map((m) => ({
     role: m.role,
@@ -55,8 +58,17 @@ export function chatResponse(opts: {
       const send = (obj: unknown) => controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n"));
       send({ type: "refs", refs: opts.refs });
       let segments: Segment[] = [];
+      let spent = 0;
       try {
-        const gen = streamChat({ sources: opts.sources, history: prior, question: opts.question, extraSystem: opts.extraSystem });
+        const gen = streamChat({
+          sources: opts.sources,
+          history: prior,
+          question: opts.question,
+          extraSystem: opts.extraSystem,
+          onUsage: (model, usage) => {
+            spent = opts.charge?.(model, usage) ?? 0;
+          },
+        });
         while (true) {
           const next = await gen.next();
           if (next.done) {
@@ -76,7 +88,7 @@ export function chatResponse(opts: {
           citations_json: JSON.stringify({ segments, refs: opts.refs }),
           created_at: now(),
         });
-        send({ type: "done", id: msgId });
+        send({ type: "done", id: msgId, credits: spent });
       } catch (err) {
         console.error("[pdftek] chat failed", err);
         send({ type: "error", error: describeAiError(err) });

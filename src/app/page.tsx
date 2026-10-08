@@ -53,8 +53,8 @@ export default async function Home() {
           </h1>
           <p className="lead">Convert, edit, sign and understand your PDFs in one place.</p>
           <div className="mk-cta">
-            <Link className="btn btn-primary btn-lg btn-glow" href={user ? "/app" : "/signup"}>
-              {user ? "Open your workbench" : "Start free — no card required"}
+            <Link prefetch={false} className="btn btn-primary btn-lg btn-glow" href={user ? "/app" : "/go/start"}>
+              {user ? "Open your workbench" : "Start free — no sign-up needed"}
             </Link>
             <a className="btn btn-lg" href="#how">
               See how it works
@@ -117,7 +117,7 @@ export default async function Home() {
             </h2>
             <p className="mk-sub">Word, Excel and PowerPoint to PDF and back, with fonts, tables, bullets and spacing exactly where they were. Even scans and receipts come out editable.</p>
             <div className="mk-cta" style={{ justifyContent: "flex-start" }}>
-              <Link className="btn btn-primary" href={user ? "/app" : "/signup"}>
+              <Link prefetch={false} className="btn btn-primary" href={user ? "/app" : "/go/start"}>
                 Convert a file now
               </Link>
             </div>
@@ -230,7 +230,7 @@ export default async function Home() {
           Your documents, finally under control.
         </h2>
         <div className="mk-cta">
-          <Link className="btn btn-primary btn-lg" href={user ? "/app" : "/signup"}>
+          <Link prefetch={false} className="btn btn-primary btn-lg" href={user ? "/app" : "/go/start"}>
             {user ? "Open your workbench" : "Create your free workspace"}
           </Link>
         </div>

@@ -5,6 +5,20 @@ import { addVersion, assertCanEdit, createDocument, getDocument, readCurrentPdf,
 import { mergePdfs, pageNumbers, parseRanges, rebuildPages, setMetadata, watermark } from "@/lib/pdf";
 import { logActivity } from "@/lib/activity";
 import { compressPdf } from "@/lib/pdf-compress";
+import { assertBatch, checkTasks, commitTasks } from "@/lib/billing";
+
+const TASK_LABEL = {
+  merge: "Merge",
+  split: "Split",
+  extract: "Extract pages",
+  delete_pages: "Delete pages",
+  organize: "Organize pages",
+  rotate: "Rotate",
+  watermark: "Watermark",
+  page_numbers: "Page numbers",
+  optimize: "Compress",
+  metadata: "Edit properties",
+} as const;
 
 type P = { params: Promise<{ wid: string }> };
 
@@ -31,6 +45,14 @@ export const POST = route<P>(async (req, { params }) => {
   const { wid } = await params;
   const ctx = await requireMember(wid);
   const input = await body(req, Input);
+  if (input.op === "merge") assertBatch(ctx, input.docIds.length);
+  // Each tool run is one task: free up to the daily limit, then credits or a pass.
+  const ticket = checkTasks(ctx, req, 1, TASK_LABEL[input.op]);
+  const res = await runTool(input);
+  commitTasks(ticket);
+  return res;
+
+  async function runTool(input: z.infer<typeof Input>): Promise<Response> {
   const base = (n: string) => n.replace(/\.pdf$/i, "");
 
   const newDoc = async (name: string, pdf: Buffer) =>
@@ -117,6 +139,7 @@ export const POST = route<P>(async (req, { params }) => {
       const pdf = await setMetadata(await readCurrentPdf(doc), input);
       return json({ documents: [await newVersion(doc.id, pdf, "Updated properties")] });
     }
+  }
   }
 });
 

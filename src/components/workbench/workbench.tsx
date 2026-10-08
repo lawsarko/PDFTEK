@@ -12,7 +12,7 @@ import { Library } from "./library";
 import { DocumentPane } from "./document-pane";
 import { Assistant } from "./assistant";
 import { UploadModal } from "./upload-modal";
-import { ProModal } from "./pro-modal";
+import { notifyPaywall } from "../paywall";
 
 export function Workbench({ wid }: { wid: string }) {
   const router = useRouter();
@@ -25,7 +25,6 @@ export function Workbench({ wid }: { wid: string }) {
     const add = params.get("add");
     return add === "images" || add === "scan" || add === "upload" ? add : false;
   });
-  const [pro, setPro] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<"library" | "document" | "assistant">(() => (params.get("do") === "ask" ? "assistant" : "library"));
   const [assistantTab, setAssistantTab] = useState("chat");
   const activeId = params.get("doc");
@@ -96,8 +95,8 @@ export function Workbench({ wid }: { wid: string }) {
 
   const requirePro = useCallback(
     (feature: string) => {
-      if (info && info.workspace.plan === "free") {
-        setPro(feature);
+      if (info && !info.billing.membership) {
+        notifyPaywall({ code: "membership_required", message: `${feature} needs a Day Pass ($1.99 for 24 hours) or pdftek Pro.` });
         return false;
       }
       return true;
@@ -137,6 +136,7 @@ export function Workbench({ wid }: { wid: string }) {
     <WorkbenchContext.Provider value={ctx}>
       <div className="app">
         <TopBar />
+        {info.me.is_guest && <GuestBanner />}
         <div className="main" data-view={mobileView}>
           <Library />
           <DocumentPane key={active?.id ?? "none"} />
@@ -157,8 +157,21 @@ export function Workbench({ wid }: { wid: string }) {
           ))}
         </nav>
         {uploadOpen && <UploadModal initialTab={uploadOpen} onClose={() => setUploadOpen(false)} />}
-        {pro && <ProModal feature={pro} onClose={() => setPro(null)} />}
       </div>
     </WorkbenchContext.Provider>
+  );
+}
+
+/** Guests can do everything free without an account; this nudges them to keep their files. */
+function GuestBanner() {
+  return (
+    <div className="guest-banner">
+      <I.clock size={14} />
+      <span className="grow">
+        You&apos;re using pdftek without an account. Files are deleted after 24 hours. <b>Create a free account</b> to keep them and get 20 free tasks a day.
+      </span>
+      <a className="btn btn-sm btn-primary" href="/signup">Create free account</a>
+      <a className="btn btn-sm btn-ghost hide-mobile" href="/login">Sign in</a>
+    </div>
   );
 }

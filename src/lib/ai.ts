@@ -2,11 +2,14 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { HttpError } from "./http";
 
-export const AI_MODEL = process.env.PDFTEK_AI_MODEL || "claude-opus-5";
+export const AI_MODEL = process.env.PDFTEK_AI_MODEL || "claude-opus-5-5";
 const FALLBACK_BETA = "server-side-fallback-2026-07-01";
 const MAX_PDF_BYTES = 30 * 1024 * 1024;
 
 let client: Anthropic | null = null;
+
+/** Reports token usage of a finished request so it can be billed (see billing.chargeAi). */
+export type UsageHook = (model: string, usage: Anthropic.Beta.BetaUsage) => void;
 
 export function aiConfigured() {
   return Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
@@ -86,6 +89,7 @@ export async function* streamChat(opts: {
   history: { role: "user" | "assistant"; content: string }[];
   question: string;
   extraSystem?: string;
+  onUsage?: UsageHook;
 }): AsyncGenerator<ChatEvent, { segments: Segment[] }> {
   const docBlocks = opts.sources.map((s, i) => toBlock(s, i === opts.sources.length - 1));
   const turns = [...opts.history.slice(-12), { role: "user" as const, content: opts.question }];
@@ -130,6 +134,7 @@ export async function* streamChat(opts: {
     }
   }
   const final = await stream.finalMessage();
+  opts.onUsage?.(AI_MODEL, final.usage);
   if (final.stop_reason === "refusal") {
     const message = "The assistant declined to answer this request.";
     segments.push({ text: message, citations: [] });
@@ -207,6 +212,7 @@ export async function extract(opts: {
   preset: string;
   customFields?: string[];
   playbook?: string;
+  onUsage?: UsageHook;
 }): Promise<ExtractionResult> {
   let instruction: string;
   if (opts.preset === "custom") {
@@ -239,6 +245,7 @@ export async function extract(opts: {
     ],
   });
   const msg = await stream.finalMessage();
+  opts.onUsage?.(AI_MODEL, msg.usage);
   if (msg.stop_reason === "refusal") throw new HttpError(422, "The assistant declined to process this document.");
   if (msg.stop_reason === "max_tokens") throw new HttpError(422, "The document is too large to extract in one pass. Try a narrower extraction.");
   const text = msg.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("");
@@ -251,7 +258,7 @@ export async function extract(opts: {
 
 // ---------- plain completions (summaries, compare insights, automations) ----------
 
-export async function complete(opts: { system: string; sources?: Source[]; prompt: string; effort?: "low" | "medium" | "high" }) {
+export async function complete(opts: { system: string; sources?: Source[]; prompt: string; effort?: "low" | "medium" | "high"; onUsage?: UsageHook }) {
   const stream = ai().beta.messages.stream({
     model: AI_MODEL,
     max_tokens: 16000,
@@ -270,6 +277,7 @@ export async function complete(opts: { system: string; sources?: Source[]; promp
     ],
   });
   const msg = await stream.finalMessage();
+  opts.onUsage?.(AI_MODEL, msg.usage);
   if (msg.stop_reason === "refusal") throw new HttpError(422, "The assistant declined this request.");
   return msg.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("").trim();
 }

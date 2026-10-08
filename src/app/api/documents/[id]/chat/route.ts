@@ -4,6 +4,7 @@ import { docAccess, pageTexts, readCurrentPdf } from "@/lib/documents";
 import { chatResponse, clearHistory, history } from "@/lib/chat";
 import { aiConfigured } from "@/lib/ai";
 import { rateLimit } from "@/lib/auth";
+import { assertAiCredits, chargeAi } from "@/lib/billing";
 import { HttpError } from "@/lib/http";
 
 type P = { params: Promise<{ id: string }> };
@@ -27,11 +28,13 @@ export const POST = route<P>(async (req, { params }) => {
   const { id } = await params;
   const { ctx, doc } = await docAccess(id);
   if (!aiConfigured()) throw new HttpError(503, "AI features need an Anthropic API key. Set ANTHROPIC_API_KEY on the server.", "ai_not_configured");
-  rateLimit(`chat:${ctx.user.id}`, ctx.plan === "free" ? 30 : 300, 24 * 3600_000);
+  rateLimit(`chat:${ctx.user.id}`, 600, 24 * 3600_000); // abuse guard; cost is metered in credits
+  assertAiCredits(ctx);
   const input = await body(req, Input);
   const pdf = await readCurrentPdf(doc);
   const fallbackText = pageTexts(doc.id).map((p) => `[Page ${p.page}]\n${p.text}`).join("\n\n");
   return chatResponse({
+    charge: (model, usage) => chargeAi(ctx, model, usage, "AI chat"),
     workspaceId: ctx.workspace.id,
     userId: ctx.user.id,
     documentId: doc.id,

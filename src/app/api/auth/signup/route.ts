@@ -2,7 +2,7 @@ import { z } from "zod";
 import { get, insert, run } from "@/lib/db";
 import { id, now } from "@/lib/ids";
 import { body, clientIp, conflict, json, route, badRequest } from "@/lib/http";
-import { createSession, createWorkspace, hashPassword, rateLimit } from "@/lib/auth";
+import { createSession, createWorkspace, currentUser, firstWorkspaceFor, hashPassword, rateLimit } from "@/lib/auth";
 import { logActivity } from "@/lib/activity";
 
 const Input = z.object({
@@ -22,6 +22,16 @@ export const POST = route(async (req) => {
     ? get<{ id: string; workspace_id: string; email: string; role: string; accepted_at: number | null }>("SELECT * FROM invites WHERE token = ?", input.inviteToken)
     : undefined;
   if (input.inviteToken && (!invite || invite.accepted_at)) throw badRequest("That invitation is no longer valid.");
+
+  // A guest who signs up keeps everything: the guest user simply becomes a real account.
+  const guest = await currentUser();
+  if (guest?.is_guest && !invite) {
+    run("UPDATE users SET email = ?, name = ?, password_hash = ?, is_guest = 0 WHERE id = ?", input.email, input.name, hashPassword(input.password), guest.id);
+    const wsId = firstWorkspaceFor(guest.id)!;
+    run("UPDATE workspaces SET name = ? WHERE id = ?", input.workspaceName || `${input.name.split(" ")[0]}'s workspace`, wsId);
+    logActivity({ workspaceId: wsId, userId: guest.id, action: "created_workspace" });
+    return json({ ok: true, workspaceId: wsId });
+  }
 
   const userId = id("usr_");
   insert("users", { id: userId, email: input.email, name: input.name, password_hash: hashPassword(input.password), created_at: now() });

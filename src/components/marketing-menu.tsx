@@ -158,7 +158,7 @@ function Panel({ groups, onPick }: { groups: Group[]; onPick: () => void }) {
         <div key={g.title} className="mega-col">
           <div className="mega-title">{g.title}</div>
           {g.items.map((it) => (
-            <Link key={it.href} href={it.href} className="mega-item" onClick={onPick}>
+            <Link prefetch={false} key={it.href} href={it.href} className="mega-item" onClick={onPick}>
               <span className="mega-ico">{it.icon}</span>
               <span className="col" style={{ gap: 0 }}>
                 <span>{it.label}</span>
@@ -223,7 +223,7 @@ export function MarketingMenu() {
               )}
             </div>
           ) : (
-            <Link key={e.label} href={e.href!} className={`mk-link ${e.accent ? "accent" : ""}`}>
+            <Link prefetch={false} key={e.label} href={e.href!} className={`mk-link ${e.accent ? "accent" : ""}`}>
               {e.icon} {e.label}
             </Link>
           ),
@@ -244,7 +244,7 @@ export function MarketingMenu() {
             </div>
             <div className="mk-sheet-quick">
               {ENTRIES.filter((e) => e.href).map((e) => (
-                <Link key={e.label} href={e.href!} className={`mk-quick ${e.accent ? "accent" : ""}`} onClick={() => setSheet(false)}>
+                <Link prefetch={false} key={e.label} href={e.href!} className={`mk-quick ${e.accent ? "accent" : ""}`} onClick={() => setSheet(false)}>
                   {e.icon} {e.label}
                 </Link>
               ))}

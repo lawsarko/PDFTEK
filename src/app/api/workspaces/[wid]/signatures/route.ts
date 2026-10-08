@@ -2,7 +2,8 @@ import { z } from "zod";
 import { all, insert, tx } from "@/lib/db";
 import { id, now, token } from "@/lib/ids";
 import { body, json, route, badRequest } from "@/lib/http";
-import { requireMember, requirePlan } from "@/lib/auth";
+import { requireMember } from "@/lib/auth";
+import { requireMembership } from "@/lib/billing";
 import { getDocument } from "@/lib/documents";
 import { inviteSigner, type SignatureRequestRow, type SignerRow } from "@/lib/signing";
 import { logActivity } from "@/lib/activity";
@@ -75,7 +76,7 @@ const Input = z.object({
 export const POST = route<P>(async (req, { params }) => {
   const { wid } = await params;
   const ctx = await requireMember(wid);
-  requirePlan(ctx, "E-signatures");
+  requireMembership(ctx, "E-signatures");
   const input = await body(req, Input);
   const doc = getDocument(ctx, input.documentId);
   const keys = new Set(input.signers.map((s) => s.key));

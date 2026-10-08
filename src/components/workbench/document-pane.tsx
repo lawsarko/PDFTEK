@@ -90,6 +90,15 @@ export function DocumentPane() {
   const convert = async (kind: string, pages?: number[]) => {
     setConvertOpen(false);
     if (!pdf) return;
+    // Word/Excel are converted (and counted) on the server; the rest run in the browser and report a task first.
+    if (kind !== "docx" && kind !== "xlsx") {
+      try {
+        await api(`/api/workspaces/${wid}/usage`, { method: "POST", json: { action: "task", label: `PDF to ${kind.toUpperCase()}` } });
+      } catch (e) {
+        toast(errMsg(e), "error");
+        return;
+      }
+    }
     const label = `Converting to ${kind.toUpperCase()}`;
     const onProgress = (done: number, total: number) => setProgress({ label, done, total });
     setProgress({ label, done: 0, total: pdf.numPages });
@@ -125,7 +134,9 @@ export function DocumentPane() {
     if (a === "edit") {
       if (requirePro("Text editing")) setEditing(true);
     } else if (a === "ocr") setOcrOpen(true);
-    else if (a === "read") setTts(true);
+    else if (a === "read") {
+      if (requirePro("Read aloud")) setTts(true);
+    }
     else if (a === "ask") document.querySelector<HTMLTextAreaElement>(".assistant textarea")?.focus();
     else if (a.startsWith("convert-")) void convert(a.slice(8));
   };
@@ -209,7 +220,7 @@ export function DocumentPane() {
           >
             <I.edit size={13} /> Edit {info.workspace.plan === "free" && <span className="pro-tag">PRO</span>}
           </button>
-          <button className={`tool-btn ${tts ? "active" : ""}`} onClick={() => setTts((v) => !v)}>
+          <button className={`tool-btn ${tts ? "active" : ""}`} onClick={() => (tts ? setTts(false) : requirePro("Read aloud") && setTts(true))}>
             <I.speaker size={13} /> Read aloud
           </button>
           <Link

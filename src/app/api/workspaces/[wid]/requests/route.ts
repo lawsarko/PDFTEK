@@ -2,7 +2,8 @@ import { z } from "zod";
 import { all, insert } from "@/lib/db";
 import { id, now, token } from "@/lib/ids";
 import { body, json, route } from "@/lib/http";
-import { requireMember, requirePlan } from "@/lib/auth";
+import { requireMember } from "@/lib/auth";
+import { requireMembership } from "@/lib/billing";
 import { appUrl, sendMail } from "@/lib/mail";
 import { logActivity } from "@/lib/activity";
 
@@ -33,7 +34,7 @@ const Input = z.object({
 export const POST = route<P>(async (req, { params }) => {
   const { wid } = await params;
   const ctx = await requireMember(wid);
-  requirePlan(ctx, "Document requests");
+  requireMembership(ctx, "Document requests");
   const input = await body(req, Input);
   const t = token();
   const rid = id("req_");

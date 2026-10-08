@@ -3,6 +3,7 @@ import { get } from "@/lib/db";
 import { body, json, route, HttpError } from "@/lib/http";
 import { requireMember, rateLimit } from "@/lib/auth";
 import { searchWorkspace } from "@/lib/documents";
+import { assertAiCredits, chargeAi } from "@/lib/billing";
 import { chatResponse, clearHistory, history } from "@/lib/chat";
 import { aiConfigured, type Source, type SourceRef } from "@/lib/ai";
 
@@ -26,7 +27,8 @@ export const POST = route<P>(async (req, { params }) => {
   const { wid } = await params;
   const ctx = await requireMember(wid);
   if (!aiConfigured()) throw new HttpError(503, "AI features need an Anthropic API key. Set ANTHROPIC_API_KEY on the server.", "ai_not_configured");
-  rateLimit(`chat:${ctx.user.id}`, ctx.plan === "free" ? 30 : 300, 24 * 3600_000);
+  rateLimit(`chat:${ctx.user.id}`, 600, 24 * 3600_000); // abuse guard; cost is metered in credits
+  assertAiCredits(ctx);
   const { question } = await body(req, z.object({ question: z.string().trim().min(1).max(4000) }));
   const hits = searchWorkspace(wid, question, 24);
   const sources: Source[] = [];
@@ -43,6 +45,7 @@ export const POST = route<P>(async (req, { params }) => {
     refs.push({ documentId: "", documentName: "Knowledge base" });
   }
   return chatResponse({
+    charge: (model, usage) => chargeAi(ctx, model, usage, "AI chat"),
     workspaceId: wid,
     userId: ctx.user.id,
     documentId: null,
