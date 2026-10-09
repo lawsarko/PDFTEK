@@ -167,8 +167,17 @@ export async function currentOrGuest(req: Request): Promise<{ user: User; worksp
 
 /** Moves a guest's documents, credits and Day Pass into an account's workspace, then deletes the guest. */
 export function mergeGuestInto(guestId: string, targetWorkspaceId: string, targetUserId: string) {
-  const ws = get<{ id: string; credits: number; pass_until: number | null }>(
-    `SELECT w.id, w.credits, w.pass_until FROM memberships m JOIN workspaces w ON w.id = m.workspace_id WHERE m.user_id = ? LIMIT 1`,
+  const ws = get<{
+    id: string;
+    credits: number;
+    pass_until: number | null;
+    plan: string;
+    stripe_customer_id: string | null;
+    stripe_subscription_id: string | null;
+    billing_interval: string | null;
+  }>(
+    `SELECT w.id, w.credits, w.pass_until, w.plan, w.stripe_customer_id, w.stripe_subscription_id, w.billing_interval
+       FROM memberships m JOIN workspaces w ON w.id = m.workspace_id WHERE m.user_id = ? LIMIT 1`,
     guestId,
   );
   if (ws && ws.id !== targetWorkspaceId) {
@@ -183,6 +192,18 @@ export function mergeGuestInto(guestId: string, targetWorkspaceId: string, targe
       ws.pass_until ?? 0,
       targetWorkspaceId,
     );
+    // A subscription bought as a guest moves too (webhooks find it again by subscription id).
+    if (ws.stripe_subscription_id || ws.plan === "pro" || ws.plan === "business") {
+      run(
+        `UPDATE workspaces SET plan = CASE WHEN plan = 'business' THEN plan ELSE ? END, stripe_customer_id = COALESCE(?, stripe_customer_id), stripe_subscription_id = COALESCE(?, stripe_subscription_id),
+           billing_interval = COALESCE(?, billing_interval), allowance_expires_at = NULL WHERE id = ?`,
+        ws.plan,
+        ws.stripe_customer_id ?? null,
+        ws.stripe_subscription_id ?? null,
+        ws.billing_interval ?? null,
+        targetWorkspaceId,
+      );
+    }
     run("DELETE FROM workspaces WHERE id = ?", ws.id);
   }
   run("DELETE FROM users WHERE id = ? AND is_guest = 1", guestId);

@@ -46,17 +46,20 @@ export async function POST(req: Request) {
       }
       break;
     }
+    // Matched by subscription id as well as metadata: a guest's subscription may have moved to the
+    // account they later signed in to.
     case "customer.subscription.updated": {
-      const wid = obj.metadata?.workspace_id;
-      if (!wid) break;
       const active = ["active", "trialing", "past_due"].includes(obj.status as string);
       const plan = obj.metadata?.plan === "business" ? "business" : "pro";
-      run("UPDATE workspaces SET plan = ? WHERE id = ?", active ? plan : "free", wid);
+      run("UPDATE workspaces SET plan = ? WHERE stripe_subscription_id = ? OR id = ?", active ? plan : "free", obj.id as string, obj.metadata?.workspace_id ?? "");
       break;
     }
     case "customer.subscription.deleted": {
-      const wid = obj.metadata?.workspace_id;
-      if (wid) run("UPDATE workspaces SET plan = 'free', stripe_subscription_id = NULL, billing_interval = NULL WHERE id = ?", wid);
+      run(
+        "UPDATE workspaces SET plan = 'free', stripe_subscription_id = NULL, billing_interval = NULL WHERE stripe_subscription_id = ? OR id = ?",
+        obj.id as string,
+        obj.metadata?.workspace_id ?? "",
+      );
       break;
     }
   }

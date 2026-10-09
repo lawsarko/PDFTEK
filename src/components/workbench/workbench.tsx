@@ -12,7 +12,7 @@ import { Library } from "./library";
 import { DocumentPane } from "./document-pane";
 import { Assistant } from "./assistant";
 import { UploadModal } from "./upload-modal";
-import { notifyPaywall } from "../paywall";
+import { notifyPaywall, openSaveAccount } from "../paywall";
 import { FREE_LIMITS } from "@/lib/plans";
 
 export function Workbench({ wid }: { wid: string }) {
@@ -137,7 +137,7 @@ export function Workbench({ wid }: { wid: string }) {
     <WorkbenchContext.Provider value={ctx}>
       <div className="app">
         <TopBar />
-        {info.me.is_guest && <GuestBanner />}
+        {info.me.is_guest && <GuestBanner paid={info.billing.membership || info.billing.credits > 0} />}
         <div className="main" data-view={mobileView}>
           <Library />
           <DocumentPane key={active?.id ?? "none"} />
@@ -163,8 +163,20 @@ export function Workbench({ wid }: { wid: string }) {
   );
 }
 
-/** Guests can do everything free without an account; this nudges them to keep their files. */
-function GuestBanner() {
+/** Guests can do everything free without an account; this nudges them to keep their files (and anything they bought). */
+function GuestBanner({ paid }: { paid: boolean }) {
+  if (paid) {
+    return (
+      <div className="guest-banner">
+        <I.lock size={14} />
+        <span className="grow">
+          <b>Your purchase is saved in this browser only.</b> Create your account to keep it and use it on any device.
+        </span>
+        <button className="btn btn-sm btn-primary" onClick={openSaveAccount}>Save my purchase</button>
+        <a className="btn btn-sm btn-ghost hide-mobile" href="/login">Sign in</a>
+      </div>
+    );
+  }
   return (
     <div className="guest-banner">
       <I.clock size={14} />

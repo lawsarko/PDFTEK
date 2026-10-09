@@ -85,6 +85,12 @@ export function AuthForm({ mode, inviteToken, inviteEmail, workspaceName }: { mo
         {!inviteToken && (
           <p className="small" style={{ textAlign: "center", marginTop: 10 }}>
             <Link prefetch={false} href="/go/start">Continue without an account →</Link>
+            {mode === "login" && (
+              <>
+                <br />
+                <Link href="/restore" className="tiny">Bought without an account? Restore your purchase</Link>
+              </>
+            )}
           </p>
         )}
         {mode === "signup" && (

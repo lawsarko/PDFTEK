@@ -101,6 +101,8 @@ export function entitlements(ctx: Ctx, req?: Request): Entitlements {
     allowance,
     allowanceExpiresAt: allowance ? ws.allowance_expires_at : null,
     paymentsEnabled: paymentsEnabled(),
+    guest: ctx.user.is_guest,
+    purchaseEmail: ctx.user.is_guest ? guestPurchaseEmail(ctx.workspace.id) : null,
   };
 }
 
@@ -330,8 +332,9 @@ export function creditHistory(workspaceId: string, limit = 30) {
 // ---------- housekeeping ----------
 
 /**
- * Deletes guest accounts (and their files) 24 hours after they were created. Guests who bought
- * something are kept for 90 days so their pass or credits aren't lost before they sign up.
+ * Deletes guest accounts (and their files) 24 hours after they were created. Guests who still have
+ * something they paid for (a subscription, an unexpired pass, credits, or a purchase in the last 90
+ * days) are kept, so they can come back and save it to an account.
  */
 export async function cleanupGuests() {
   const { deleteFile } = await import("./storage");
@@ -343,8 +346,8 @@ export async function cleanupGuests() {
     cutoff,
   );
   for (const g of guests) {
-    const paid = g.workspace_id && get("SELECT 1 FROM purchases WHERE workspace_id = ? AND created_at > ?", g.workspace_id, paidCutoff);
-    if (paid && g.created_at > paidCutoff) continue;
+    // Never delete a guest who still has something they paid for.
+    if (g.workspace_id && guestHasValue(g.workspace_id, paidCutoff)) continue;
     if (g.workspace_id) {
       const keys = all<{ storage_key: string }>(
         "SELECT v.storage_key FROM document_versions v JOIN documents d ON d.id = v.document_id WHERE d.workspace_id = ?",
@@ -359,4 +362,21 @@ export async function cleanupGuests() {
   }
   run("DELETE FROM usage_daily WHERE day < ?", new Date(now() - 7 * 86_400_000).toISOString().slice(0, 10));
   return guests.length;
+}
+
+function guestHasValue(workspaceId: string, paidCutoff: number) {
+  const ws = get<{ plan: string; pass_until: number | null; credits: number }>(
+    "SELECT plan, pass_until, credits FROM workspaces WHERE id = ?",
+    workspaceId,
+  );
+  if (!ws) return false;
+  if (ws.plan === "pro" || ws.plan === "business") return true;
+  if (ws.pass_until && ws.pass_until > now()) return true;
+  if (ws.credits > 0) return true;
+  return Boolean(get("SELECT 1 FROM purchases WHERE workspace_id = ? AND created_at > ?", workspaceId, paidCutoff));
+}
+
+/** Email a guest gave Stripe at checkout (pre-fills "create your account"). */
+export function guestPurchaseEmail(workspaceId: string): string | null {
+  return get<{ email: string | null }>("SELECT email FROM purchases WHERE workspace_id = ? AND email IS NOT NULL ORDER BY created_at DESC LIMIT 1", workspaceId)?.email ?? null;
 }

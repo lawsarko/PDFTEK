@@ -271,6 +271,14 @@ CREATE TABLE IF NOT EXISTS credit_ledger (
   created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS credit_ledger_ws ON credit_ledger(workspace_id, created_at);
+
+-- One-time sign-in links (e.g. recovering a purchase made without an account). Stored hashed.
+CREATE TABLE IF NOT EXISTS login_tokens (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  expires_at INTEGER NOT NULL,
+  used_at INTEGER
+);
 `;
 
 /** Columns added after the first release; created on startup when missing. */

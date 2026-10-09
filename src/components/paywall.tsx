@@ -18,6 +18,11 @@ export function notifyPaywall(reason: Reason) {
   window.dispatchEvent(new CustomEvent("pdftek:paywall", { detail: reason }));
 }
 
+/** Opens "save your purchase" (create an account) for guests who paid. */
+export function openSaveAccount() {
+  if (typeof window !== "undefined") window.dispatchEvent(new Event("pdftek:save-account"));
+}
+
 /** Tells usage meters to refresh after a task ran or a purchase completed. */
 export function notifyUsage() {
   if (typeof window !== "undefined") window.dispatchEvent(new Event("pdftek:usage"));
@@ -50,6 +55,21 @@ export function PaywallHost() {
   const [reason, setReason] = useState<Reason | null>(null);
   const [busy, setBusy] = useState<ProductId | null>(null);
   const [wid, setWid] = useState<string | undefined>();
+  const [save, setSave] = useState<{ email: string | null } | null>(null);
+
+  // Guests who paid are asked to create an account right away, so the purchase isn't tied to one browser.
+  const offerSave = useCallback(async (force = false) => {
+    const w = window.location.pathname.match(/\/app\/(ws_[^/?#]+)/)?.[1];
+    if (!w) return;
+    const e = (await fetch(`/api/workspaces/${w}/usage`).then((r) => (r.ok ? r.json() : null)).catch(() => null)) as Entitlements | null;
+    if (e?.guest && (force || e.membership || e.credits > 0)) setSave({ email: e.purchaseEmail });
+  }, []);
+
+  useEffect(() => {
+    const onSave = () => void offerSave(true);
+    window.addEventListener("pdftek:save-account", onSave);
+    return () => window.removeEventListener("pdftek:save-account", onSave);
+  }, [offerSave]);
 
   useEffect(() => {
     const open = (e: Event) => {
@@ -59,14 +79,18 @@ export function PaywallHost() {
     window.addEventListener("pdftek:paywall", open);
     const url = new URL(window.location.href);
     const bought = url.searchParams.get("purchased");
-    if (bought) {
-      toast(PURCHASED[bought] ?? "Thanks for your purchase!", "success");
+    const restored = url.searchParams.get("save");
+    if (bought || restored) {
+      if (bought) toast(PURCHASED[bought] ?? "Thanks for your purchase!", "success");
+      else toast("Welcome back! Your purchase is restored.", "success");
       url.searchParams.delete("purchased");
+      url.searchParams.delete("save");
       window.history.replaceState(null, "", url.pathname + url.search + url.hash);
       notifyUsage();
+      void offerSave(Boolean(restored));
     }
     return () => window.removeEventListener("pdftek:paywall", open);
-  }, [toast]);
+  }, [toast, offerSave]);
 
   const buy = useCallback(
     async (p: ProductId) => {
@@ -81,6 +105,7 @@ export function PaywallHost() {
     [toast, wid],
   );
 
+  if (save) return <SaveAccountModal email={save.email} onClose={() => setSave(null)} />;
   if (!reason) return null;
   const code = reason.code;
   const ai = code === "credits_required";
@@ -192,5 +217,76 @@ export function UsageMeter({ wid }: { wid: string }) {
       )}
       {!e.membership && <span className="usage-upgrade">Upgrade</span>}
     </button>
+  );
+}
+
+/** Turns a guest (who has paid) into a real account in one step; the purchase and files come along. */
+function SaveAccountModal({ email: initialEmail, onClose }: { email: string | null; onClose: () => void }) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState(initialEmail ?? "");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [exists, setExists] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    const res = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: name.trim() || email.split("@")[0], email, password }),
+    });
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    if (res.ok) {
+      window.location.reload();
+      return;
+    }
+    setBusy(false);
+    setExists(res.status === 409);
+    setError(data.error ?? "Couldn't create the account. Try again.");
+  };
+
+  return (
+    <Modal title="Save your purchase to an account" onClose={onClose}>
+      <form className="col gap-12" onSubmit={submit}>
+        <p className="small muted" style={{ margin: 0 }}>
+          Right now your plan and credits live in this browser only. Create a free account to keep them and use them on any device. Your files come along too.
+        </p>
+        <div className="field">
+          <label htmlFor="sa-name">Your name</label>
+          <input id="sa-name" className="input" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
+        </div>
+        <div className="field">
+          <label htmlFor="sa-email">Email</label>
+          <input id="sa-email" className="input" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+        </div>
+        <div className="field">
+          <label htmlFor="sa-pw">Choose a password</label>
+          <input id="sa-pw" className="input" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
+          <span className="tiny faint">At least 8 characters.</span>
+        </div>
+        {error && (
+          <div className="error-text">
+            {error}
+            {exists && (
+              <>
+                {" "}
+                <a href="/login">Sign in</a> and your purchase will move into that account.
+              </>
+            )}
+          </div>
+        )}
+        <div className="row" style={{ justifyContent: "flex-end" }}>
+          <button type="button" className="btn btn-ghost" onClick={onClose}>
+            Later
+          </button>
+          <button className="btn btn-primary" disabled={busy}>
+            {busy && <span className="spinner" />} Save my purchase
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }

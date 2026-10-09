@@ -58,6 +58,10 @@ export type Entitlements = {
   allowance: number;
   allowanceExpiresAt: number | null;
   paymentsEnabled: boolean;
+  /** Using pdftek without an account (purchases live in this browser until they sign up). */
+  guest: boolean;
+  /** Email given at checkout, to pre-fill "create your account" for paying guests. */
+  purchaseEmail: string | null;
 };
 
 export const PRICING_FAQ: [string, string][] = [
@@ -69,6 +73,10 @@ export const PRICING_FAQ: [string, string][] = [
   [
     "What are credits?",
     `Credits pay for AI (questions, summaries, extraction, comparisons) and for tasks beyond the free daily limit (${EXTRA_TASK_CREDITS} credits each). AI is charged on what each request actually costs, so short questions cost a few credits and long documents a little more. Purchased credits never expire.`,
+  ],
+  [
+    "I paid without an account. How do I keep it?",
+    "Right after paying, pdftek offers to save your purchase to an account: just add a password. If you skipped that and changed devices or cleared your browser, use \"Restore a purchase\" on the sign-in page with the email you used at checkout.",
   ],
   ["What does the Day Pass include?", `24 hours of everything in Pro: unlimited tasks, files up to ${PAID_LIMITS.maxFileMb} MB, editing, read aloud and e-signatures, plus 50 AI credits. It doesn't renew.`],
   ["Can I cancel Pro anytime?", "Yes. Cancel from Settings → Billing in one click; Pro stays active until the end of the period you paid for."],
