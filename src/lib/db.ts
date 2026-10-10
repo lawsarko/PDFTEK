@@ -282,13 +282,17 @@ CREATE TABLE IF NOT EXISTS login_tokens (
 `;
 
 /** Columns added after the first release; created on startup when missing. */
-const ADDED_COLUMNS: [table: string, column: string, ddl: string][] = [
+const ADDED_COLUMNS: [table: string, column: string, ddl: string, backfill?: string][] = [
   ["users", "is_guest", "INTEGER NOT NULL DEFAULT 0"],
   ["workspaces", "pass_until", "INTEGER"],
   ["workspaces", "credits", "INTEGER NOT NULL DEFAULT 0"],
   ["workspaces", "allowance_credits", "INTEGER NOT NULL DEFAULT 0"],
   ["workspaces", "allowance_expires_at", "INTEGER"],
   ["workspaces", "billing_interval", "TEXT"],
+  // Accounts created before email verification existed are treated as verified.
+  ["users", "email_verified_at", "INTEGER", "UPDATE users SET email_verified_at = created_at WHERE is_guest = 0"],
+  ["users", "google_sub", "TEXT"],
+  ["login_tokens", "purpose", "TEXT NOT NULL DEFAULT 'restore'"],
 ];
 
 type GlobalWithDb = typeof globalThis & { __pdftekDb?: DatabaseSync };
@@ -298,10 +302,14 @@ function open(): DatabaseSync {
   const db = new DatabaseSync(path.join(DATA_DIR, "pdftek.db"));
   db.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;");
   db.exec(SCHEMA);
-  for (const [table, column, ddl] of ADDED_COLUMNS) {
+  for (const [table, column, ddl, backfill] of ADDED_COLUMNS) {
     const cols = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
-    if (!cols.some((c) => c.name === column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddl}`);
+    if (!cols.some((c) => c.name === column)) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddl}`);
+      if (backfill) db.exec(backfill);
+    }
   }
+  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS users_google_sub ON users(google_sub) WHERE google_sub IS NOT NULL");
   return db;
 }
 

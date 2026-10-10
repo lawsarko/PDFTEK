@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/auth-form";
 import { currentUser } from "@/lib/auth";
+import { googleEnabled } from "@/lib/google-auth";
 
 export const metadata = { title: "Sign in" };
 export const dynamic = "force-dynamic";
@@ -13,7 +14,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
   if (user && !user.is_guest && !invite) redirect("/app");
   return (
     <Suspense>
-      <AuthForm mode="login" inviteToken={invite} />
+      <AuthForm mode="login" inviteToken={invite} google={googleEnabled()} />
     </Suspense>
   );
 }

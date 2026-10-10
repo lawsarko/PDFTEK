@@ -80,6 +80,12 @@ export function PaywallHost() {
     const url = new URL(window.location.href);
     const bought = url.searchParams.get("purchased");
     const restored = url.searchParams.get("save");
+    const verified = url.searchParams.get("verified");
+    if (verified === "1") {
+      toast("Email confirmed. Thanks!", "success");
+      url.searchParams.delete("verified");
+      window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+    }
     if (bought || restored) {
       if (bought) toast(PURCHASED[bought] ?? "Thanks for your purchase!", "success");
       else toast("Welcome back! Your purchase is restored.", "success");

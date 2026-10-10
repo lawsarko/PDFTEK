@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { get, insert, run } from "@/lib/db";
+import { get } from "@/lib/db";
 import { body, clientIp, json, publicOrigin, route, HttpError } from "@/lib/http";
 import { createSession, firstWorkspaceFor, rateLimit } from "@/lib/auth";
 import { mailConfigured, sendMail } from "@/lib/mail";
-import { sha256, token, now } from "@/lib/ids";
+import { consumeToken, issueToken } from "@/lib/tokens";
 
 /**
  * Recovering a purchase made without an account, e.g. on another device or after clearing cookies.
@@ -26,8 +26,7 @@ export const POST = route(async (req) => {
       )
     : undefined;
   if (owner?.is_guest) {
-    const raw = token(32);
-    insert("login_tokens", { id: sha256(raw), user_id: owner.id, expires_at: now() + 30 * 60_000 });
+    const raw = issueToken(owner.id, "restore", 30 * 60_000);
     await sendMail({
       to: email,
       subject: "Restore your pdftek purchase",
@@ -51,13 +50,9 @@ export const POST = route(async (req) => {
 });
 
 export async function GET(req: Request) {
-  const raw = new URL(req.url).searchParams.get("token") ?? "";
-  const row = raw ? get<{ id: string; user_id: string; expires_at: number; used_at: number | null }>("SELECT * FROM login_tokens WHERE id = ?", sha256(raw)) : undefined;
-  if (!row || row.used_at || row.expires_at < now()) {
-    return new Response(null, { status: 303, headers: { Location: "/restore?expired=1" } });
-  }
-  run("UPDATE login_tokens SET used_at = ? WHERE id = ?", now(), row.id);
-  await createSession(row.user_id, req.headers.get("user-agent"));
-  const wid = firstWorkspaceFor(row.user_id);
+  const userId = consumeToken(new URL(req.url).searchParams.get("token") ?? "", "restore");
+  if (!userId) return new Response(null, { status: 303, headers: { Location: "/restore?expired=1" } });
+  await createSession(userId, req.headers.get("user-agent"));
+  const wid = firstWorkspaceFor(userId);
   return new Response(null, { status: 303, headers: { Location: wid ? `/app/${wid}?save=1` : "/app", "Cache-Control": "no-store" } });
 }

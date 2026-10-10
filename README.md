@@ -54,7 +54,8 @@ Word/Excel/PowerPoint → PDF needs LibreOffice, which Render's plain Node runti
 | `DATA_DIR` | Where the database and files are stored (default `./data`). |
 | `ANTHROPIC_API_KEY` | Enables chat, extraction, summaries, compare insights and AI automation steps. |
 | `PDFTEK_AI_MODEL` | Overrides the model (default `claude-opus-5-5`). AI is billed to users in credits at the model's API price. |
-| `SMTP_URL`, `MAIL_FROM` | Outbound email. Without them, emails are logged, and the UI offers copyable links instead. |
+| `SMTP_URL`, `MAIL_FROM` | Outbound email: password resets, email confirmation, signature requests. Without them, emails are logged, the UI offers copyable links instead, and "Forgot password" explains it's unavailable. |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional "Continue with Google". OAuth client redirect URI: `<APP_URL>/api/auth/google/callback`. |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Payments. Prices are built in (`src/lib/plans.ts`). Point a Stripe webhook at `/api/stripe/webhook` for `checkout.session.completed`, `invoice.paid`, `customer.subscription.updated` and `customer.subscription.deleted`. |
 | `ADMIN_EMAILS` | Comma-separated account emails with unlimited use and free AI (the site owner). |
 | `PDFTEK_FAKE_PAYMENTS=1` | Development only: purchases complete instantly without Stripe. Ignored in production. |

@@ -8,7 +8,7 @@ import { forbidden, unauthorized, notFound, HttpError } from "./http";
 export const SESSION_COOKIE = "pdftek_session";
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
-export type User = { id: string; email: string; name: string; created_at: number; is_guest: boolean };
+export type User = { id: string; email: string; name: string; created_at: number; is_guest: boolean; email_verified: boolean };
 export type Role = "owner" | "admin" | "member";
 export type Plan = "free" | "pro" | "business";
 export type Workspace = {
@@ -74,14 +74,42 @@ export async function currentUser(): Promise<User | null> {
   const jar = await cookies();
   const raw = jar.get(SESSION_COOKIE)?.value;
   if (!raw) return null;
-  const row = get<Omit<User, "is_guest"> & { is_guest: number; expires_at: number }>(
-    `SELECT u.id, u.email, u.name, u.created_at, u.is_guest, s.expires_at
+  const row = get<Omit<User, "is_guest" | "email_verified"> & { is_guest: number; email_verified_at: number | null; expires_at: number }>(
+    `SELECT u.id, u.email, u.name, u.created_at, u.is_guest, u.email_verified_at, s.expires_at
        FROM sessions s JOIN users u ON u.id = s.user_id
       WHERE s.id = ?`,
     sha256(raw),
   );
   if (!row || row.expires_at < now()) return null;
-  return { id: row.id, email: row.email, name: row.name, created_at: row.created_at, is_guest: Boolean(row.is_guest) };
+  return {
+    id: row.id,
+    email: row.email,
+    name: row.name,
+    created_at: row.created_at,
+    is_guest: Boolean(row.is_guest),
+    email_verified: Boolean(row.email_verified_at),
+  };
+}
+
+/** Signs a user out everywhere (after a password reset). */
+export function destroyAllSessions(userId: string) {
+  run("DELETE FROM sessions WHERE user_id = ?", userId);
+}
+
+/** Emails a link that confirms the address belongs to the user. No-op without SMTP. */
+export async function sendVerificationEmail(userId: string, email: string, origin: string) {
+  const { mailConfigured, sendMail } = await import("./mail");
+  if (!mailConfigured()) return false;
+  const { issueToken } = await import("./tokens");
+  const raw = issueToken(userId, "verify", 7 * 86_400_000);
+  const { delivered } = await sendMail({
+    to: email,
+    subject: "Confirm your email for pdftek",
+    heading: "Confirm your email",
+    paragraphs: ["Thanks for joining pdftek. Confirm this is your email so you can always recover your account and receive receipts and signature requests."],
+    cta: { label: "Confirm my email", url: `${origin}/api/auth/verify?token=${raw}` },
+  });
+  return delivered;
 }
 
 export async function requireUser(): Promise<User> {

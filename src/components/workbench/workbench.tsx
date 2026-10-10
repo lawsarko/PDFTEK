@@ -138,6 +138,7 @@ export function Workbench({ wid }: { wid: string }) {
       <div className="app">
         <TopBar />
         {info.me.is_guest && <GuestBanner paid={info.billing.membership || info.billing.credits > 0} />}
+        {!info.me.is_guest && info.me.email_verified === false && info.capabilities.email && <VerifyBanner email={info.me.email} />}
         <div className="main" data-view={mobileView}>
           <Library />
           <DocumentPane key={active?.id ?? "none"} />
@@ -160,6 +161,40 @@ export function Workbench({ wid }: { wid: string }) {
         {uploadOpen && <UploadModal initialTab={uploadOpen} onClose={() => setUploadOpen(false)} />}
       </div>
     </WorkbenchContext.Provider>
+  );
+}
+
+/** Reminds a new account to confirm its email (needed for password resets to reach them). */
+function VerifyBanner({ email }: { email: string }) {
+  const toast = useToast();
+  const [state, setState] = useState<"idle" | "busy" | "sent" | "hidden">("idle");
+  if (state === "hidden") return null;
+  const resend = async () => {
+    setState("busy");
+    try {
+      await api("/api/auth/verify/resend", { method: "POST" });
+      setState("sent");
+      toast(`Confirmation email sent to ${email}.`, "success");
+    } catch (e) {
+      setState("idle");
+      toast(errMsg(e), "error");
+    }
+  };
+  return (
+    <div className="guest-banner">
+      <I.mail size={14} />
+      <span className="grow">
+        {state === "sent" ? <>Check your inbox at <b>{email}</b> and click the link to confirm.</> : <>Please confirm your email address, <b>{email}</b>, so you can always recover your account.</>}
+      </span>
+      {state !== "sent" && (
+        <button className="btn btn-sm btn-primary" onClick={resend} disabled={state === "busy"}>
+          {state === "busy" && <span className="spinner" />} Resend email
+        </button>
+      )}
+      <button className="btn btn-sm btn-ghost" onClick={() => setState("hidden")} aria-label="Dismiss">
+        <I.x size={14} />
+      </button>
+    </div>
   );
 }
 

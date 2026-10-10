@@ -365,6 +365,10 @@ button.chip:hover { border-color: var(--steel); color: var(--text-hi); }
 .faq p { color: var(--text-lo); margin: 10px 0 0; line-height: 1.6; }
 
 .auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; background: radial-gradient(ellipse 700px 400px at 50% 0%, rgba(217,142,43,0.1), transparent 70%), var(--ink); }
+.btn-google { width: 100%; justify-content: center; gap: 10px; background: #fff; color: #1f1f1f; border-color: #dadce0; font-weight: 600; }
+.btn-google:hover { background: #f4f6f8; color: #1f1f1f; }
+.auth-divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; color: var(--faint, #888); font-size: 12px; }
+.auth-divider::before, .auth-divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .auth-card { width: 100%; max-width: 420px; background: var(--ink-2); border: 1px solid var(--line); border-radius: 14px; padding: 28px; box-shadow: var(--shadow); }
 
 .public-wrap { min-height: 100vh; display: flex; flex-direction: column; }

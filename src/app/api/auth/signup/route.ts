@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { get, insert, run } from "@/lib/db";
 import { id, now } from "@/lib/ids";
-import { body, clientIp, conflict, json, route, badRequest } from "@/lib/http";
-import { createSession, createWorkspace, currentUser, firstWorkspaceFor, hashPassword, rateLimit } from "@/lib/auth";
+import { body, clientIp, conflict, json, publicOrigin, route, badRequest } from "@/lib/http";
+import { createSession, createWorkspace, currentUser, firstWorkspaceFor, hashPassword, rateLimit, sendVerificationEmail } from "@/lib/auth";
 import { logActivity } from "@/lib/activity";
 
 const Input = z.object({
@@ -30,6 +30,7 @@ export const POST = route(async (req) => {
     const wsId = firstWorkspaceFor(guest.id)!;
     run("UPDATE workspaces SET name = ? WHERE id = ?", input.workspaceName || `${input.name.split(" ")[0]}'s workspace`, wsId);
     logActivity({ workspaceId: wsId, userId: guest.id, action: "created_workspace" });
+    await sendVerificationEmail(guest.id, input.email, publicOrigin(req));
     return json({ ok: true, workspaceId: wsId });
   }
 
@@ -47,5 +48,8 @@ export const POST = route(async (req) => {
     logActivity({ workspaceId, userId, action: "created_workspace" });
   }
   await createSession(userId, req.headers.get("user-agent"));
+  // An accepted invite already proved the email works; everyone else gets a confirmation link.
+  if (invite && invite.email.toLowerCase() === input.email) run("UPDATE users SET email_verified_at = ? WHERE id = ?", now(), userId);
+  else await sendVerificationEmail(userId, input.email, publicOrigin(req));
   return json({ ok: true, workspaceId });
 });

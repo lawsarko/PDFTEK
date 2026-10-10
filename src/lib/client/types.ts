@@ -24,7 +24,7 @@ export type Version = { id: string; version: number; size: number; pageCount: nu
 export type WorkspaceInfo = {
   workspace: { id: string; name: string; plan: Plan; basePlan: Plan; trialEndsAt: number | null; playbook: string; hasSubscription: boolean };
   role: Role;
-  me: { id: string; name: string; email: string; is_guest?: boolean };
+  me: { id: string; name: string; email: string; is_guest?: boolean; email_verified?: boolean };
   billing: import("@/lib/plans").Entitlements;
   stats: { docs: number; pages: number };
   capabilities: { ai: boolean; email: boolean; serverOffice: boolean; billing: boolean };

@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/auth-form";
 import { currentUser } from "@/lib/auth";
+import { googleEnabled } from "@/lib/google-auth";
 import { get } from "@/lib/db";
 
 export const metadata = { title: "Create account" };
@@ -17,7 +18,7 @@ export default async function Signup({ searchParams }: { searchParams: Promise<{
     : undefined;
   return (
     <Suspense>
-      <AuthForm mode="signup" inviteToken={inv ? invite : undefined} inviteEmail={inv?.email} workspaceName={inv?.name} />
+      <AuthForm mode="signup" inviteToken={inv ? invite : undefined} inviteEmail={inv?.email} workspaceName={inv?.name} google={googleEnabled()} />
     </Suspense>
   );
 }

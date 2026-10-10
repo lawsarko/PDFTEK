@@ -9,7 +9,10 @@ export const POST = route(async (req) => {
   const input = await body(req, Input);
   rateLimit(`login:${clientIp(req)}`, 20, 15 * 60_000);
   rateLimit(`login:${input.email}`, 10, 15 * 60_000);
-  const user = get<{ id: string; password_hash: string }>("SELECT id, password_hash FROM users WHERE email = ?", input.email);
+  const user = get<{ id: string; password_hash: string }>("SELECT id, password_hash FROM users WHERE email = ? AND is_guest = 0", input.email);
+  if (user?.password_hash === "!") {
+    throw new HttpError(401, "This account uses Google sign-in. Choose Continue with Google, or use Forgot password to add a password.");
+  }
   if (!user || !verifyPassword(input.password, user.password_hash)) throw new HttpError(401, "Email or password is incorrect.");
   const guest = await currentUser();
   const workspaceId = firstWorkspaceFor(user.id) ?? null;
