@@ -2,11 +2,12 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { api, errMsg } from "@/lib/client/api";
+import { api, errMsg, ApiError } from "@/lib/client/api";
 import { Logo, Wordmark } from "./icons";
 
 const NOTICES: Record<string, string> = {
   google: "Google sign-in didn't complete. Try again, or use your email and password.",
+  google_exists: "An account with this email already exists. Sign in with your password once, then you can use Google.",
 };
 
 export function AuthForm({
@@ -32,6 +33,7 @@ export function AuthForm({
     return null;
   });
   const [busy, setBusy] = useState(false);
+  const [unconfirmed, setUnconfirmed] = useState<"no" | "yes" | "sent">("no");
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [k]: e.target.value });
 
   const submit = async (e: React.FormEvent) => {
@@ -51,7 +53,18 @@ export function AuthForm({
       window.location.href = next && next.startsWith("/") && !next.startsWith("//") ? next : r.workspaceId ? `/app/${r.workspaceId}` : "/app";
     } catch (err) {
       setError(errMsg(err));
+      setUnconfirmed(err instanceof ApiError && err.code === "email_not_confirmed" ? "yes" : "no");
       setBusy(false);
+    }
+  };
+
+  const resend = async () => {
+    try {
+      await api("/api/auth/verify/resend", { method: "POST", json: { email: form.email } });
+      setUnconfirmed("sent");
+      setError(`We've sent a new confirmation link to ${form.email}.`);
+    } catch (err) {
+      setError(errMsg(err));
     }
   };
 
@@ -104,7 +117,16 @@ export function AuthForm({
               <input id="ws" className="input" placeholder="e.g. Acme Legal" value={form.workspaceName} onChange={set("workspaceName")} />
             </div>
           )}
-          {error && <div className="error-text">{error}</div>}
+          {error && (
+            <div className="error-text">
+              {error}{" "}
+              {unconfirmed === "yes" && (
+                <button type="button" className="link-btn" onClick={resend}>
+                  Resend the link
+                </button>
+              )}
+            </div>
+          )}
           <button className="btn btn-primary btn-lg" type="submit" disabled={busy}>
             {busy && <span className="spinner" />} {mode === "login" ? "Sign in" : inviteToken ? "Join workspace" : "Create account"}
           </button>

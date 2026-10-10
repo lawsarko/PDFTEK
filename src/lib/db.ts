@@ -291,7 +291,8 @@ const ADDED_COLUMNS: [table: string, column: string, ddl: string, backfill?: str
   ["workspaces", "billing_interval", "TEXT"],
   // Accounts created before email verification existed are treated as verified.
   ["users", "email_verified_at", "INTEGER", "UPDATE users SET email_verified_at = created_at WHERE is_guest = 0"],
-  ["users", "google_sub", "TEXT"],
+  // Supabase Auth user id (see src/lib/supabase.ts).
+  ["users", "supabase_id", "TEXT"],
   ["login_tokens", "purpose", "TEXT NOT NULL DEFAULT 'restore'"],
 ];
 
@@ -309,7 +310,7 @@ function open(): DatabaseSync {
       if (backfill) db.exec(backfill);
     }
   }
-  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS users_google_sub ON users(google_sub) WHERE google_sub IS NOT NULL");
+  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS users_supabase_id ON users(supabase_id) WHERE supabase_id IS NOT NULL");
   return db;
 }
 

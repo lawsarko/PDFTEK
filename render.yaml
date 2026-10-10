@@ -22,13 +22,15 @@ services:
       - key: STRIPE_WEBHOOK_SECRET
         sync: false
       - key: SMTP_URL
-        sync: false # password resets and email confirmation, e.g. smtps://resend:KEY@smtp.resend.com:465
+        sync: false # optional: signature-request emails, e.g. smtps://resend:KEY@smtp.resend.com:465
       - key: MAIL_FROM
         sync: false # e.g. pdftek <no-reply@yourdomain.com>
-      - key: GOOGLE_CLIENT_ID
+      - key: SUPABASE_URL
+        sync: false # sign-in (passwords, Google, confirmation and reset emails)
+      - key: SUPABASE_ANON_KEY
         sync: false
-      - key: GOOGLE_CLIENT_SECRET
-        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false # optional: moves older accounts into Supabase
       - key: ADMIN_EMAILS
         sync: false # your own account email: unlimited use, free AI
     disk:

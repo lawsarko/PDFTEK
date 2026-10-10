@@ -4,6 +4,8 @@ import { body, clientIp, json, publicOrigin, route, HttpError } from "@/lib/http
 import { createSession, firstWorkspaceFor, rateLimit } from "@/lib/auth";
 import { mailConfigured, sendMail } from "@/lib/mail";
 import { consumeToken, issueToken } from "@/lib/tokens";
+import { sbMagicLink, supabaseEnabled } from "@/lib/supabase";
+import { supabaseHttpError } from "@/lib/identity";
 
 /**
  * Recovering a purchase made without an account, e.g. on another device or after clearing cookies.
@@ -14,6 +16,14 @@ export const POST = route(async (req) => {
   const { email } = await body(req, z.object({ email: z.string().trim().toLowerCase().email().max(200) }));
   rateLimit(`restore:${clientIp(req)}`, 10, 3600_000);
   rateLimit(`restore:${email}`, 3, 3600_000);
+  if (supabaseEnabled()) {
+    // A sign-in link from Supabase: following it creates (or opens) the account for this email, and
+    // purchases made without an account with this email move into it (see signInSupabaseUser).
+    if (get("SELECT 1 FROM purchases WHERE lower(email) = ?", email)) {
+      await sbMagicLink(email, `${publicOrigin(req)}/auth/confirm`).catch(supabaseHttpError);
+    }
+    return json({ ok: true });
+  }
   if (!mailConfigured()) {
     throw new HttpError(503, "Purchase recovery by email isn't available yet. Contact support@pdftek.app with your receipt and we'll restore it.", "mail_disabled");
   }

@@ -5,8 +5,10 @@ import { useSearchParams } from "next/navigation";
 import { api, errMsg } from "@/lib/client/api";
 import { Logo, Wordmark } from "@/components/icons";
 
-export function ResetForm() {
-  const token = useSearchParams().get("token") ?? "";
+/** `accessToken` comes from a Supabase reset link (see /auth/confirm); otherwise pdftek's own ?token=. */
+export function ResetForm({ accessToken }: { accessToken?: string }) {
+  const urlToken = useSearchParams().get("token") ?? "";
+  const token = accessToken ?? urlToken;
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
@@ -21,7 +23,7 @@ export function ResetForm() {
     setBusy(true);
     setError(null);
     try {
-      const r = await api<{ workspaceId: string | null }>("/api/auth/reset", { method: "POST", json: { token, password } });
+      const r = await api<{ workspaceId: string | null }>("/api/auth/reset", { method: "POST", json: accessToken ? { accessToken, password } : { token, password } });
       window.location.href = r.workspaceId ? `/app/${r.workspaceId}` : "/app";
     } catch (err) {
       setError(errMsg(err));

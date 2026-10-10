@@ -27,7 +27,7 @@ export type WorkspaceInfo = {
   me: { id: string; name: string; email: string; is_guest?: boolean; email_verified?: boolean };
   billing: import("@/lib/plans").Entitlements;
   stats: { docs: number; pages: number };
-  capabilities: { ai: boolean; email: boolean; serverOffice: boolean; billing: boolean };
+  capabilities: { ai: boolean; email: boolean; accountEmail?: boolean; serverOffice: boolean; billing: boolean };
 };
 
 export type Member = { id: string; name: string; email: string; role: Role; created_at: number };

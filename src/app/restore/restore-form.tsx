@@ -32,7 +32,7 @@ export function RestoreForm() {
         <h1 style={{ fontSize: 22 }}>Restore a purchase</h1>
         {done ? (
           <p className="muted">
-            If <b>{email}</b> was used to buy a Day Pass, Pro or credits, we&apos;ve emailed a link to get back to it. Check your inbox (and spam folder). The link expires in 30 minutes.
+            If <b>{email}</b> was used to buy a Day Pass, Pro or credits, we&apos;ve emailed a link to get back to it. Check your inbox (and spam folder). The link works once and expires soon.
           </p>
         ) : (
           <>

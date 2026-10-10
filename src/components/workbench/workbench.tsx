@@ -138,7 +138,7 @@ export function Workbench({ wid }: { wid: string }) {
       <div className="app">
         <TopBar />
         {info.me.is_guest && <GuestBanner paid={info.billing.membership || info.billing.credits > 0} />}
-        {!info.me.is_guest && info.me.email_verified === false && info.capabilities.email && <VerifyBanner email={info.me.email} />}
+        {!info.me.is_guest && info.me.email_verified === false && info.capabilities.accountEmail && <VerifyBanner email={info.me.email} />}
         <div className="main" data-view={mobileView}>
           <Library />
           <DocumentPane key={active?.id ?? "none"} />
@@ -172,7 +172,7 @@ function VerifyBanner({ email }: { email: string }) {
   const resend = async () => {
     setState("busy");
     try {
-      await api("/api/auth/verify/resend", { method: "POST" });
+      await api("/api/auth/verify/resend", { method: "POST", json: {} });
       setState("sent");
       toast(`Confirmation email sent to ${email}.`, "success");
     } catch (e) {

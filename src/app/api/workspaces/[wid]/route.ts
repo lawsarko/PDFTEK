@@ -4,6 +4,7 @@ import { body, json, route } from "@/lib/http";
 import { requireMember } from "@/lib/auth";
 import { aiConfigured } from "@/lib/ai";
 import { mailConfigured } from "@/lib/mail";
+import { supabaseEnabled } from "@/lib/supabase";
 import { hasServerOffice } from "@/lib/pdf";
 import { entitlements } from "@/lib/billing";
 
@@ -33,6 +34,8 @@ export const GET = route<P>(async (req, { params }) => {
     capabilities: {
       ai: aiConfigured(),
       email: mailConfigured(),
+      // Confirmation emails can come from Supabase even without pdftek's own SMTP.
+      accountEmail: mailConfigured() || supabaseEnabled(),
       serverOffice: await hasServerOffice(),
       billing: Boolean(process.env.STRIPE_SECRET_KEY),
     },
