@@ -96,7 +96,7 @@ export function AuthForm({
             </div>
           )}
           <div className="field">
-            <label htmlFor="email">Work email</label>
+            <label htmlFor="email">Email</label>
             <input id="email" className="input" type="email" autoComplete="email" required value={form.email} onChange={set("email")} readOnly={!!inviteEmail && mode === "signup"} />
           </div>
           <div className="field">
