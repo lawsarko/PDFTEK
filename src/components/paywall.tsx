@@ -279,7 +279,7 @@ function SaveAccountModal({ email: initialEmail, onClose }: { email: string | nu
             {exists && (
               <>
                 {" "}
-                <a href="/login">Sign in</a> and your purchase will move into that account.
+                <Link href="/login">Sign in</Link> and your purchase will move into that account.
               </>
             )}
           </div>

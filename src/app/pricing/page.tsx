@@ -4,7 +4,11 @@ import { CreditPacks, PlanCards } from "@/components/pricing";
 import { FREE_LIMITS, PRICING_FAQ } from "@/lib/plans";
 import { Reveal } from "@/components/motion";
 
-export const metadata = { title: "Pricing", description: "Free PDF tools for everyone. Day Pass $1.99, Pro $5.99/month, pay-as-you-go AI credits." };
+export const metadata = {
+  title: "Pricing – Free PDF Tools, $1.99 Day Pass, Pro $5.99/mo",
+  description: "Free PDF tools for everyone, no sign-up. Day Pass $1.99 for 24 hours, Pro $5.99/month, and pay-as-you-go AI credits that never expire.",
+  alternates: { canonical: "/pricing" },
+};
 export const dynamic = "force-dynamic";
 
 const ROWS: [string, string, string, string, string][] = [

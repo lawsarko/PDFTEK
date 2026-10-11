@@ -1,0 +1,573 @@
+import { FREE_LIMITS, PRODUCTS, usd } from "./plans";
+
+/**
+ * Public landing pages for each PDF task (/merge-pdf, /pdf-to-word, …): what search engines and AI
+ * assistants read. Every claim here must match what the app really does. `go` is the /go/<key> deep
+ * link that opens the tool.
+ */
+export type Access = "free" | "member" | "ai";
+export type SeoTool = {
+  slug: string;
+  go: string;
+  name: string;
+  category: "Convert from PDF" | "Convert to PDF" | "Organize" | "Optimize & secure" | "Edit & sign" | "AI & accessibility";
+  title: string;
+  description: string;
+  h1: string;
+  lead: string;
+  steps: [string, string][];
+  benefits: string[];
+  faq: [string, string][];
+  related: string[];
+  access: Access;
+};
+
+const FREE_NOTE = `Free without an account: ${FREE_LIMITS.guest.tasksPerDay} tasks a day (${FREE_LIMITS.free.tasksPerDay} with a free account), files up to ${FREE_LIMITS.free.maxFileMb} MB.`;
+const MEMBER_NOTE = `Included with a ${usd(PRODUCTS.pass.cents)} Day Pass (24 hours, no subscription) or Pro at ${usd(PRODUCTS.pro_month.cents)}/month.`;
+const AI_NOTE = `Uses AI credits: 250 credits cost ${usd(PRODUCTS.credits_250.cents)} and never expire, and Pro includes 400 a month.`;
+
+export const ACCESS_NOTE: Record<Access, string> = { free: FREE_NOTE, member: MEMBER_NOTE, ai: AI_NOTE };
+
+const privacyFaq: [string, string] = [
+  "Is it safe to upload my files?",
+  "Files are sent over HTTPS and stored in your private workspace, never shared or used to train AI. Files from sessions without an account are deleted automatically after 24 hours, and you can delete any file yourself at any time.",
+];
+const freeFaq: [string, string] = [
+  "Is it really free?",
+  `Yes. ${FREE_NOTE} No watermark is added. If you need more, a Day Pass is ${usd(PRODUCTS.pass.cents)} for 24 hours and Pro is ${usd(PRODUCTS.pro_month.cents)}/month.`,
+];
+const deviceFaq: [string, string] = [
+  "Do I need to install anything?",
+  "No. PDFTEK runs in your web browser on Windows, Mac, Linux, iPhone, iPad and Android. Nothing to download or install.",
+];
+
+export const SEO_TOOLS: SeoTool[] = [
+  // ---------- convert from PDF ----------
+  {
+    slug: "pdf-to-word",
+    go: "pdf-to-word",
+    name: "PDF to Word",
+    category: "Convert from PDF",
+    title: "PDF to Word Converter – Free, Editable DOCX Online",
+    description: "Convert PDF to an editable Word document (DOCX) online for free. Keeps headings, paragraphs and tables. Scanned PDFs work too. No sign-up needed.",
+    h1: "Convert PDF to Word",
+    lead: "Turn any PDF into an editable Word document (.docx) in seconds. Text, headings and tables come out ready to edit in Microsoft Word, Google Docs or Pages.",
+    steps: [
+      ["Upload your PDF", "Choose a PDF from your computer or phone, or drag it into PDFTEK."],
+      ["Convert to Word", "PDFTEK rebuilds the text, headings and tables as a real Word document."],
+      ["Download the DOCX", "Open it in Word, Google Docs or Pages and edit like any other document."],
+    ],
+    benefits: [
+      "Editable paragraphs, not a picture of your page",
+      "Tables become real Word tables",
+      "Scanned PDFs: run OCR first to convert them too",
+      "Works on Windows, Mac, iPhone and Android",
+    ],
+    faq: [
+      ["Will the formatting be kept?", "PDFTEK keeps paragraphs, headings, lists and tables so the document stays easy to edit. Very complex designs (magazine layouts, overlapping graphics) may need small touch-ups."],
+      ["Can I convert a scanned PDF to Word?", "Yes. Run OCR on the scan first (it's built in) so the text can be recognized, then convert to Word."],
+      freeFaq,
+      privacyFaq,
+    ],
+    related: ["word-to-pdf", "pdf-to-excel", "ocr-pdf", "edit-pdf"],
+    access: "free",
+  },
+  {
+    slug: "pdf-to-excel",
+    go: "pdf-to-excel",
+    name: "PDF to Excel",
+    category: "Convert from PDF",
+    title: "PDF to Excel Converter – Extract Tables to XLSX Free",
+    description: "Convert PDF tables to Excel (XLSX) online. Pull bank statements, invoices and reports into spreadsheet rows and columns. Free, no sign-up.",
+    h1: "Convert PDF to Excel",
+    lead: "Get the tables out of a PDF and into an Excel workbook (.xlsx), with rows and columns you can sort, sum and filter. No more retyping figures.",
+    steps: [
+      ["Upload your PDF", "Statements, invoices, price lists or reports with tables."],
+      ["Convert to Excel", "PDFTEK detects the tables and lays them out as spreadsheet cells."],
+      ["Download the XLSX", "Open it in Excel, Google Sheets or Numbers."],
+    ],
+    benefits: ["Tables become real cells you can calculate with", "Each page's tables are kept in order", "Great for bank statements, invoices and financial reports", "Opens in Excel, Google Sheets and Numbers"],
+    faq: [
+      ["Does it work with bank statements?", "Yes. Statements with clear columns convert well. For scanned statements, run OCR first."],
+      ["Can AI pull specific figures instead?", `Yes. Ask PDFTEK's AI to extract exactly the fields you need (totals, dates, parties) into a spreadsheet. ${AI_NOTE}`],
+      freeFaq,
+      privacyFaq,
+    ],
+    related: ["excel-to-pdf", "pdf-to-word", "chat-with-pdf", "ocr-pdf"],
+    access: "free",
+  },
+  {
+    slug: "pdf-to-powerpoint",
+    go: "pdf-to-powerpoint",
+    name: "PDF to PowerPoint",
+    category: "Convert from PDF",
+    title: "PDF to PowerPoint Converter – PDF to PPTX Online Free",
+    description: "Convert PDF to PowerPoint (PPTX) online. Each PDF page becomes a slide you can present and edit. Free, no account needed.",
+    h1: "Convert PDF to PowerPoint",
+    lead: "Turn a PDF into a PowerPoint presentation (.pptx). Every page becomes a slide, ready to present, reorder or add notes to.",
+    steps: [
+      ["Upload your PDF", "Any PDF: a report, handout or exported slide deck."],
+      ["Convert to PowerPoint", "Each page is placed on its own slide."],
+      ["Download the PPTX", "Open in PowerPoint, Keynote or Google Slides."],
+    ],
+    benefits: ["One slide per page, in order", "Opens in PowerPoint, Keynote and Google Slides", "Present PDFs without switching apps", "Free for everyday use"],
+    faq: [["Can I edit the slides?", "Yes. You can add text, notes and new slides around the converted pages in PowerPoint."], freeFaq, deviceFaq, privacyFaq],
+    related: ["powerpoint-to-pdf", "pdf-to-jpg", "pdf-to-word", "merge-pdf"],
+    access: "free",
+  },
+  {
+    slug: "pdf-to-jpg",
+    go: "pdf-to-jpg",
+    name: "PDF to JPG",
+    category: "Convert from PDF",
+    title: "PDF to JPG Converter – Save PDF Pages as Images Free",
+    description: "Convert PDF pages to high-quality JPG images online, or to PNG, WEBP and TIFF. Free, fast, no sign-up and no watermark.",
+    h1: "Convert PDF to JPG",
+    lead: "Save every page of a PDF as a sharp JPG image to share in chats, slides or social posts. PNG, WEBP and TIFF are available too.",
+    steps: [
+      ["Upload your PDF", "Choose the PDF whose pages you want as pictures."],
+      ["Convert to images", "Pick JPG, PNG, WEBP or TIFF."],
+      ["Download", "Get one image per page."],
+    ],
+    benefits: ["One image per page", "JPG, PNG, WEBP and TIFF", "No watermark on free conversions", "Works on phones and computers"],
+    faq: [["Can I convert to PNG instead of JPG?", "Yes. PNG, WEBP and TIFF are also available."], freeFaq, deviceFaq, privacyFaq],
+    related: ["jpg-to-pdf", "pdf-to-powerpoint", "compress-pdf", "split-pdf"],
+    access: "free",
+  },
+
+  // ---------- convert to PDF ----------
+  {
+    slug: "word-to-pdf",
+    go: "word-to-pdf",
+    name: "Word to PDF",
+    category: "Convert to PDF",
+    title: "Word to PDF Converter – DOC & DOCX to PDF Free Online",
+    description: "Convert Word documents (DOC, DOCX) to PDF online with fonts, tables and layout intact. Free, no sign-up, no watermark.",
+    h1: "Convert Word to PDF",
+    lead: "Turn a Word document (.docx or .doc) into a PDF that looks exactly the same on every device, with fonts, tables, bullets and spacing where you left them.",
+    steps: [
+      ["Upload your Word file", "DOCX or DOC from Microsoft Word, Google Docs export or LibreOffice."],
+      ["Convert to PDF", "PDFTEK renders the document with a full office engine for accurate layout."],
+      ["Download the PDF", "Share, print or sign it."],
+    ],
+    benefits: ["Accurate layout with a full office engine", "Fonts, tables, headers and footers kept", "Also converts RTF and ODT files", "No watermark"],
+    faq: [
+      ["Will my fonts and layout change?", "PDFTEK converts with a full office engine, so layout, tables and spacing are kept. Rare custom fonts are replaced by a close match if they aren't embedded in the file."],
+      ["Can I convert several Word files at once?", `Yes, up to ${FREE_LIMITS.free.maxFiles} files at a time for free, and up to 50 with a Day Pass or Pro.`],
+      freeFaq,
+      privacyFaq,
+    ],
+    related: ["pdf-to-word", "merge-pdf", "sign-pdf", "excel-to-pdf"],
+    access: "free",
+  },
+  {
+    slug: "excel-to-pdf",
+    go: "excel-to-pdf",
+    name: "Excel to PDF",
+    category: "Convert to PDF",
+    title: "Excel to PDF Converter – XLSX to PDF Free Online",
+    description: "Convert Excel spreadsheets (XLSX, XLS, ODS) to PDF online. Keeps columns, borders and number formats. Free, no sign-up.",
+    h1: "Convert Excel to PDF",
+    lead: "Turn an Excel spreadsheet into a clean PDF for invoices, reports and price lists, with columns, borders and number formats intact.",
+    steps: [
+      ["Upload your spreadsheet", "XLSX, XLS or ODS."],
+      ["Convert to PDF", "Each sheet is laid out on PDF pages."],
+      ["Download the PDF", "Ready to email, print or sign."],
+    ],
+    benefits: ["Columns, borders and formats kept", "XLSX, XLS and ODS supported", "Perfect for invoices and reports", "No watermark"],
+    faq: [["Does every sheet get converted?", "Yes, each sheet in the workbook is included in the PDF."], freeFaq, deviceFaq, privacyFaq],
+    related: ["pdf-to-excel", "word-to-pdf", "merge-pdf", "compress-pdf"],
+    access: "free",
+  },
+  {
+    slug: "powerpoint-to-pdf",
+    go: "powerpoint-to-pdf",
+    name: "PowerPoint to PDF",
+    category: "Convert to PDF",
+    title: "PowerPoint to PDF Converter – PPTX to PDF Free Online",
+    description: "Convert PowerPoint presentations (PPTX, PPT) to PDF online. One slide per page, layout and images intact. Free, no sign-up.",
+    h1: "Convert PowerPoint to PDF",
+    lead: "Turn a presentation into a PDF anyone can open: one slide per page, with images and layout exactly as designed.",
+    steps: [
+      ["Upload your presentation", "PPTX, PPT or ODP."],
+      ["Convert to PDF", "Each slide becomes a PDF page."],
+      ["Download the PDF", "Share handouts that open on any device."],
+    ],
+    benefits: ["One slide per page", "Images and layout kept", "Smaller and easier to share than PPTX", "No watermark"],
+    faq: [["Are animations kept?", "PDF is a static format, so each slide is saved as it looks at the end of its animations."], freeFaq, deviceFaq, privacyFaq],
+    related: ["pdf-to-powerpoint", "compress-pdf", "merge-pdf", "word-to-pdf"],
+    access: "free",
+  },
+  {
+    slug: "jpg-to-pdf",
+    go: "jpg-to-pdf",
+    name: "JPG to PDF",
+    category: "Convert to PDF",
+    title: "JPG to PDF Converter – Images to PDF Free Online",
+    description: "Convert JPG, PNG, HEIC and other images to PDF online. Combine several photos into one PDF. Free, no sign-up, no watermark.",
+    h1: "Convert JPG to PDF",
+    lead: "Turn photos and images into a PDF. Combine several pictures into one document: receipts, IDs, handwritten notes or iPhone photos (HEIC).",
+    steps: [
+      ["Add your images", "JPG, PNG, HEIC, WEBP and more, from your computer or phone."],
+      ["Arrange them", "Put the pages in the order you want."],
+      ["Create the PDF", "Download one PDF with all your images."],
+    ],
+    benefits: ["Combine many photos into one PDF", "JPG, PNG, HEIC (iPhone) and WEBP", "Great for receipts and ID copies", "No watermark"],
+    faq: [["Can I convert iPhone photos (HEIC)?", "Yes. HEIC photos from iPhone and iPad are supported."], freeFaq, deviceFaq, privacyFaq],
+    related: ["pdf-to-jpg", "scan-to-pdf", "merge-pdf", "compress-pdf"],
+    access: "free",
+  },
+  {
+    slug: "scan-to-pdf",
+    go: "scan-to-pdf",
+    name: "Scan to PDF",
+    category: "Convert to PDF",
+    title: "Scan to PDF – Scan Documents With Your Phone Camera",
+    description: "Scan paper documents to PDF with your phone or laptop camera, then make them searchable with OCR. Free online, no app needed.",
+    h1: "Scan documents to PDF",
+    lead: "Use your phone or laptop camera to scan paper documents straight into a PDF. No scanner and no app to install. Then make the text searchable with OCR.",
+    steps: [
+      ["Open the scanner", "Allow camera access in your browser."],
+      ["Capture each page", "Snap as many pages as you need."],
+      ["Save as PDF", "Optionally run OCR to make the text searchable and copyable."],
+    ],
+    benefits: ["No scanner or app needed", "Multi-page scans in one PDF", "OCR in 13 languages makes scans searchable", "Works on iPhone and Android"],
+    faq: [["Can I search the text of a scanned document?", "Yes. Run OCR after scanning and the PDF gets a searchable, copyable text layer."], freeFaq, deviceFaq, privacyFaq],
+    related: ["ocr-pdf", "jpg-to-pdf", "compress-pdf", "sign-pdf"],
+    access: "free",
+  },
+
+  // ---------- organize ----------
+  {
+    slug: "merge-pdf",
+    go: "merge",
+    name: "Merge PDF",
+    category: "Organize",
+    title: "Merge PDF – Combine PDF Files Into One Free Online",
+    description: "Merge PDF files online for free. Combine multiple PDFs into one document in the order you want. No sign-up, no watermark.",
+    h1: "Merge PDF files",
+    lead: "Combine several PDFs into one document in the order you choose. Ideal for applications, reports and paperwork you need to send as a single file.",
+    steps: [
+      ["Add your PDFs", "Upload two or more PDF files."],
+      ["Put them in order", "Arrange the files the way they should appear."],
+      ["Merge and download", "Get one combined PDF."],
+    ],
+    benefits: ["Combine any number of PDFs", "Keep pages in the order you choose", "No watermark, no sign-up", "Reorder or remove pages afterwards"],
+    faq: [
+      ["How many PDFs can I merge?", `Up to ${FREE_LIMITS.free.maxFiles} files at a time for free (${FREE_LIMITS.free.maxFileMb} MB each). A Day Pass or Pro raises that to 50 files of 100 MB.`],
+      ["Can I merge Word files and images too?", "Yes. Convert them to PDF first (also free), then merge."],
+      freeFaq,
+      privacyFaq,
+    ],
+    related: ["split-pdf", "organize-pdf", "compress-pdf", "jpg-to-pdf"],
+    access: "free",
+  },
+  {
+    slug: "split-pdf",
+    go: "split",
+    name: "Split PDF",
+    category: "Organize",
+    title: "Split PDF – Extract Pages From a PDF Free Online",
+    description: "Split a PDF into separate files or extract specific pages online. Free, fast, no sign-up and no watermark.",
+    h1: "Split a PDF",
+    lead: "Pull out the pages you need, or break a large PDF into smaller files. Perfect for sending just one chapter, invoice or form.",
+    steps: [
+      ["Upload your PDF", "Choose the file you want to split."],
+      ["Choose pages", "Pick page ranges or split into separate files."],
+      ["Download", "Get the new PDFs."],
+    ],
+    benefits: ["Extract any page range", "Split into multiple files", "Original stays untouched", "No watermark"],
+    faq: [["Does splitting reduce quality?", "No. Pages are copied exactly; nothing is re-compressed."], freeFaq, deviceFaq, privacyFaq],
+    related: ["merge-pdf", "organize-pdf", "rotate-pdf", "compress-pdf"],
+    access: "free",
+  },
+  {
+    slug: "organize-pdf",
+    go: "organize",
+    name: "Organize PDF",
+    category: "Organize",
+    title: "Organize PDF – Reorder, Delete & Rearrange Pages Free",
+    description: "Reorder, delete and rearrange PDF pages online. Drag pages into place and download the new PDF. Free, no sign-up.",
+    h1: "Organize PDF pages",
+    lead: "Drag pages into the right order, delete the ones you don't need, and save a clean PDF.",
+    steps: [
+      ["Upload your PDF", "See every page as a thumbnail."],
+      ["Rearrange", "Drag to reorder and remove unwanted pages."],
+      ["Save", "Download the reorganized PDF."],
+    ],
+    benefits: ["Visual page thumbnails", "Reorder and delete pages", "Every version is kept", "No watermark"],
+    faq: [["Can I undo changes?", "Yes. PDFTEK keeps previous versions of your document, so you can go back."], freeFaq, deviceFaq, privacyFaq],
+    related: ["merge-pdf", "split-pdf", "rotate-pdf", "add-page-numbers-to-pdf"],
+    access: "free",
+  },
+  {
+    slug: "rotate-pdf",
+    go: "rotate",
+    name: "Rotate PDF",
+    category: "Organize",
+    title: "Rotate PDF – Turn PDF Pages Permanently Free Online",
+    description: "Rotate PDF pages online and save them permanently. Fix sideways or upside-down scans. Free, no sign-up, no watermark.",
+    h1: "Rotate PDF pages",
+    lead: "Fix sideways or upside-down pages and save the rotation permanently, so the PDF opens the right way for everyone.",
+    steps: [
+      ["Upload your PDF", "Choose the file with pages to turn."],
+      ["Rotate", "Turn pages 90°, 180° or 270°."],
+      ["Save", "Download the corrected PDF."],
+    ],
+    benefits: ["Permanent rotation, not just the viewer", "Rotate one page or all pages", "Great for scans", "No watermark"],
+    faq: [["Will the rotation stick when I send the file?", "Yes. The rotation is saved in the PDF itself."], freeFaq, deviceFaq, privacyFaq],
+    related: ["organize-pdf", "scan-to-pdf", "split-pdf", "merge-pdf"],
+    access: "free",
+  },
+  {
+    slug: "add-page-numbers-to-pdf",
+    go: "page-numbers",
+    name: "Add page numbers",
+    category: "Organize",
+    title: "Add Page Numbers to PDF – Free Online Tool",
+    description: "Add page numbers to a PDF online: \"Page n of N\" or Bates numbering, positioned where you want. For reports, theses and legal bundles. Free.",
+    h1: "Add page numbers to a PDF",
+    lead: "Number the pages of any PDF for reports, theses, court bundles and manuals, without opening a desktop editor.",
+    steps: [
+      ["Upload your PDF", "Choose the document to number."],
+      ["Pick the style", "\"Page n of N\" or Bates-style numbering, and where it goes."],
+      ["Download", "Get the numbered PDF."],
+    ],
+    benefits: ["\"Page n of N\" or Bates numbering", "Choose the position and start number", "Ideal for legal bundles and theses", "No watermark"],
+    faq: [freeFaq, deviceFaq, privacyFaq],
+    related: ["watermark-pdf", "organize-pdf", "merge-pdf", "edit-pdf"],
+    access: "free",
+  },
+
+  // ---------- optimize & secure ----------
+  {
+    slug: "compress-pdf",
+    go: "compress",
+    name: "Compress PDF",
+    category: "Optimize & secure",
+    title: "Compress PDF – Reduce PDF File Size Free Online",
+    description: "Compress PDF files online to reduce file size for email and uploads. Choose the level; images are optimized, text stays sharp. Free, no sign-up.",
+    h1: "Compress a PDF",
+    lead: "Make large PDFs small enough to email or upload. Images are recompressed and unused data removed while text stays crisp. Image-heavy files often shrink by 90% or more.",
+    steps: [
+      ["Upload your PDF", "Any PDF that's too big to send."],
+      ["Choose a level", "Balanced for everyday use, or strong for the smallest file."],
+      ["Download", "See the new size before you download."],
+    ],
+    benefits: ["Shrinks image-heavy PDFs dramatically", "Text stays sharp and searchable", "Choose quality vs. size", "No watermark"],
+    faq: [
+      ["How much smaller will my PDF get?", "It depends on the content. Scans and photo-heavy PDFs shrink the most, often by 90% or more. Text-only PDFs are usually small already."],
+      ["Will the quality drop?", "Text and vector graphics stay sharp. Photos are recompressed; the balanced level keeps them looking good on screen and in print."],
+      freeFaq,
+      privacyFaq,
+    ],
+    related: ["merge-pdf", "pdf-to-jpg", "split-pdf", "protect-pdf"],
+    access: "free",
+  },
+  {
+    slug: "protect-pdf",
+    go: "protect",
+    name: "Protect PDF",
+    category: "Optimize & secure",
+    title: "Password Protect PDF – Encrypt PDF With AES-256 Free",
+    description: "Add a password to a PDF online with AES-256 encryption. Optionally block printing, copying and editing. Free, no sign-up.",
+    h1: "Password-protect a PDF",
+    lead: "Lock a PDF with a password using strong AES-256 encryption. You can also stop others from printing, copying or editing it.",
+    steps: [
+      ["Upload your PDF", "Choose the document to protect."],
+      ["Set a password", "Optionally restrict printing, copying and editing."],
+      ["Download", "Only people with the password can open it."],
+    ],
+    benefits: ["AES-256 encryption", "Restrict printing, copying and editing", "Opens in any PDF reader with the password", "No watermark"],
+    faq: [
+      ["How strong is the protection?", "PDFTEK uses AES-256, the strongest encryption in the PDF standard. Choose a long password: it can't be recovered if you forget it."],
+      ["Can I remove the password later?", "Yes, with the Unlock PDF tool, as long as you know the password."],
+      freeFaq,
+      privacyFaq,
+    ],
+    related: ["unlock-pdf", "watermark-pdf", "sign-pdf", "compress-pdf"],
+    access: "free",
+  },
+  {
+    slug: "unlock-pdf",
+    go: "unlock",
+    name: "Unlock PDF",
+    category: "Optimize & secure",
+    title: "Unlock PDF – Remove PDF Password Free Online",
+    description: "Remove the password from a PDF you own. Enter the password once and download an unlocked copy. Free, no sign-up.",
+    h1: "Remove a PDF password",
+    lead: "Tired of typing the password every time? Enter it once and download an unlocked copy of your PDF. Restrictions on printing and copying are removed too.",
+    steps: [
+      ["Upload the locked PDF", "Choose your password-protected file."],
+      ["Enter the password", "It's used once to decrypt the file."],
+      ["Download", "Get an unlocked copy."],
+    ],
+    benefits: ["Removes open passwords and restrictions", "Your password is never stored", "Unlocked copy keeps every page intact", "No watermark"],
+    faq: [
+      ["Can you unlock a PDF without the password?", "No. PDFTEK only unlocks files you can open, so you need the password. PDFs that only restrict printing or copying (no open password) are unlocked automatically."],
+      freeFaq,
+      privacyFaq,
+    ],
+    related: ["protect-pdf", "compress-pdf", "edit-pdf", "merge-pdf"],
+    access: "free",
+  },
+  {
+    slug: "watermark-pdf",
+    go: "watermark",
+    name: "Watermark PDF",
+    category: "Optimize & secure",
+    title: "Add Watermark to PDF – Stamp Text on PDF Pages Free",
+    description: "Add a text watermark like CONFIDENTIAL or DRAFT to every page of a PDF online. Free, no sign-up.",
+    h1: "Add a watermark to a PDF",
+    lead: "Stamp CONFIDENTIAL, DRAFT, COPY or your company name across every page to discourage sharing and mark the status of a document.",
+    steps: [
+      ["Upload your PDF", "Choose the document to mark."],
+      ["Type the watermark", "Enter the text to stamp on each page."],
+      ["Download", "Get the watermarked PDF."],
+    ],
+    benefits: ["Marks every page", "Any text you like", "Original kept as a previous version", "Combine with password protection"],
+    faq: [freeFaq, deviceFaq, privacyFaq],
+    related: ["protect-pdf", "add-page-numbers-to-pdf", "sign-pdf", "edit-pdf"],
+    access: "free",
+  },
+
+  // ---------- edit & sign ----------
+  {
+    slug: "edit-pdf",
+    go: "edit",
+    name: "Edit PDF",
+    category: "Edit & sign",
+    title: "Edit PDF Online – Change Text, Add Images & Redact",
+    description: "Edit PDF text directly in your browser: click a line to change it, add text and images, highlight, and permanently redact. No software to install.",
+    h1: "Edit a PDF online",
+    lead: "Click any line to change the words, keeping the original font. Add text boxes and images, highlight, and permanently redact sensitive information.",
+    steps: [
+      ["Upload your PDF", "Open it in the PDFTEK editor."],
+      ["Click and edit", "Change existing text, add text or images, highlight or redact."],
+      ["Save and download", "Every save keeps the previous version."],
+    ],
+    benefits: ["Edit existing text, not just add on top", "True redaction: hidden text is removed for good", "Add images, text and highlights", "Version history for every save"],
+    faq: [
+      ["Can I change the existing text in a PDF?", "Yes. Click a line and type. PDFTEK matches the original font as closely as possible."],
+      ["Is redaction permanent?", "Yes. Redacted pages are flattened, so the hidden text can't be copied or recovered."],
+      ["How much does it cost?", MEMBER_NOTE],
+      privacyFaq,
+    ],
+    related: ["sign-pdf", "watermark-pdf", "pdf-to-word", "ocr-pdf"],
+    access: "member",
+  },
+  {
+    slug: "sign-pdf",
+    go: "sign",
+    name: "Sign PDF",
+    category: "Edit & sign",
+    title: "Sign PDF Online – E-Signatures With Audit Certificate",
+    description: "Send PDFs for e-signature online. Place fields, set signing order, send reminders, and get a certificate of completion. No account needed to sign.",
+    h1: "Sign PDFs and request e-signatures",
+    lead: "Place signature, date and text fields, send to one or more signers in order, and get a signed PDF with a certificate of completion. Signers don't need an account.",
+    steps: [
+      ["Upload your PDF", "Contracts, offer letters, NDAs or forms."],
+      ["Place fields and add signers", "Choose who signs where, and in what order."],
+      ["Send", "Signers get an email link; you get the signed PDF and certificate."],
+    ],
+    benefits: ["Signing order and reminders", "Certificate of completion with SHA-256 fingerprint", "Signers need no account", "Captures consent, timestamps and IP addresses"],
+    faq: [
+      ["Are the e-signatures legally binding?", "PDFTEK records consent, signer email identity, IP addresses and timestamps, and adds a certificate of completion: the standard evidence for simple electronic signatures under ESIGN (US) and eIDAS (EU). Check local rules for regulated documents."],
+      ["Do signers need to pay or sign up?", "No. Signers open a secure link from their email and sign in the browser."],
+      ["How much does it cost?", MEMBER_NOTE],
+      privacyFaq,
+    ],
+    related: ["edit-pdf", "word-to-pdf", "protect-pdf", "merge-pdf"],
+    access: "member",
+  },
+
+  // ---------- AI & accessibility ----------
+  {
+    slug: "ocr-pdf",
+    go: "ocr",
+    name: "OCR PDF",
+    category: "AI & accessibility",
+    title: "OCR PDF – Make Scanned PDFs Searchable Free Online",
+    description: "Run OCR on scanned PDFs to make the text searchable and copyable. 13 languages including English, Spanish, French, German and Chinese. Free online.",
+    h1: "Make a scanned PDF searchable with OCR",
+    lead: "Scanned pages are just pictures. OCR recognizes the text so you can search, select, copy and convert it, in 13 languages.",
+    steps: [
+      ["Upload a scanned PDF", "Or scan pages with your camera."],
+      ["Choose the language", "13 languages are available."],
+      ["Run OCR", "The PDF gets a searchable text layer, and the page looks the same."],
+    ],
+    benefits: ["13 OCR languages", "Text becomes searchable and copyable", "Page appearance unchanged", "Then convert to Word or Excel"],
+    faq: [["Which languages are supported?", "13 languages, including English, Spanish, French, German, Portuguese, Italian and Chinese."], freeFaq, deviceFaq, privacyFaq],
+    related: ["scan-to-pdf", "pdf-to-word", "pdf-to-excel", "chat-with-pdf"],
+    access: "free",
+  },
+  {
+    slug: "read-pdf-aloud",
+    go: "read-aloud",
+    name: "Read PDF aloud",
+    category: "AI & accessibility",
+    title: "Read PDF Aloud – PDF Text to Speech Online",
+    description: "Listen to any PDF with natural text-to-speech in 11 languages. Pick the voice and speed, follow along as it reads. No app to install.",
+    h1: "Read a PDF aloud",
+    lead: "Listen to reports, papers and books while you commute or cook. Choose the voice, language and speed, and follow along as PDFTEK reads.",
+    steps: [
+      ["Upload your PDF", "Any PDF with text, or a scan after OCR."],
+      ["Press play", "Choose voice, language and speed."],
+      ["Listen", "Pause, skip and resume anytime."],
+    ],
+    benefits: ["11 languages", "Adjustable voice and speed", "Great for accessibility and learning", "Works on phone and desktop"],
+    faq: [["Can it read scanned PDFs?", "Yes, after running OCR (built in) so the text can be recognized."], ["How much does it cost?", MEMBER_NOTE], deviceFaq, privacyFaq],
+    related: ["chat-with-pdf", "ocr-pdf", "pdf-to-word", "edit-pdf"],
+    access: "member",
+  },
+  {
+    slug: "chat-with-pdf",
+    go: "ask",
+    name: "Chat with PDF",
+    category: "AI & accessibility",
+    title: "Chat With PDF – AI Answers With Page Citations",
+    description: "Ask questions about any PDF and get AI answers that cite the exact page. Summarize contracts, reports and papers, and extract data to Excel.",
+    h1: "Chat with your PDF",
+    lead: "Ask a question in plain language and get an answer drawn only from your document, with the page cited. Click a citation to see the passage highlighted.",
+    steps: [
+      ["Upload your PDF", "Contracts, research papers, financial reports, manuals."],
+      ["Ask anything", "Summaries, key dates, obligations, figures, comparisons."],
+      ["Check the source", "Every answer links to the page it came from."],
+    ],
+    benefits: ["Answers cite the exact page", "Summaries, key terms and risk flags", "Extract figures and tables to Excel", "Works across many documents at once"],
+    faq: [
+      ["Does the AI make things up?", "PDFTEK answers only from your documents and cites the page for every claim, so you can verify any answer in seconds."],
+      ["How much does it cost?", AI_NOTE],
+      ["Is my document used to train AI?", "No. Your documents are only used to answer your questions."],
+      privacyFaq,
+    ],
+    related: ["compare-pdf", "pdf-to-excel", "read-pdf-aloud", "ocr-pdf"],
+    access: "ai",
+  },
+  {
+    slug: "compare-pdf",
+    go: "compare",
+    name: "Compare PDF",
+    category: "AI & accessibility",
+    title: "Compare PDF Files – Find Differences Between Two PDFs",
+    description: "Compare two PDF versions side by side and see every change highlighted: added, removed and edited text. Ideal for contracts and redlines.",
+    h1: "Compare two PDFs",
+    lead: "See exactly what changed between two versions of a contract or report, with additions and deletions highlighted. No more reading both line by line.",
+    steps: [
+      ["Upload two versions", "The original and the revised PDF."],
+      ["Compare", "PDFTEK lines up the text and marks every change."],
+      ["Review", "Jump through additions and deletions."],
+    ],
+    benefits: ["Additions and deletions highlighted", "Great for contract redlines", "Optional AI summary of what changed", "No software to install"],
+    faq: [["Can AI summarize the changes?", `Yes. An AI summary of the important changes is available. ${AI_NOTE}`], freeFaq, deviceFaq, privacyFaq],
+    related: ["chat-with-pdf", "edit-pdf", "sign-pdf", "pdf-to-word"],
+    access: "free",
+  },
+];
+
+export const SEO_TOOL_BY_SLUG = new Map(SEO_TOOLS.map((t) => [t.slug, t]));
+export const SEO_CATEGORIES = Array.from(new Set(SEO_TOOLS.map((t) => t.category)));
+
+export function siteUrl() {
+  return (process.env.APP_URL || "https://pdftek.com").replace(/\/$/, "");
+}

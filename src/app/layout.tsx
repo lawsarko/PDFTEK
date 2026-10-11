@@ -3,11 +3,23 @@ import "./globals.css";
 import { ToastProvider } from "@/components/toast";
 import { PaywallHost } from "@/components/paywall";
 
+const SITE = (process.env.APP_URL || "https://pdftek.com").replace(/\/$/, "");
+const DESCRIPTION =
+  "Free online PDF tools: convert PDF to Word, Excel, PowerPoint and JPG and back, merge, split, compress, protect, edit, e-sign and chat with PDFs. No sign-up needed.";
+
 export const metadata: Metadata = {
-  title: { default: "pdftek — Every document, handled.", template: "%s · pdftek" },
-  description:
-    "Upload, convert, edit, sign and understand documents in one workspace. AI answers with page citations, e-signatures, document requests and automations for legal, finance and research teams.",
+  metadataBase: new URL(SITE),
+  title: { default: "PDFTEK – Free Online PDF Tools: Convert, Edit, Merge & Sign PDFs", template: "%s | PDFTEK" },
+  description: DESCRIPTION,
+  applicationName: "PDFTEK",
+  openGraph: { type: "website", siteName: "PDFTEK", title: "PDFTEK – Every document, handled.", description: DESCRIPTION },
+  twitter: { card: "summary_large_image", title: "PDFTEK – Every document, handled.", description: DESCRIPTION },
   icons: { icon: "/icon.svg" },
+  // Paste the codes from Google Search Console and Bing Webmaster Tools into these env vars.
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
+    other: process.env.BING_SITE_VERIFICATION ? { "msvalidate.01": process.env.BING_SITE_VERIFICATION } : undefined,
+  },
 };
 
 export const viewport: Viewport = { themeColor: "#10151c", width: "device-width", initialScale: 1 };

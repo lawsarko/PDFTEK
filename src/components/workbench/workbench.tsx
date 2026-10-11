@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api, errMsg } from "@/lib/client/api";
@@ -208,7 +209,7 @@ function GuestBanner({ paid }: { paid: boolean }) {
           <b>Your purchase is saved in this browser only.</b> Create your account to keep it and use it on any device.
         </span>
         <button className="btn btn-sm btn-primary" onClick={openSaveAccount}>Save my purchase</button>
-        <a className="btn btn-sm btn-ghost hide-mobile" href="/login">Sign in</a>
+        <Link className="btn btn-sm btn-ghost hide-mobile" href="/login">Sign in</Link>
       </div>
     );
   }
@@ -218,8 +219,8 @@ function GuestBanner({ paid }: { paid: boolean }) {
       <span className="grow">
         You&apos;re using pdftek without an account. Files are deleted after 24 hours. <b>Create a free account</b> to keep them and get {FREE_LIMITS.free.tasksPerDay} free tasks a day.
       </span>
-      <a className="btn btn-sm btn-primary" href="/signup">Create free account</a>
-      <a className="btn btn-sm btn-ghost hide-mobile" href="/login">Sign in</a>
+      <Link className="btn btn-sm btn-primary" href="/signup">Create free account</Link>
+      <Link className="btn btn-sm btn-ghost hide-mobile" href="/login">Sign in</Link>
     </div>
   );
 }

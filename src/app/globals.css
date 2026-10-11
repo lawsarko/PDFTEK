@@ -578,3 +578,25 @@ button.chip:hover { border-color: var(--steel); color: var(--text-hi); }
 .compare-table td:first-child { color: var(--text-hi); }
 .card .price-grid.price-grid-4 { grid-template-columns: repeat(2, 1fr); margin-top: 16px; }
 @media (max-width: 640px) { .card .price-grid.price-grid-4 { grid-template-columns: 1fr; } }
+
+/* ---------- SEO tool pages ---------- */
+.crumbs { font-size: 13px; color: var(--slate); display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.crumbs a { color: var(--text-lo); }
+.seo-steps { list-style: none; padding: 0; margin: 24px 0 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.seo-steps li { display: flex; gap: 14px; background: var(--ink-2); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+.seo-steps h3 { font-size: 16px; margin: 2px 0 6px; }
+.seo-steps p { margin: 0; color: var(--text-lo); font-size: 14px; line-height: 1.55; }
+.seo-step-n { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--amber-soft); color: var(--amber); font-family: var(--font-mono); display: flex; align-items: center; justify-content: center; font-weight: 600; }
+.seo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 18px; }
+.seo-tile { display: flex; flex-direction: column; gap: 6px; background: var(--ink-2); border: 1px solid var(--line); border-radius: 12px; padding: 16px; color: var(--text-hi); transition: border-color .15s, transform .15s; }
+.seo-tile:hover { border-color: var(--amber); text-decoration: none; transform: translateY(-2px); }
+.seo-tile span { color: var(--text-lo); font-size: 13px; line-height: 1.5; }
+.mk-footer-tools { max-width: 1180px; margin: 0 auto 28px; display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px 20px; font-size: 13px; }
+.mk-footer-tools a { color: var(--text-lo); }
+@media (max-width: 900px) { .seo-steps { grid-template-columns: 1fr; } .seo-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 520px) { .seo-grid { grid-template-columns: 1fr; } }
+@media (max-width: 520px) {
+  .mk-nav-inner { gap: 10px; padding: 0 14px; }
+  .mk-nav-inner .btn-sm { padding-left: 10px; padding-right: 10px; }
+}
+@media (max-width: 380px) { .mk-nav-inner .btn-ghost { display: none; } }

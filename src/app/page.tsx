@@ -2,9 +2,13 @@ import Link from "next/link";
 import { currentUser } from "@/lib/auth";
 import { I, Logo } from "@/components/icons";
 import { MarketingNav, MarketingFooter } from "@/components/marketing";
+import { JsonLd } from "@/components/json-ld";
+import { SEO_TOOLS, siteUrl } from "@/lib/seo-tools";
+import { PRODUCTS } from "@/lib/plans";
 import { ConvertDemo, CountUp, FlowSequence, LiveChat, Reveal, ScrollProgress, Spotlight, TiltOnScroll, Typewriter } from "@/components/motion";
 
 export const dynamic = "force-dynamic";
+export const metadata = { alternates: { canonical: "/" }, openGraph: { url: "/" } };
 
 const TYPED = ["converted.", "edited.", "signed.", "understood.", "handled."];
 
@@ -31,8 +35,40 @@ const FEATURES: { icon: React.ReactNode; title: string; body: string }[] = [
 
 export default async function Home() {
   const user = await currentUser();
+  const site = siteUrl();
   return (
     <div className="mk">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": `${site}/#org`,
+              name: "PDFTEK",
+              url: site,
+              logo: `${site}/icon.svg`,
+            },
+            { "@type": "WebSite", "@id": `${site}/#site`, name: "PDFTEK", url: site, publisher: { "@id": `${site}/#org` } },
+            {
+              "@type": "SoftwareApplication",
+              name: "PDFTEK",
+              url: site,
+              applicationCategory: "BusinessApplication",
+              operatingSystem: "Any (web browser)",
+              description:
+                "Online PDF workbench: convert, merge, split, compress, protect, OCR, edit, e-sign and chat with PDFs. Most tools are free without an account.",
+              featureList: SEO_TOOLS.map((t) => t.name),
+              offers: [
+                { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD" },
+                { "@type": "Offer", name: "Day Pass", price: (PRODUCTS.pass.cents / 100).toFixed(2), priceCurrency: "USD" },
+                { "@type": "Offer", name: "Pro (monthly)", price: (PRODUCTS.pro_month.cents / 100).toFixed(2), priceCurrency: "USD" },
+              ],
+              publisher: { "@id": `${site}/#org` },
+            },
+          ],
+        }}
+      />
       <MarketingNav signedIn={!!user} />
 
       <ScrollProgress />
@@ -126,6 +162,24 @@ export default async function Home() {
             <ConvertDemo />
           </Reveal>
         </div>
+      </section>
+
+      <section className="mk-section" id="tools" style={{ paddingTop: 24 }}>
+        <Reveal>
+          <div className="eyebrow">PDF tools</div>
+          <h2 className="mk-h2" style={{ marginTop: 10 }}>Popular PDF tools, free online.</h2>
+          <div className="seo-grid">
+            {SEO_TOOLS.slice(0, 12).map((t) => (
+              <Link key={t.slug} href={`/${t.slug}`} className="seo-tile">
+                <b>{t.name}</b>
+                <span>{t.description.split(". ")[0]}.</span>
+              </Link>
+            ))}
+          </div>
+          <p style={{ marginTop: 18 }}>
+            <Link href="/tools">See all {SEO_TOOLS.length} PDF tools →</Link>
+          </p>
+        </Reveal>
       </section>
 
       <section className="mk-section" id="features">
