@@ -600,3 +600,7 @@ button.chip:hover { border-color: var(--steel); color: var(--text-hi); }
   .mk-nav-inner .btn-sm { padding-left: 10px; padding-right: 10px; }
 }
 @media (max-width: 380px) { .mk-nav-inner .btn-ghost { display: none; } }
+.mk-footer-made { max-width: 1180px; margin: 28px auto 0; padding-top: 20px; border-top: 1px solid var(--line-soft); text-align: center; color: var(--slate); font-size: 13px; }
+.mk-footer-made .heart { color: #e5484d; display: inline-block; animation: heartbeat 1.6s ease-in-out infinite; }
+@keyframes heartbeat { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.25); } 30% { transform: scale(1); } 45% { transform: scale(1.15); } }
+@media (prefers-reduced-motion: reduce) { .mk-footer-made .heart { animation: none; } }

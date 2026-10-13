@@ -65,6 +65,9 @@ export function MarketingFooter() {
         </div>
         <span>© {new Date().getFullYear()} PDFTEK</span>
       </div>
+      <p className="mk-footer-made">
+        Made in Chicago, USA with love <span className="heart" aria-hidden="true">♥</span>
+      </p>
     </footer>
   );
 }
