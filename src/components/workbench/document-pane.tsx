@@ -223,6 +223,9 @@ export function DocumentPane() {
           <button className={`tool-btn ${tts ? "active" : ""}`} onClick={() => (tts ? setTts(false) : requirePro("Read aloud") && setTts(true))}>
             <I.speaker size={13} /> Read aloud
           </button>
+          <Link href={`/app/${wid}/fill/${active.id}`} className="tool-btn" title="Fill in this form: AI finds the fields and fills them from your profile">
+            <I.form size={13} /> Fill form
+          </Link>
           <Link
             href={`/app/${wid}/send/${active.id}`}
             className="tool-btn"

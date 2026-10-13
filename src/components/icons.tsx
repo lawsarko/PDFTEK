@@ -70,6 +70,10 @@ export const I = {
   folder: svg(<path d="M3 6h6l2 2h10v11H3z" />),
   clock: svg(<><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>),
   menu: svg(<path d="M4 6h16M4 12h16M4 18h16" />),
+  form: svg(<><rect x="5" y="3.5" width="14" height="18" rx="2" /><path d="M9 3.5h6v3H9z" /><path d="M8.5 11h7M8.5 14.5h7M8.5 18h4" /></>),
+  user: svg(<><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" /></>),
+  info: svg(<><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7.5v.5" /></>),
+  steps: svg(<><path d="M4 7h4M4 12h8M4 17h12" /><path d="m17 5 3 2-3 2" /></>),
 };
 
 export function Logo({ size = 22 }: { size?: number }) {

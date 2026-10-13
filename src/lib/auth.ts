@@ -234,6 +234,9 @@ export function mergeGuestInto(guestId: string, targetWorkspaceId: string, targe
     }
     run("DELETE FROM workspaces WHERE id = ?", ws.id);
   }
+  // Form profiles belong to the person, so they come along too.
+  run("UPDATE form_profiles SET user_id = ? WHERE user_id = ?", targetUserId, guestId);
+  run("UPDATE OR IGNORE form_drafts SET user_id = ? WHERE user_id = ?", targetUserId, guestId);
   run("DELETE FROM users WHERE id = ? AND is_guest = 1", guestId);
 }
 

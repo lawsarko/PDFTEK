@@ -141,6 +141,7 @@ type Entry = {
 const ENTRIES: Entry[] = [
   { label: "Convert", groups: CONVERT, icon: <I.convert size={18} /> },
   { label: "Edit", href: "/go/edit", icon: <I.edit size={18} /> },
+  { label: "Fill form", href: "/go/fill-form", icon: <I.form size={18} /> },
   { label: "Sign", href: "/go/sign", icon: <I.sign size={18} /> },
   { label: "Organize", groups: ORGANIZE, icon: <I.layers size={18} /> },
   { label: "Read aloud", href: "/go/read-aloud", icon: <I.speaker size={18} /> },

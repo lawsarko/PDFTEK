@@ -279,6 +279,49 @@ CREATE TABLE IF NOT EXISTS login_tokens (
   expires_at INTEGER NOT NULL,
   used_at INTEGER
 );
+
+-- Form filler: reusable answers (one person can keep several, e.g. "Me", "My child", "My company").
+CREATE TABLE IF NOT EXISTS form_profiles (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'person',
+  data_json TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS form_profiles_user ON form_profiles(user_id);
+
+-- The fields found on a form (by the PDF itself, AI, or by hand), so it can be filled again instantly.
+CREATE TABLE IF NOT EXISTS form_templates (
+  document_id TEXT PRIMARY KEY REFERENCES documents(id) ON DELETE CASCADE,
+  workspace_id TEXT NOT NULL,
+  version_id TEXT NOT NULL,
+  fields_json TEXT NOT NULL,
+  summary_json TEXT,
+  acro INTEGER NOT NULL DEFAULT 0,
+  detected_by TEXT NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
+-- Answers in progress, so a half-filled form survives a closed tab. Sensitive answers are never kept.
+CREATE TABLE IF NOT EXISTS form_drafts (
+  document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  values_json TEXT NOT NULL,
+  profile_id TEXT,
+  updated_at INTEGER NOT NULL,
+  PRIMARY KEY (document_id, user_id)
+);
+
+-- One AI-filled form a month on the house, so everyone can try it.
+CREATE TABLE IF NOT EXISTS form_free_uses (
+  workspace_id TEXT NOT NULL,
+  month TEXT NOT NULL,
+  document_id TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (workspace_id, month)
+);
 `;
 
 /** Columns added after the first release; created on startup when missing. */

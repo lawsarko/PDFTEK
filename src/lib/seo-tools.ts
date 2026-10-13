@@ -433,6 +433,42 @@ export const SEO_TOOLS: SeoTool[] = [
 
   // ---------- edit & sign ----------
   {
+    slug: "fill-pdf-form",
+    go: "fill-form",
+    name: "Fill PDF form",
+    category: "Edit & sign",
+    title: "Fill PDF Forms Online with AI – Autofill, Sign & Send",
+    description:
+      "Fill any PDF form online, even scanned or non-fillable ones. AI finds every field, explains each question and autofills from your saved profile. Sign and download free.",
+    h1: "Fill any PDF form in minutes",
+    lead: "Upload a form, fillable or not, even a phone photo of a paper form. PDFTEK finds every blank, box and signature line, explains each question in plain English, and fills what it already knows about you. You check, sign and download.",
+    steps: [
+      ["Upload the form", "Rental and job applications, school and medical forms, tax and government forms: any PDF or scan."],
+      ["Let AI fill it", "Fields are found and filled from your saved profile, your notes and documents like an ID or pay stub. Each answer shows where it came from."],
+      ["Check, sign and send", "Review flagged answers, add your signature, then download or send it for signatures."],
+    ],
+    benefits: [
+      "Works on flat and scanned forms, not just fillable PDFs",
+      "Plain-English help for every question",
+      "Fills from a saved profile: never type your address again",
+      "Every answer shows its source and confidence",
+      "Sensitive numbers (SSN, bank) are never stored",
+      "Fill hundreds of copies from a spreadsheet",
+    ],
+    faq: [
+      ["Can I fill a PDF that isn't fillable?", "Yes. PDFTEK reads the page itself, finds the lines, boxes and tick boxes, and turns them into fields you can type into, even on scanned paper forms."],
+      [
+        "Is it free?",
+        `Typing into forms, ticking boxes and signing is free (${FREE_LIMITS.guest.tasksPerDay} tasks a day without an account, ${FREE_LIMITS.free.tasksPerDay} with one). AI filling is free for your first form each month, then uses AI credits (250 for ${usd(PRODUCTS.credits_250.cents)}). Pro includes 400 credits a month.`,
+      ],
+      ["Do you store my Social Security number?", "No. Sensitive answers like SSNs, bank and card numbers are used only for the form you're filling and never saved to your profile or drafts."],
+      ["Can I fill the same form for many people?", "Yes. Upload a spreadsheet with one row per person and download a ZIP with every filled PDF (Day Pass or Pro)."],
+      privacyFaq,
+    ],
+    related: ["sign-pdf", "edit-pdf", "scan-to-pdf", "ocr-pdf"],
+    access: "free",
+  },
+  {
     slug: "edit-pdf",
     go: "edit",
     name: "Edit PDF",

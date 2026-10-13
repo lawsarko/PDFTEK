@@ -281,3 +281,41 @@ export async function complete(opts: { system: string; sources?: Source[]; promp
   if (msg.stop_reason === "refusal") throw new HttpError(422, "The assistant declined this request.");
   return msg.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("").trim();
 }
+
+// ---------- structured output with images (form filler) ----------
+
+export type AiContent = Anthropic.Beta.BetaContentBlockParam;
+
+export function jpegBlock(base64: string): AiContent {
+  return { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64 } };
+}
+
+/** One request whose answer must match `schema` exactly; returns the parsed JSON. */
+export async function structured<T>(opts: {
+  system: string;
+  content: AiContent[];
+  schema: Record<string, unknown>;
+  effort?: "low" | "medium" | "high";
+  maxTokens?: number;
+  onUsage?: UsageHook;
+}): Promise<T> {
+  const stream = ai().beta.messages.stream({
+    model: AI_MODEL,
+    max_tokens: opts.maxTokens ?? 32000,
+    betas: [FALLBACK_BETA],
+    fallbacks: "default",
+    output_config: { effort: opts.effort ?? "medium", format: { type: "json_schema", schema: opts.schema } },
+    system: opts.system,
+    messages: [{ role: "user", content: opts.content }],
+  });
+  const msg = await stream.finalMessage();
+  opts.onUsage?.(AI_MODEL, msg.usage);
+  if (msg.stop_reason === "refusal") throw new HttpError(422, "The assistant declined to process this document.");
+  if (msg.stop_reason === "max_tokens") throw new HttpError(422, "This form is too large to read in one pass. Try fewer pages.");
+  const text = msg.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("");
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new HttpError(502, "The AI returned an unreadable result. Try again.");
+  }
+}

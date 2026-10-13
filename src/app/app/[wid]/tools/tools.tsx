@@ -14,7 +14,8 @@ import { ConvertToPdfModal } from "@/components/convert-to-pdf";
 
 type ToolKey = "merge" | "split" | "extract" | "organize" | "delete_pages" | "rotate" | "watermark" | "page_numbers" | "optimize" | "metadata" | "protect";
 
-const TOOLS: { key: ToolKey | "unlock" | "topdf" | "images" | "scan" | "convert" | "ocr" | "compare"; title: string; desc: string; icon: React.ReactNode }[] = [
+const TOOLS: { key: ToolKey | "unlock" | "topdf" | "images" | "scan" | "convert" | "ocr" | "compare" | "fill"; title: string; desc: string; icon: React.ReactNode }[] = [
+  { key: "fill", title: "Fill a form", desc: "AI finds every field, fills it from your profile, and you sign. Works on scans.", icon: <I.form size={18} /> },
   { key: "topdf", title: "Convert to PDF", desc: "Word, Excel, PowerPoint, text and images to PDF.", icon: <I.file size={18} /> },
   { key: "convert", title: "Convert PDF", desc: "To Word, Excel, PowerPoint, JPG, PNG, WEBP, TIFF.", icon: <I.convert size={18} /> },
   { key: "merge", title: "Merge PDFs", desc: "Combine several documents into one, in any order.", icon: <I.merge size={18} /> },
@@ -35,7 +36,7 @@ const TOOLS: { key: ToolKey | "unlock" | "topdf" | "images" | "scan" | "convert"
   { key: "compare", title: "Compare", desc: "Redline two documents or versions, with an AI summary.", icon: <I.compare size={18} /> },
 ];
 
-const NON_MODAL = ["unlock", "topdf", "images", "scan", "convert", "ocr", "compare", "pick"];
+const NON_MODAL = ["unlock", "topdf", "images", "scan", "convert", "ocr", "compare", "pick", "fill"];
 
 /** Uploads files to the workspace library and hands back the created documents. */
 function UploadButton({ wid, onDone, multiple = false, label = "Upload a PDF", accept = ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.rtf,.txt,.jpg,.jpeg,.png" }: { wid: string; onDone: (d: Doc[]) => void; multiple?: boolean; label?: string; accept?: string }) {
@@ -69,6 +70,7 @@ function UploadButton({ wid, onDone, multiple = false, label = "Upload a PDF", a
 }
 
 const PICK_TASKS: Record<string, { title: string; hint: string }> = {
+  fill: { title: "Fill a form", hint: "Pick or upload the form to fill: fillable PDFs, flat PDFs and scans all work." },
   edit: { title: "Edit a PDF", hint: "Pick the document to edit. You can change text, add images, highlight and redact." },
   sign: { title: "Request signatures", hint: "Pick the document people need to sign." },
   ask: { title: "Ask AI about a document", hint: "Pick a document and ask anything. Every answer cites its page." },
@@ -84,7 +86,8 @@ const PICK_TASKS: Record<string, { title: string; hint: string }> = {
 function PickDocModal({ wid, task, docs, onUploaded, onClose }: { wid: string; task: string; docs: Doc[]; onUploaded: (d: Doc[]) => void; onClose: () => void }) {
   const router = useRouter();
   const t = PICK_TASKS[task] ?? { title: "Choose a document", hint: "Pick a document from your library or upload one." };
-  const go = (id: string) => router.push(task === "sign" ? `/app/${wid}/send/${id}` : `/app/${wid}?doc=${id}&do=${task}`);
+  const go = (id: string) =>
+    router.push(task === "sign" ? `/app/${wid}/send/${id}` : task === "fill" ? `/app/${wid}/fill/${id}` : `/app/${wid}?doc=${id}&do=${task}`);
   return (
     <Modal title={t.title} onClose={onClose}>
       <div className="col gap-12">
@@ -222,6 +225,7 @@ export function Tools({ wid }: { wid: string }) {
     else if (k === "unlock") setUnlock(true);
     else if (k === "images" || k === "scan") router.push(`/app/${wid}?add=${k}`);
     else if (k === "convert" || k === "ocr") router.push(`/app/${wid}${preselect ? `?doc=${preselect}` : ""}`);
+    else if (k === "fill") setPick("fill");
     else if (k === "compare") router.push(`/app/${wid}/compare${preselect ? `?a=${preselect}` : ""}`);
     else setOpen(k);
   };

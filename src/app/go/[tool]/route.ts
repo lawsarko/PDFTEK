@@ -17,6 +17,7 @@ const TASKS: Record<string, string> = {
   "pdf-to-powerpoint": PICK("convert-pptx"),
   "pdf-to-jpg": PICK("convert-jpg"),
   edit: PICK("edit"),
+  "fill-form": PICK("fill"),
   sign: PICK("sign"),
   ask: PICK("ask"),
   "read-aloud": PICK("read"),
