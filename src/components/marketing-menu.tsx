@@ -134,6 +134,7 @@ type Entry = {
   label: string;
   href?: string;
   groups?: Group[];
+  /** Shown in the phone menu; in the top bar only on the accent entry (Ask AI). */
   icon: React.ReactNode;
   accent?: boolean;
 };
@@ -214,7 +215,7 @@ export function MarketingMenu() {
                 aria-expanded={open === e.label}
                 onClick={() => setOpen(open === e.label ? null : e.label)}
               >
-                {e.icon} {e.label} <I.chevron size={13} />
+                {e.label} <I.chevron size={13} />
               </button>
               {open === e.label && (
                 <div className="mega" role="menu">
@@ -224,7 +225,7 @@ export function MarketingMenu() {
             </div>
           ) : (
             <Link prefetch={false} key={e.label} href={e.href!} className={`mk-link ${e.accent ? "accent" : ""}`}>
-              {e.icon} {e.label}
+              {e.accent && e.icon} {e.label}
             </Link>
           ),
         )}
