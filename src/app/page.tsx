@@ -47,7 +47,8 @@ export default async function Home() {
               "@id": `${site}/#org`,
               name: "PDFTEK",
               url: site,
-              logo: `${site}/icon.svg`,
+              // Google needs a raster logo (at least 112 px) for search results and knowledge panels.
+              logo: `${site}/icon-512.png`,
             },
             { "@type": "WebSite", "@id": `${site}/#site`, name: "PDFTEK", url: site, publisher: { "@id": `${site}/#org` } },
             {

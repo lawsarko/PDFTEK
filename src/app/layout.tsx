@@ -14,7 +14,16 @@ export const metadata: Metadata = {
   applicationName: "PDFTEK",
   openGraph: { type: "website", siteName: "PDFTEK", title: "PDFTEK – Every document, handled.", description: DESCRIPTION },
   twitter: { card: "summary_large_image", title: "PDFTEK – Every document, handled.", description: DESCRIPTION },
-  icons: { icon: "/icon.svg" },
+  // favicon.ico (src/app) is picked up automatically; Google's results use a square raster icon.
+  icons: {
+    icon: [
+      { url: "/icon-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/icon-96.png", sizes: "96x96", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: { url: "/apple-touch-icon.png", sizes: "180x180" },
+  },
   // Paste the codes from Google Search Console and Bing Webmaster Tools into these env vars.
   verification: {
     google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
