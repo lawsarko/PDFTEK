@@ -138,15 +138,15 @@ type Entry = {
   accent?: boolean;
 };
 const ENTRIES: Entry[] = [
-  { label: "Convert", groups: CONVERT, icon: <I.convert size={14} /> },
-  { label: "Edit", href: "/go/edit", icon: <I.edit size={14} /> },
-  { label: "Sign", href: "/go/sign", icon: <I.sign size={14} /> },
-  { label: "Organize", groups: ORGANIZE, icon: <I.layers size={14} /> },
-  { label: "Read aloud", href: "/go/read-aloud", icon: <I.speaker size={14} /> },
+  { label: "Convert", groups: CONVERT, icon: <I.convert size={18} /> },
+  { label: "Edit", href: "/go/edit", icon: <I.edit size={18} /> },
+  { label: "Sign", href: "/go/sign", icon: <I.sign size={18} /> },
+  { label: "Organize", groups: ORGANIZE, icon: <I.layers size={18} /> },
+  { label: "Read aloud", href: "/go/read-aloud", icon: <I.speaker size={18} /> },
   {
     label: "Ask AI",
     href: "/go/ask",
-    icon: <I.sparkle size={14} />,
+    icon: <I.sparkle size={18} />,
     accent: true,
   },
 ];
@@ -214,7 +214,7 @@ export function MarketingMenu() {
                 aria-expanded={open === e.label}
                 onClick={() => setOpen(open === e.label ? null : e.label)}
               >
-                {e.icon} {e.label} <I.chevron size={12} />
+                {e.icon} {e.label} <I.chevron size={13} />
               </button>
               {open === e.label && (
                 <div className="mega" role="menu">

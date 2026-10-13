@@ -324,8 +324,8 @@ button.chip:hover { border-color: var(--steel); color: var(--text-hi); }
 .mk { background: var(--ink); min-height: 100vh; }
 .mk-nav { position: sticky; top: 0; z-index: 30; background: rgba(16,21,28,.85); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line-soft); }
 .mk-nav-inner { max-width: 1180px; margin: 0 auto; padding: 0 20px; height: 62px; display: flex; align-items: center; gap: 28px; }
-.mk-links { display: flex; gap: 4px; font-size: 13.5px; align-items: center; }
-.mk-links a { color: var(--text-lo); }
+.mk-links { display: flex; gap: 2px; font-size: 15px; align-items: center; }
+.mk-links a { color: var(--text-hi); }
 .mk-links a:hover { color: var(--text-hi); text-decoration: none; }
 .mk-section { max-width: 1180px; margin: 0 auto; padding: 88px 20px; }
 .mk-hero { padding-top: 84px; padding-bottom: 40px; text-align: center; background: radial-gradient(ellipse 900px 480px at 50% 0%, rgba(217,142,43,0.13), transparent 70%); }
@@ -499,7 +499,7 @@ button.chip:hover { border-color: var(--steel); color: var(--text-hi); }
 }
 
 /* marketing menu */
-.mk-link { display: inline-flex; align-items: center; gap: 6px; color: var(--text-lo); background: none; border: 0; font: inherit; font-size: 13.5px; padding: 7px 11px; border-radius: 8px; cursor: pointer; transition: color .15s, background .15s; }
+.mk-link { display: inline-flex; align-items: center; gap: 8px; color: var(--text-hi); background: none; border: 0; font: inherit; font-size: 15px; font-weight: 500; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: color .15s, background .15s; }
 .mk-link:hover, .mk-link.on { color: var(--text-hi); background: rgba(255,255,255,.05); text-decoration: none; }
 .mk-link svg:last-child:not(:first-child) { opacity: .6; transition: transform .2s; }
 .mk-link.on svg:last-child { transform: rotate(180deg); }
@@ -604,3 +604,15 @@ button.chip:hover { border-color: var(--steel); color: var(--text-hi); }
 .mk-footer-made .heart { color: #e5484d; display: inline-block; animation: heartbeat 1.6s ease-in-out infinite; }
 @keyframes heartbeat { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.25); } 30% { transform: scale(1); } 45% { transform: scale(1.15); } }
 @media (prefers-reduced-motion: reduce) { .mk-footer-made .heart { animation: none; } }
+/* Top menu: icons large enough to read at a glance, in the brand color. */
+.mk-link > svg:first-child { color: var(--amber); flex: none; }
+.mk-nav-inner > .mk-link { font-size: 15px; font-weight: 500; color: var(--text-hi); }
+.mk-nav-inner .btn-ghost { font-size: 14.5px; font-weight: 600; }
+.mk-link { white-space: nowrap; }
+.mk-nav-inner { gap: 20px; }
+/* The full menu needs about 1,200px; below that the menu button takes over. */
+@media (max-width: 1200px) {
+  .mk-nav-inner .mk-links { display: none; }
+  .mk-burger { display: inline-flex; }
+}
+@media (max-width: 520px) { .mk-nav-inner { gap: 10px; } }
