@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ToastProvider } from "@/components/toast";
 import { PaywallHost } from "@/components/paywall";
+import { AuthLinkCatcher } from "@/components/auth-link-catcher";
 
 const SITE = (process.env.APP_URL || "https://pdftek.com").replace(/\/$/, "");
 const DESCRIPTION =
@@ -48,6 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ToastProvider>
           {children}
           <PaywallHost />
+          <AuthLinkCatcher />
         </ToastProvider>
       </body>
     </html>
