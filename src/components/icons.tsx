@@ -73,6 +73,16 @@ export const I = {
   form: svg(<><rect x="5" y="3.5" width="14" height="18" rx="2" /><path d="M9 3.5h6v3H9z" /><path d="M8.5 11h7M8.5 14.5h7M8.5 18h4" /></>),
   user: svg(<><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" /></>),
   info: svg(<><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7.5v.5" /></>),
+  pencil: svg(<><path d="M4 20l1-4L16 5l3 3L8 19z" /><path d="M14 7l3 3" /></>),
+  marker: svg(<><path d="M9 15l-4 4h6l1.5-1.5" /><path d="M8 12l7-7 4 4-7 7z" /></>),
+  underline: svg(<><path d="M7 4v6a5 5 0 0 0 10 0V4" /><path d="M5 20h14" /></>),
+  strike: svg(<><path d="M16 6.5C15 5 13.5 4.5 12 4.5c-2.5 0-4 1.3-4 3 0 1.5 1 2.3 3 3" /><path d="M8 17c1 1.7 2.6 2.5 4.3 2.5 2.4 0 4-1.3 4-3.2 0-.8-.3-1.5-.9-2" /><path d="M4 12h16" /></>),
+  squiggle: svg(<><path d="M6 4v6a6 6 0 0 0 12 0V4" /><path d="M3 20c1.5-1.5 3-1.5 4.5 0s3 1.5 4.5 0 3-1.5 4.5 0 3 1.5 4.5 0" /></>),
+  square: svg(<rect x="4" y="4" width="16" height="16" rx="1.5" />),
+  circle: svg(<circle cx="12" cy="12" r="8" />),
+  line: svg(<path d="M5 19L19 5" />),
+  arrow: svg(<><path d="M5 19L19 5" /><path d="M10 5h9v9" /></>),
+  shapes: svg(<><rect x="3" y="11" width="9" height="9" rx="1" /><circle cx="16.5" cy="7.5" r="4.5" /></>),
   steps: svg(<><path d="M4 7h4M4 12h8M4 17h12" /><path d="m17 5 3 2-3 2" /></>),
 };
 

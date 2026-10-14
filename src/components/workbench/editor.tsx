@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PageViewport } from "pdfjs-dist";
-import { PDFDocument, StandardFonts, rgb, type PDFFont } from "pdf-lib";
+import { BlendMode, LineCapStyle, LineJoinStyle, PDFDocument, StandardFonts, popGraphicsState, pushGraphicsState, rgb, setLineJoin, type PDFFont } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { cssStack, isSerif } from "@/lib/font-names";
 import { api, errMsg } from "@/lib/client/api";
@@ -29,10 +29,55 @@ type TextOp = {
 } & Style;
 type ImageOp = { id: string; type: "image"; page: number; x: number; y: number; w: number; h: number; dataUrl: string };
 type RectOp = { id: string; type: "highlight" | "whiteout" | "redact"; page: number; x: number; y: number; w: number; h: number };
-type Op = TextOp | ImageOp | RectOp;
-type Tool = "select" | "text" | "image" | "highlight" | "whiteout" | "redact";
+/** Text markup. Each rect covers one line of the marked text: [x, y, w, h], y = bottom of the glyphs. */
+type MarkOp = { id: string; type: "mark"; kind: MarkKind; page: number; rects: [number, number, number, number][]; color: string };
+/** Freehand pen or highlighter stroke, in PDF points. */
+type InkOp = { id: string; type: "ink"; page: number; points: [number, number][]; color: string; width: number; opacity: number };
+/** Shapes are kept as their two defining corners (or a line's two ends). */
+type ShapeOp = { id: string; type: "shape"; kind: ShapeKind; page: number; x1: number; y1: number; x2: number; y2: number; color: string; width: number };
+type Op = TextOp | ImageOp | RectOp | MarkOp | InkOp | ShapeOp;
+type MarkKind = "highlight" | "underline" | "strike" | "squiggle";
+type InkKind = "pencil" | "highlighter" | "eraser";
+type ShapeKind = "rect" | "ellipse" | "check" | "cross" | "line" | "arrow";
+type Tool = "select" | "text" | "image" | "mark" | "ink" | "shape" | "whiteout" | "redact";
 
+/** "highlight" rects come from drafts saved before text markup existed. */
 const isRect = (o: Op): o is RectOp => o.type === "highlight" || o.type === "whiteout" || o.type === "redact";
+const isDrawn = (o: Op): o is MarkOp | InkOp | ShapeOp => o.type === "mark" || o.type === "ink" || o.type === "shape";
+
+const MARKS: [MarkKind, string, React.ReactNode][] = [
+  ["highlight", "Highlight", <I.highlight key="i" size={14} />],
+  ["underline", "Underline", <I.underline key="i" size={14} />],
+  ["strike", "Strikethrough", <I.strike key="i" size={14} />],
+  ["squiggle", "Squiggle", <I.squiggle key="i" size={14} />],
+];
+const INKS: [InkKind, string, React.ReactNode][] = [
+  ["pencil", "Pencil", <I.pencil key="i" size={14} />],
+  ["highlighter", "Highlighter", <I.marker key="i" size={14} />],
+  ["eraser", "Eraser", <I.eraser key="i" size={14} />],
+];
+const SHAPES: [ShapeKind, string, React.ReactNode][] = [
+  ["rect", "Rectangle", <I.square key="i" size={14} />],
+  ["ellipse", "Circle", <I.circle key="i" size={14} />],
+  ["check", "Checkmark", <I.check key="i" size={14} />],
+  ["cross", "Cross", <I.x key="i" size={14} />],
+  ["line", "Line", <I.line key="i" size={14} />],
+  ["arrow", "Arrow", <I.arrow key="i" size={14} />],
+];
+/** Starting colour for each kind of mark; people can change it in the toolbar. */
+const PEN_DEFAULT: Record<string, { color: string; width: number }> = {
+  highlight: { color: "#ffd400", width: 0 },
+  underline: { color: "#e5484d", width: 0 },
+  strike: { color: "#e5484d", width: 0 },
+  squiggle: { color: "#e5484d", width: 0 },
+  pencil: { color: "#1d4ed8", width: 2 },
+  highlighter: { color: "#ffd400", width: 12 },
+  eraser: { color: "#000000", width: 0 },
+  shape: { color: "#e5484d", width: 2 },
+};
+type Pen = { color: string; width: number };
+/** Thickness choices, in points, for tools that have one. */
+const WIDTHS: Record<string, number[] | undefined> = { pencil: [1, 2, 3, 5, 8], highlighter: [8, 12, 18, 24], shape: [1, 2, 3, 5] };
 const uid = () => Math.random().toString(36).slice(2, 10);
 const DEFAULT_STYLE: Style = { size: 11, bold: false, italic: false, underline: false, serif: false, color: "#111111" };
 const TEXT_COLOR = "#171717";
@@ -45,6 +90,133 @@ function coverRect(op: { x: number; y: number; size: number; ow?: number; ascent
   const bottom = op.y + desc * op.size * 1.15 - 0.6;
   const top = op.y + asc * op.size + 0.6;
   return { x: op.x - 1.2, y: bottom, w: (op.ow ?? 0) + 2.4, h: top - bottom };
+}
+
+// ---------- markup, drawings and shapes: one geometry for the screen and the saved PDF ----------
+
+type Pt = [number, number];
+/** A drawn op as plain paths in PDF points. `fill` paths are closed areas; the rest are strokes. */
+type Geometry = { paths: { pts: Pt[]; closed: boolean; fill: boolean }[]; width: number; color: string; opacity: number; multiply: boolean };
+
+function markLines(kind: MarkKind, [x, y, w, h]: [number, number, number, number]): { pts: Pt[]; closed: boolean; fill: boolean } {
+  if (kind === "highlight") return { pts: [[x, y], [x + w, y], [x + w, y + h], [x, y + h]], closed: true, fill: true };
+  if (kind === "underline") return { pts: [[x, y + h * 0.12], [x + w, y + h * 0.12]], closed: false, fill: false };
+  if (kind === "strike") return { pts: [[x, y + h * 0.42], [x + w, y + h * 0.42]], closed: false, fill: false };
+  // Squiggle: a gentle wave just under the text.
+  const amp = Math.max(0.8, h * 0.05);
+  const len = Math.max(3, h * 0.28);
+  const pts: Pt[] = [];
+  for (let t = 0; t <= w; t += len / 8) pts.push([x + t, y + h * 0.08 + Math.sin((t / len) * Math.PI * 2) * amp]);
+  return { pts, closed: false, fill: false };
+}
+
+function geometry(op: MarkOp | InkOp | ShapeOp): Geometry {
+  if (op.type === "mark") {
+    const thick = Math.max(0.75, Math.min(2, (op.rects[0]?.[3] ?? 10) * 0.07));
+    return { paths: op.rects.map((r) => markLines(op.kind, r)), width: op.kind === "highlight" ? 0 : thick, color: op.color, opacity: op.kind === "highlight" ? 0.4 : 1, multiply: op.kind === "highlight" };
+  }
+  if (op.type === "ink") return { paths: [{ pts: op.points, closed: false, fill: false }], width: op.width, color: op.color, opacity: op.opacity, multiply: op.opacity < 1 };
+  const { x1, y1, x2, y2 } = op;
+  const [l, r, b, t] = [Math.min(x1, x2), Math.max(x1, x2), Math.min(y1, y2), Math.max(y1, y2)];
+  const [w, h] = [r - l, t - b];
+  const base = { width: op.width, color: op.color, opacity: 1, multiply: false };
+  const open = (pts: Pt[]) => ({ pts, closed: false, fill: false });
+  switch (op.kind) {
+    case "rect":
+      return { ...base, paths: [{ pts: [[l, b], [r, b], [r, t], [l, t]], closed: true, fill: false }] };
+    case "ellipse": {
+      const pts: Pt[] = [];
+      for (let i = 0; i < 72; i++) pts.push([l + w / 2 + (w / 2) * Math.cos((i / 72) * Math.PI * 2), b + h / 2 + (h / 2) * Math.sin((i / 72) * Math.PI * 2)]);
+      return { ...base, paths: [{ pts, closed: true, fill: false }] };
+    }
+    case "check":
+      return { ...base, paths: [open([[l + w * 0.1, b + h * 0.5], [l + w * 0.38, b + h * 0.15], [l + w * 0.92, b + h * 0.88]])] };
+    case "cross":
+      return { ...base, paths: [open([[l + w * 0.12, b + h * 0.12], [r - w * 0.12, t - h * 0.12]]), open([[l + w * 0.12, t - h * 0.12], [r - w * 0.12, b + h * 0.12]])] };
+    case "line":
+      return { ...base, paths: [open([[x1, y1], [x2, y2]])] };
+    case "arrow": {
+      const a = Math.atan2(y2 - y1, x2 - x1);
+      const head = Math.min(Math.hypot(x2 - x1, y2 - y1) * 0.45, 6 + op.width * 3);
+      const wing = (d: number): Pt => [x2 - head * Math.cos(a + d), y2 - head * Math.sin(a + d)];
+      return { ...base, paths: [open([[x1, y1], [x2, y2]]), open([wing(0.45), [x2, y2], wing(-0.45)])] };
+    }
+  }
+}
+
+/** Distance from p to segment ab. */
+function segDist(p: Pt, a: Pt, b: Pt) {
+  const [dx, dy] = [b[0] - a[0], b[1] - a[1]];
+  const len = dx * dx + dy * dy;
+  const t = len ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / len)) : 0;
+  return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy);
+}
+
+/** Whether a PDF-space point touches the op, within `tol` points of a stroke. */
+function hits(op: MarkOp | InkOp | ShapeOp, p: Pt, tol: number) {
+  if (op.type === "mark") return op.rects.some(([x, y, w, h]) => p[0] >= x - tol && p[0] <= x + w + tol && p[1] >= y - tol && p[1] <= y + h + tol);
+  const g = geometry(op);
+  const reach = tol + g.width / 2;
+  return g.paths.some(({ pts, closed }) => {
+    if (pts.length === 1) return Math.hypot(p[0] - pts[0][0], p[1] - pts[0][1]) <= reach;
+    const n = closed ? pts.length : pts.length - 1;
+    for (let i = 0; i < n; i++) if (segDist(p, pts[i], pts[(i + 1) % pts.length]) <= reach) return true;
+    return false;
+  });
+}
+
+function bounds(op: MarkOp | InkOp | ShapeOp): [number, number, number, number] {
+  const pts = geometry(op).paths.flatMap((p) => p.pts);
+  const xs = pts.map((q) => q[0]);
+  const ys = pts.map((q) => q[1]);
+  return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+}
+
+function translate(op: MarkOp | InkOp | ShapeOp, dx: number, dy: number): Op {
+  if (op.type === "mark") return { ...op, rects: op.rects.map(([x, y, w, h]) => [x + dx, y + dy, w, h]) };
+  if (op.type === "ink") return { ...op, points: op.points.map(([x, y]) => [x + dx, y + dy]) };
+  return { ...op, x1: op.x1 + dx, y1: op.y1 + dy, x2: op.x2 + dx, y2: op.y2 + dy };
+}
+
+/**
+ * Text under a drag from `a` to `b` (PDF points), the way a text selection works: from the start
+ * point to the end of its line, whole lines in between, and the last line up to the end point.
+ * Returns one rect per line.
+ */
+function textUnder(runs: TextRun[], a: Pt, b: Pt): [number, number, number, number][] {
+  const box = (r: TextRun) => ({ l: r.x, r: r.x + r.w, b: r.y + Math.min(-0.15, r.descent) * r.size, t: r.y + Math.max(0.6, r.ascent) * r.size });
+  const inBand = (r: TextRun, y: number) => {
+    const k = box(r);
+    return y >= k.b && y <= k.t;
+  };
+  // Reading order: the start is the higher point (or the left one on the same line).
+  const sameLine = runs.some((r) => inBand(r, a[1]) && inBand(r, b[1])) || Math.abs(a[1] - b[1]) < 2;
+  const [s, e] = sameLine ? (a[0] <= b[0] ? [a, b] : [b, a]) : a[1] > b[1] ? [a, b] : [b, a];
+  // Snap a cut inside a run to the nearest character boundary.
+  const snap = (r: TextRun, x: number) => {
+    const n = Math.max(1, r.str.length);
+    const cw = r.w / n;
+    return r.x + Math.max(0, Math.min(n, Math.round((x - r.x) / cw))) * cw;
+  };
+  const lines = new Map<number, { l: number; r: number; b: number; t: number }>();
+  for (const r of runs) {
+    if (!r.str.trim()) continue;
+    const k = box(r);
+    const mid = (k.b + k.t) / 2;
+    const first = inBand(r, s[1]) || (sameLine && Math.abs(mid - s[1]) < r.size);
+    const last = inBand(r, e[1]) || (sameLine && Math.abs(mid - e[1]) < r.size);
+    if (!first && !last && !(mid < s[1] && mid > e[1])) continue;
+    let l = k.l;
+    let rr = k.r;
+    if (first) l = Math.max(l, snap(r, s[0]));
+    if (last) rr = Math.min(rr, snap(r, e[0]));
+    if (sameLine && !(first && last)) continue;
+    if (rr - l < 0.5) continue;
+    const key = Math.round(r.y);
+    const cur = lines.get(key);
+    lines.set(key, cur ? { l: Math.min(cur.l, l), r: Math.max(cur.r, rr), b: Math.min(cur.b, k.b), t: Math.max(cur.t, k.t) } : { l, r: rr, b: k.b, t: k.t });
+  }
+  return [...lines.values()].sort((p, q) => q.b - p.b).map((k) => [k.l, k.b, k.r - k.l, k.t - k.b]);
 }
 
 // ---------- fonts: the document's own typeface, fetched once per face ----------
@@ -75,6 +247,10 @@ export function Editor({ doc, onExit }: { doc: Doc; onExit: (saved: Doc | null) 
   const [undo, setUndo] = useState<Op[][]>([]);
   const [redo, setRedo] = useState<Op[][]>([]);
   const [tool, setTool] = useState<Tool>("select");
+  const [markKind, setMarkKind] = useState<MarkKind>("highlight");
+  const [inkKind, setInkKind] = useState<InkKind>("pencil");
+  const [shapeKind, setShapeKind] = useState<ShapeKind>("rect");
+  const [pens, setPens] = useState<Record<string, Pen>>(PEN_DEFAULT);
   const [style, setStyle] = useState<Style>(DEFAULT_STYLE);
   const [selected, setSelected] = useState<string | null>(null);
   const [scale, setScale] = useState(1.3);
@@ -223,7 +399,7 @@ export function Editor({ doc, onExit }: { doc: Doc; onExit: (saved: Doc | null) 
       form.append("file", new File([bytes as BlobPart], doc.name, { type: "application/pdf" }));
       form.append("kind", "edit");
       const counts = ops.reduce<Record<string, number>>((m, o) => ((m[o.type] = (m[o.type] ?? 0) + 1), m), {});
-      const label: Record<string, string> = { replace: "text edit", text: "text box", image: "image", highlight: "highlight", whiteout: "whiteout", redact: "redaction" };
+      const label: Record<string, string> = { replace: "text edit", text: "text box", image: "image", highlight: "highlight", whiteout: "whiteout", redact: "redaction", mark: "markup", ink: "drawing", shape: "shape" };
       form.append("note", Object.entries(counts).map(([k, n]) => `${n} ${label[k]}${n > 1 ? "s" : ""}`).join(", "));
       const r = await api<{ document: Doc }>(`/api/documents/${doc.id}/versions`, { method: "POST", body: form });
       await fetch(`/api/documents/${doc.id}/draft`, { method: "PUT", headers: { "content-type": "application/json" }, body: "null" });
@@ -239,14 +415,30 @@ export function Editor({ doc, onExit }: { doc: Doc; onExit: (saved: Doc | null) 
 
   const sel = ops.find((o) => o.id === selected);
   const shownStyle = sel && (sel.type === "text" || sel.type === "replace") ? sel : style;
+  const penKey = tool === "mark" ? markKind : tool === "ink" ? inkKind : tool === "shape" ? "shape" : sel?.type === "mark" ? sel.kind : sel?.type === "ink" ? (sel.opacity < 1 ? "highlighter" : "pencil") : sel?.type === "shape" ? "shape" : null;
+  const selDrawn = sel && isDrawn(sel) ? sel : null;
+  const pen: Pen = selDrawn ? { color: selDrawn.color, width: selDrawn.type === "mark" ? 0 : selDrawn.width } : penKey ? pens[penKey] : { color: "#000000", width: 0 };
+  // Pen changes apply to the next mark and to the selected one.
+  const applyPen = (patch: Partial<Pen>) => {
+    if (penKey) setPens((p) => ({ ...p, [penKey]: { ...p[penKey], ...patch } }));
+    if (selDrawn) commit((list) => list.map((o) => (o.id === selDrawn.id && isDrawn(o) ? ({ ...o, color: patch.color ?? o.color, ...(o.type !== "mark" && patch.width ? { width: patch.width } : {}) } as Op) : o)));
+  };
+  const pick = (t: Tool) => {
+    setTool(t);
+    setSelected(null);
+  };
   const tools: [Tool, React.ReactNode, string][] = [
     ["select", <I.edit key="i" size={13} />, "Edit text"],
     ["text", <I.text key="i" size={13} />, "Add text"],
     ["image", <I.image key="i" size={13} />, "Image"],
-    ["highlight", <I.highlight key="i" size={13} />, "Highlight"],
-    ["whiteout", <I.eraser key="i" size={13} />, "Whiteout"],
-    ["redact", <I.redact key="i" size={13} />, "Redact"],
   ];
+  const hint: Partial<Record<Tool, string>> = {
+    select: "Click any text to change it. Click a mark or drawing to move, recolour or delete it.",
+    text: "Click anywhere on the page, type, then press Enter.",
+    mark: "Drag across text to mark it. Works like selecting text.",
+    ink: inkKind === "eraser" ? "Drag over drawings, marks or shapes to erase them." : "Draw on the page with your mouse, pen or finger.",
+    shape: shapeKind === "check" || shapeKind === "cross" ? "Click to stamp, or drag to size it." : "Drag on the page to draw. Hold Shift to keep it even.",
+  };
 
   return (
     <>
@@ -271,39 +463,66 @@ export function Editor({ doc, onExit }: { doc: Doc; onExit: (saved: Doc | null) 
             className={`tool-btn ${tool === t ? "active" : ""}`}
             onClick={() => {
               if (t === "image") imageInput.current?.click();
-              else setTool(t);
+              else pick(t);
             }}
-            title={t === "redact" ? "Redaction permanently removes content: affected pages are flattened to images on save." : undefined}
           >
             {icon} {label}
           </button>
         ))}
+        <ToolMenu label="Highlight" items={MARKS} active={tool === "mark"} current={markKind} onPick={(k) => { setMarkKind(k); pick("mark"); }} />
+        <ToolMenu label="Draw" items={INKS} active={tool === "ink"} current={inkKind} onPick={(k) => { setInkKind(k); pick("ink"); }} />
+        <ToolMenu label="Shape" items={SHAPES} active={tool === "shape"} current={shapeKind} onPick={(k) => { setShapeKind(k); pick("shape"); }} />
+        <button className={`tool-btn ${tool === "whiteout" ? "active" : ""}`} onClick={() => pick("whiteout")}>
+          <I.square size={13} /> Whiteout
+        </button>
+        <button className={`tool-btn ${tool === "redact" ? "active" : ""}`} onClick={() => pick("redact")} title="Redaction permanently removes content: affected pages are flattened to images on save.">
+          <I.redact size={13} /> Redact
+        </button>
         <input ref={imageInput} type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && pickImage(e.target.files[0])} />
         <span className="sep" />
-        <button className={`tool-btn ${shownStyle.bold ? "active" : ""}`} onClick={() => applyStyle({ bold: !shownStyle.bold })} aria-label="Bold" style={{ fontWeight: 700 }}>
-          B
-        </button>
-        <button className={`tool-btn ${shownStyle.italic ? "active" : ""}`} onClick={() => applyStyle({ italic: !shownStyle.italic })} aria-label="Italic" style={{ fontStyle: "italic" }}>
-          I
-        </button>
-        <button className={`tool-btn ${shownStyle.underline ? "active" : ""}`} onClick={() => applyStyle({ underline: !shownStyle.underline })} aria-label="Underline" style={{ textDecoration: "underline" }}>
-          U
-        </button>
-        <select
-          className="select input-sm"
-          style={{ width: 150 }}
-          value={shownStyle.family ?? (shownStyle.serif ? "Times New Roman" : "Arial")}
-          onChange={(e) => applyStyle({ family: e.target.value, serif: isSerif(e.target.value) })}
-          aria-label="Font"
-        >
-          {[...new Set([sel && "origFamily" in sel ? sel.origFamily : undefined, shownStyle.family, ...FONT_CHOICES].filter(Boolean) as string[])].map((f) => (
-            <option key={f} value={f}>
-              {f}
-            </option>
-          ))}
-        </select>
-        <input className="input input-sm" type="number" min={5} max={96} style={{ width: 62 }} value={Math.round(shownStyle.size)} onChange={(e) => applyStyle({ size: Math.max(5, Math.min(96, Number(e.target.value) || 11)) })} aria-label="Font size" />
-        <input type="color" value={shownStyle.color} onChange={(e) => applyStyle({ color: e.target.value })} aria-label="Text color" style={{ width: 30, height: 28, border: "1px solid var(--line)", background: "transparent", borderRadius: 6, padding: 2 }} />
+        {penKey ? (
+          penKey !== "eraser" && (
+            <>
+              <input type="color" value={pen.color} onChange={(e) => applyPen({ color: e.target.value })} aria-label="Colour" title="Colour" style={{ width: 30, height: 28, border: "1px solid var(--line)", background: "transparent", borderRadius: 6, padding: 2 }} />
+              {WIDTHS[penKey] && (
+                <select className="select input-sm" style={{ width: 92 }} value={pen.width} onChange={(e) => applyPen({ width: Number(e.target.value) })} aria-label="Thickness" title="Thickness">
+                  {[...new Set([...WIDTHS[penKey], pen.width])].sort((x, y) => x - y).map((w) => (
+                    <option key={w} value={w}>
+                      {w} pt
+                    </option>
+                  ))}
+                </select>
+              )}
+            </>
+          )
+        ) : (
+          <>
+            <button className={`tool-btn ${shownStyle.bold ? "active" : ""}`} onClick={() => applyStyle({ bold: !shownStyle.bold })} aria-label="Bold" style={{ fontWeight: 700 }}>
+              B
+            </button>
+            <button className={`tool-btn ${shownStyle.italic ? "active" : ""}`} onClick={() => applyStyle({ italic: !shownStyle.italic })} aria-label="Italic" style={{ fontStyle: "italic" }}>
+              I
+            </button>
+            <button className={`tool-btn ${shownStyle.underline ? "active" : ""}`} onClick={() => applyStyle({ underline: !shownStyle.underline })} aria-label="Underline" style={{ textDecoration: "underline" }}>
+              U
+            </button>
+            <select
+              className="select input-sm"
+              style={{ width: 150 }}
+              value={shownStyle.family ?? (shownStyle.serif ? "Times New Roman" : "Arial")}
+              onChange={(e) => applyStyle({ family: e.target.value, serif: isSerif(e.target.value) })}
+              aria-label="Font"
+            >
+              {[...new Set([sel && "origFamily" in sel ? sel.origFamily : undefined, shownStyle.family, ...FONT_CHOICES].filter(Boolean) as string[])].map((f) => (
+                <option key={f} value={f}>
+                  {f}
+                </option>
+              ))}
+            </select>
+            <input className="input input-sm" type="number" min={5} max={96} style={{ width: 62 }} value={Math.round(shownStyle.size)} onChange={(e) => applyStyle({ size: Math.max(5, Math.min(96, Number(e.target.value) || 11)) })} aria-label="Font size" />
+            <input type="color" value={shownStyle.color} onChange={(e) => applyStyle({ color: e.target.value })} aria-label="Text color" style={{ width: 30, height: 28, border: "1px solid var(--line)", background: "transparent", borderRadius: 6, padding: 2 }} />
+          </>
+        )}
         <span className="sep" />
         <button className="tool-btn" onClick={doUndo} disabled={!undo.length} aria-label="Undo">
           <I.undo size={13} />
@@ -319,7 +538,7 @@ export function Editor({ doc, onExit }: { doc: Doc; onExit: (saved: Doc | null) 
           <I.zoomIn size={13} />
         </button>
         {tool === "redact" && <span className="small" style={{ color: "var(--warn)" }}>Drag over content to redact. Redacted pages are flattened on save so the hidden text is gone for good.</span>}
-        {tool === "select" && <span className="small faint">Click any text to change it.</span>}
+        {hint[tool] && <span className="small faint">{hint[tool]}</span>}
       </div>
       <div className="page-scroll" ref={scrollRef} onClick={() => setSelected(null)}>
         <PdfViewer
@@ -332,6 +551,10 @@ export function Editor({ doc, onExit }: { doc: Doc; onExit: (saved: Doc | null) 
               info={pageInfo}
               src={src}
               tool={tool}
+              markKind={markKind}
+              inkKind={inkKind}
+              shapeKind={shapeKind}
+              pen={penKey ? pens[penKey] : pens.shape}
               style={style}
               ops={ops.filter((o) => o.page === pageInfo.page)}
               selected={selected}
@@ -351,12 +574,61 @@ export function Editor({ doc, onExit }: { doc: Doc; onExit: (saved: Doc | null) 
   );
 }
 
+/** A toolbar button that opens a short list of related tools (Highlight ▾, Draw ▾, Shape ▾). */
+function ToolMenu<K extends string>({ label, items, active, current, onPick }: { label: string; items: [K, string, React.ReactNode][]; active: boolean; current: K; onPick: (k: K) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: Event) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("pointerdown", close);
+    window.addEventListener("keydown", esc);
+    return () => {
+      window.removeEventListener("pointerdown", close);
+      window.removeEventListener("keydown", esc);
+    };
+  }, [open]);
+  const cur = items.find((i) => i[0] === current) ?? items[0];
+  return (
+    <div className="tool-menu" ref={ref}>
+      <button className={`tool-btn ${active ? "active" : ""}`} onClick={() => setOpen((o) => !o)} aria-haspopup="menu" aria-expanded={open}>
+        {cur[2]} {active ? cur[1] : label} <I.chevron size={11} />
+      </button>
+      {open && (
+        <div className="tool-menu-list" role="menu">
+          {items.map(([k, l, icon]) => (
+            <button
+              key={k}
+              role="menuitemradio"
+              aria-checked={active && k === current}
+              className={active && k === current ? "on" : ""}
+              onClick={() => {
+                onPick(k);
+                setOpen(false);
+              }}
+            >
+              {icon} {l}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ---------- per-page overlay ----------
 
 function EditLayer({
   info,
   src,
   tool,
+  markKind,
+  inkKind,
+  shapeKind,
+  pen,
   style,
   ops,
   selected,
@@ -369,6 +641,10 @@ function EditLayer({
   info: PageInfo;
   src: string;
   tool: Tool;
+  markKind: MarkKind;
+  inkKind: InkKind;
+  shapeKind: ShapeKind;
+  pen: Pen;
   style: Style;
   ops: Op[];
   selected: string | null;
@@ -382,8 +658,13 @@ function EditLayer({
   const vp = info.viewport;
   const [runs, setRuns] = useState<TextRun[]>([]);
   const [editing, setEditing] = useState<{ opId?: string; run?: TextRun; x: number; y: number; text: string; style: Style } | null>(null);
-  const [drag, setDrag] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
+  const [drag, setDrag] = useState<{ x0: number; y0: number; x1: number; y1: number; shift?: boolean } | null>(null);
+  const [ink, setInk] = useState<Pt[] | null>(null);
+  const [erasing, setErasing] = useState(false);
+  const erased = useRef(false);
+  const openedAt = useRef(0);
   const layer = useRef<HTMLDivElement>(null);
+  const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -422,14 +703,74 @@ function EditLayer({
     return [e.clientX - r.left, e.clientY - r.top] as [number, number];
   };
 
+  const selDrawn = ops.find((o): o is MarkOp | InkOp | ShapeOp => o.id === selected && isDrawn(o));
   const replaced = new Set(ops.filter((o): o is TextOp => o.type === "replace").map((o) => `${o.x.toFixed(1)}:${o.y.toFixed(1)}`));
+
+  const pdfPt = (px: number, py: number): Pt => toPdf(px, py).map((v) => Math.round(v * 100) / 100) as Pt;
+  /** Shape corners in CSS pixels, with Shift keeping squares square and lines at 45° steps. */
+  const shapeEnds = (d: NonNullable<typeof drag>): [Pt, Pt] => {
+    let [x1, y1] = [d.x1, d.y1];
+    if (Math.hypot(x1 - d.x0, y1 - d.y0) < 4) {
+      // A click stamps a default-sized shape.
+      const z = info.scale;
+      const [w, h] = shapeKind === "check" || shapeKind === "cross" ? [16, 16] : shapeKind === "line" || shapeKind === "arrow" ? [90, 0] : shapeKind === "ellipse" ? [60, 60] : [100, 56];
+      if (shapeKind === "check" || shapeKind === "cross") return [[d.x0 - (w * z) / 2, d.y0 - (h * z) / 2], [d.x0 + (w * z) / 2, d.y0 + (h * z) / 2]];
+      return [[d.x0, d.y0], [d.x0 + w * z, d.y0 + h * z]];
+    }
+    if (d.shift) {
+      const [dx, dy] = [x1 - d.x0, y1 - d.y0];
+      if (shapeKind === "line" || shapeKind === "arrow") {
+        const a = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4);
+        const len = Math.hypot(dx, dy);
+        [x1, y1] = [d.x0 + Math.cos(a) * len, d.y0 + Math.sin(a) * len];
+      } else {
+        const m = Math.max(Math.abs(dx), Math.abs(dy));
+        [x1, y1] = [d.x0 + Math.sign(dx || 1) * m, d.y0 + Math.sign(dy || 1) * m];
+      }
+    }
+    return [[d.x0, d.y0], [x1, y1]];
+  };
+  const shapeOp = (d: NonNullable<typeof drag>): ShapeOp => {
+    const [c0, c1] = shapeEnds(d);
+    const [x1, y1] = pdfPt(...c0);
+    const [x2, y2] = pdfPt(...c1);
+    return { id: uid(), type: "shape", kind: shapeKind, page: info.page, x1, y1, x2, y2, color: pen.color, width: pen.width || 2 };
+  };
+  const markRects = (d: NonNullable<typeof drag>): [number, number, number, number][] => {
+    const a = pdfPt(d.x0, d.y0);
+    if (Math.hypot(d.x1 - d.x0, d.y1 - d.y0) < 3) {
+      // A click marks the word group under the pointer.
+      const r = runs.find((q) => q.str.trim() && a[0] >= q.x && a[0] <= q.x + q.w && a[1] >= q.y + Math.min(-0.15, q.descent) * q.size && a[1] <= q.y + Math.max(0.6, q.ascent) * q.size);
+      return r ? [[r.x, r.y + Math.min(-0.15, r.descent) * r.size, r.w, (Math.max(0.6, r.ascent) - Math.min(-0.15, r.descent)) * r.size]] : [];
+    }
+    const b = pdfPt(d.x1, d.y1);
+    const found = textUnder(runs, a, b);
+    if (found.length) return found;
+    // No text there (a scan, a picture): mark the dragged area itself.
+    const [l, r, bo, t] = [Math.min(a[0], b[0]), Math.max(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[1], b[1])];
+    return r - l > 3 && t - bo > 3 ? [[l, bo, r - l, t - bo]] : [];
+  };
+  const eraseAt = (px: number, py: number) => {
+    const p = toPdf(px, py);
+    const gone = new Set(ops.filter(isDrawn).filter((o) => hits(o, p, 6 / info.scale)).map((o) => o.id));
+    if (!gone.size) return;
+    const drop = (o: Op[]) => o.filter((x) => !gone.has(x.id));
+    if (erased.current) commitSilently(drop);
+    else commit(drop);
+    erased.current = true;
+  };
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.target !== layer.current) return;
     e.stopPropagation();
     const [px, py] = local(e);
     if (tool === "text") {
+      // Without this the browser moves focus to the page right after the new box takes it, and an
+      // empty box that loses focus is discarded: the "Add text does nothing" bug.
+      e.preventDefault();
+      if (editing) commitEdit();
       const [x, y] = toPdf(px, py + style.size * info.scale * 0.8);
+      openedAt.current = Date.now();
       setEditing({ x, y, text: "", style });
     } else if (tool === "image" && pendingImage) {
       const wPt = Math.min(200, vp.width / info.scale / 2);
@@ -437,24 +778,103 @@ function EditLayer({
       const [x, y] = toPdf(px, py);
       commit((o) => [...o, { id: uid(), type: "image", page: info.page, x, y: y - hPt, w: wPt, h: hPt, dataUrl: pendingImage.dataUrl }]);
       onPlacedImage();
-    } else if (tool === "highlight" || tool === "whiteout" || tool === "redact") {
+    } else if (tool === "ink") {
+      e.preventDefault();
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
-      setDrag({ x0: px, y0: py, x1: px, y1: py });
+      if (inkKind === "eraser") {
+        erased.current = false;
+        setErasing(true);
+        eraseAt(px, py);
+      } else setInk([[px, py]]);
+    } else if (tool === "mark" || tool === "shape" || tool === "whiteout" || tool === "redact") {
+      e.preventDefault();
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+      setDrag({ x0: px, y0: py, x1: px, y1: py, shift: e.shiftKey });
     } else setSelected(null);
   };
   const onPointerMove = (e: React.PointerEvent) => {
-    if (!drag) return;
+    if (!drag && !ink && !erasing) return;
     const [px, py] = local(e);
-    setDrag({ ...drag, x1: px, y1: py });
+    if (erasing) eraseAt(px, py);
+    else if (ink) {
+      const last = ink[ink.length - 1];
+      if (Math.hypot(px - last[0], py - last[1]) >= 1.5) setInk([...ink, [px, py]]);
+    } else if (drag) setDrag({ ...drag, x1: px, y1: py, shift: e.shiftKey });
   };
   const onPointerUp = () => {
+    if (erasing) {
+      setErasing(false);
+      return;
+    }
+    if (ink) {
+      const pts = ink.length === 1 ? [ink[0], [ink[0][0] + 0.5, ink[0][1]] as Pt] : ink;
+      const highlighter = inkKind === "highlighter";
+      commit((o) => [...o, { id: uid(), type: "ink", page: info.page, points: pts.map(([x, y]) => pdfPt(x, y)), color: pen.color, width: pen.width || (highlighter ? 12 : 2), opacity: highlighter ? 0.35 : 1 }]);
+      setInk(null);
+      return;
+    }
     if (!drag) return;
-    const [ax, ay] = toPdf(Math.min(drag.x0, drag.x1), Math.max(drag.y0, drag.y1));
-    const [bx, by] = toPdf(Math.max(drag.x0, drag.x1), Math.min(drag.y0, drag.y1));
-    const w = Math.abs(bx - ax);
-    const h = Math.abs(by - ay);
-    if (w > 2 && h > 2) commit((o) => [...o, { id: uid(), type: tool as RectOp["type"], page: info.page, x: Math.min(ax, bx), y: Math.min(ay, by), w, h }]);
+    if (tool === "mark") {
+      const rects = markRects(drag);
+      if (rects.length) commit((o) => [...o, { id: uid(), type: "mark", kind: markKind, page: info.page, rects, color: pen.color }]);
+    } else if (tool === "shape") {
+      const op = shapeOp(drag);
+      commit((o) => [...o, op]);
+    } else {
+      const [ax, ay] = toPdf(Math.min(drag.x0, drag.x1), Math.max(drag.y0, drag.y1));
+      const [bx, by] = toPdf(Math.max(drag.x0, drag.x1), Math.min(drag.y0, drag.y1));
+      const w = Math.abs(bx - ax);
+      const h = Math.abs(by - ay);
+      if (w > 2 && h > 2) commit((o) => [...o, { id: uid(), type: tool as RectOp["type"], page: info.page, x: Math.min(ax, bx), y: Math.min(ay, by), w, h }]);
+    }
     setDrag(null);
+  };
+
+  const startMoveDrawn = (e: React.PointerEvent, op: MarkOp | InkOp | ShapeOp) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setSelected(op.id);
+    const [sx, sy] = [e.clientX, e.clientY];
+    const origin = toPdf(0, 0);
+    let moved = false;
+    const move = (ev: PointerEvent) => {
+      const [dx, dy] = [ev.clientX - sx, ev.clientY - sy];
+      if (!moved && Math.hypot(dx, dy) < 3) return;
+      if (!moved) commit((o) => o); // one undo step for the whole drag
+      moved = true;
+      const p = toPdf(dx, dy);
+      commitSilently((o) => o.map((x) => (x.id === op.id ? translate(op, p[0] - origin[0], p[1] - origin[1]) : x)));
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+  const pathD = (pts: Pt[], closed: boolean) => pts.map(([x, y], i) => `${i ? "L" : "M"}${toCss(x, y).map((v) => v.toFixed(1)).join(" ")}`).join("") + (closed ? "Z" : "");
+  const drawn = (op: MarkOp | InkOp | ShapeOp, key: string, interactive: boolean) => {
+    const g = geometry(op);
+    const sw = Math.max(0.5, g.width * info.scale);
+    return (
+      <g key={key} opacity={g.opacity}>
+        {g.paths.map((p, i) => (
+          <path key={i} d={pathD(p.pts, p.closed)} fill={p.fill ? g.color : "none"} stroke={p.fill ? "none" : g.color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
+        ))}
+        {interactive &&
+          g.paths.map((p, i) => (
+            <path
+              key={`h${i}`}
+              className={p.fill ? "hit-area" : "hit"}
+              d={pathD(p.pts, p.closed)}
+              fill={p.fill ? "transparent" : "none"}
+              stroke="transparent"
+              strokeWidth={Math.max(12, sw + 8)}
+              onPointerDown={(e) => startMoveDrawn(e, op)}
+            />
+          ))}
+      </g>
+    );
   };
 
   const commitEdit = () => {
@@ -495,7 +915,7 @@ function EditLayer({
     setEditing(null);
   };
 
-  const startMove = (e: React.PointerEvent, op: Op) => {
+  const startMove = (e: React.PointerEvent, op: TextOp) => {
     e.stopPropagation();
     setSelected(op.id);
     if (tool !== "select" && tool !== "text") return;
@@ -555,7 +975,21 @@ function EditLayer({
   return (
     <div
       ref={layer}
-      className={`edit-layer ${tool === "text" || (tool === "image" && pendingImage) ? "mode-text" : ""} ${["highlight", "whiteout", "redact"].includes(tool) ? "mode-rect" : ""}`}
+      className={`edit-layer ${
+        tool === "text" || (tool === "image" && pendingImage)
+          ? "mode-text"
+          : tool === "whiteout" || tool === "redact"
+            ? "mode-rect"
+            : tool === "mark"
+              ? "mode-mark"
+              : tool === "ink"
+                ? inkKind === "eraser"
+                  ? "mode-erase"
+                  : "mode-draw"
+                : tool === "shape"
+                  ? "mode-draw"
+                  : "mode-select"
+      }`}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -605,7 +1039,7 @@ function EditLayer({
             </div>
           );
         }
-        if (editing?.opId === op.id) return null;
+        if (isDrawn(op) || editing?.opId === op.id) return null;
         const [px, py] = toCss(op.x, op.y);
         const fs = op.size * info.scale;
         return (
@@ -630,6 +1064,40 @@ function EditLayer({
         );
       })}
 
+      <svg className="edit-draw" aria-hidden>
+        {ops.filter(isDrawn).map((op) => drawn(op, op.id, tool === "select"))}
+        {selDrawn &&
+          (() => {
+            const [l, b, r, t] = bounds(selDrawn);
+            const box = rectCss(l, b, r - l, t - b);
+            return <rect className="sel-box" x={box.left - 4} y={box.top - 4} width={box.width + 8} height={box.height + 8} rx={3} />;
+          })()}
+        {drag && tool === "mark" && drawn({ id: "", type: "mark", kind: markKind, page: info.page, rects: markRects(drag), color: pen.color }, "preview", false)}
+        {drag && tool === "shape" && drawn(shapeOp(drag), "preview", false)}
+        {ink && (
+          <path d={ink.map(([x, y], i) => `${i ? "L" : "M"}${x} ${y}`).join("")} fill="none" stroke={pen.color} strokeOpacity={inkKind === "highlighter" ? 0.35 : 1} strokeWidth={(pen.width || 2) * info.scale} strokeLinecap="round" strokeLinejoin="round" />
+        )}
+      </svg>
+      {selDrawn &&
+        (() => {
+          const [l, b, r, t] = bounds(selDrawn);
+          const box = rectCss(l, b, r - l, t - b);
+          return (
+            <button
+              className="edit-draw-del"
+              style={{ left: box.left + box.width - 6, top: box.top - 16 }}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={() => {
+                commit((o) => o.filter((x) => x.id !== selDrawn.id));
+                setSelected(null);
+              }}
+              aria-label="Remove"
+            >
+              ×
+            </button>
+          );
+        })()}
+
       {editing && (
         <>
           {editing.run && (() => {
@@ -638,7 +1106,9 @@ function EditLayer({
           })()}
           <input
             className="edit-input"
+            ref={input}
             autoFocus
+            placeholder="Type here"
             value={editing.text}
             size={Math.max(4, editing.text.length + 1)}
             onChange={(e) => setEditing({ ...editing, text: e.target.value })}
@@ -646,7 +1116,11 @@ function EditLayer({
               if (e.key === "Enter") commitEdit();
               if (e.key === "Escape") setEditing(null);
             }}
-            onBlur={commitEdit}
+            onBlur={() => {
+              // A brand-new empty box that loses focus at once (a stray click) stays open.
+              if (!editing.text && Date.now() - openedAt.current < 400) requestAnimationFrame(() => input.current?.focus());
+              else commitEdit();
+            }}
             onPointerDown={(e) => e.stopPropagation()}
             style={{
               left: toCss(editing.x, editing.y)[0] - 2,
@@ -657,7 +1131,7 @@ function EditLayer({
           />
         </>
       )}
-      {drag && (
+      {drag && (tool === "whiteout" || tool === "redact") && (
         <div
           style={{
             position: "absolute",
@@ -665,7 +1139,7 @@ function EditLayer({
             top: Math.min(drag.y0, drag.y1),
             width: Math.abs(drag.x1 - drag.x0),
             height: Math.abs(drag.y1 - drag.y0),
-            background: tool === "highlight" ? "rgba(255,214,0,.35)" : tool === "redact" ? "rgba(0,0,0,.8)" : "rgba(255,255,255,.9)",
+            background: tool === "redact" ? "rgba(0,0,0,.8)" : "rgba(255,255,255,.9)",
             border: "1px dashed var(--amber)",
             pointerEvents: "none",
           }}
@@ -800,6 +1274,19 @@ async function buildPdf(src: string, ops: Op[], standardFontsOnly = false): Prom
     if (isRect(op)) {
       const color = op.type === "highlight" ? rgb(1, 0.84, 0) : op.type === "whiteout" ? rgb(1, 1, 1) : rgb(0, 0, 0);
       page.drawRectangle({ x: op.x, y: op.y, width: op.w, height: op.h, color, opacity: op.type === "highlight" ? 0.35 : 1 });
+    } else if (isDrawn(op)) {
+      const g = geometry(op);
+      const color = hexToRgb(g.color);
+      const blendMode = g.multiply ? BlendMode.Multiply : undefined;
+      // Round joins keep pen strokes smooth; pdf-lib has no option for it, so set it around the path.
+      page.pushOperators(pushGraphicsState(), setLineJoin(LineJoinStyle.Round));
+      for (const p of g.paths) {
+        // drawSvgPath flips y, so feed it page coordinates with y negated.
+        const d = p.pts.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(2)} ${(-y).toFixed(2)}`).join("") + (p.closed ? "Z" : "");
+        if (p.fill) page.drawSvgPath(d, { x: 0, y: 0, color, opacity: g.opacity, blendMode });
+        else page.drawSvgPath(d, { x: 0, y: 0, borderColor: color, borderWidth: g.width, borderOpacity: g.opacity, borderLineCap: LineCapStyle.Round, blendMode });
+      }
+      page.pushOperators(popGraphicsState());
     } else if (op.type === "image") {
       const img = await pdf.embedJpg(Uint8Array.from(atob(op.dataUrl.split(",")[1]), (c) => c.charCodeAt(0)));
       page.drawImage(img, { x: op.x, y: op.y, width: op.w, height: op.h });
