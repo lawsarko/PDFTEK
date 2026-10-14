@@ -24,6 +24,8 @@ type Props = {
   onRect: (id: string, rect: Rect, optionIndex?: number) => void;
   onAdd: (page: number, rect: Rect) => void;
   onDelete: (id: string) => void;
+  /** Leave layout editing and put the cursor in this field. */
+  onFillNow: (id: string) => void;
 };
 
 type VpBox = { left: number; top: number; width: number; height: number };
@@ -54,7 +56,8 @@ export function FieldLayer(p: Props) {
     const r = e.currentTarget.getBoundingClientRect();
     const [w, h] = DEFAULT_SIZE[p.newType] ?? [170, 16];
     const scale = p.info.viewport.scale;
-    const box = { left: e.clientX - r.left, top: e.clientY - r.top - (h * scale) / 2, width: w * scale, height: h * scale };
+    // People click on the line they want to write on, so the new box sits just above that point.
+    const box = { left: e.clientX - r.left, top: e.clientY - r.top - h * scale + 2, width: w * scale, height: h * scale };
     p.onAdd(p.info.page, toPdf(p.info, box));
   };
 
@@ -111,8 +114,21 @@ export function FieldLayer(p: Props) {
 
         if (p.mode === "layout") {
           return (
-            <div key={f.id} className={`${cls} ff-box`} style={style} onPointerDown={(e) => drag(e, f, f.rect, false)} title={f.label}>
+            <div
+              key={f.id}
+              className={`${cls} ff-box`}
+              style={style}
+              onPointerDown={(e) => drag(e, f, f.rect, false)}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                p.onFillNow(f.id);
+              }}
+              title={`${f.label} · double-click to type the answer`}
+            >
               <span className="ff-box-label">{f.label}</span>
+              {/* The answer shows inside the box, the name above it. */}
+              {value?.value && f.type !== "checkbox" && <span className="ff-box-value" style={{ fontSize }}>{value.value}</span>}
+              {(f.type === "signature" || f.type === "initials") && p.signatures[f.id] && <img className="ff-box-sig" src={p.signatures[f.id]} alt="" />}
               {p.selected === f.id && (
                 <>
                   <button className="ff-del" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); p.onDelete(f.id); }} aria-label="Delete field">

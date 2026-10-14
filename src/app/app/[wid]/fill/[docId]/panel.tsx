@@ -199,7 +199,10 @@ export function FieldsList({
                   <div className="row between" style={{ gap: 6 }}>
                     <label className="ff-row-label">
                       {onLabel ? (
-                        <input className="ff-label-edit" value={f.label} onChange={(e) => onLabel(f.id, e.target.value)} />
+                        <>
+                          <span className="ff-mini-cap">Field name</span>
+                          <input className="ff-label-edit" value={f.label} placeholder="e.g. Full name" onChange={(e) => onLabel(f.id, e.target.value)} />
+                        </>
                       ) : (
                         f.label
                       )}
@@ -215,11 +218,10 @@ export function FieldsList({
                     </span>
                   </div>
                   {helpOpen === f.id && f.help && <div className="ff-help">{f.help}</div>}
-                  {!onLabel && (
-                    <div className="mt-4" onClick={(e) => e.stopPropagation()} onFocus={() => onSelect(f.id)}>
-                      <FieldInput field={f} value={v} signature={signatures[f.id]} onChange={(val) => onChange(f.id, val)} onSign={() => onSign(f.id)} />
-                    </div>
-                  )}
+                  <div className="mt-4" onClick={(e) => e.stopPropagation()} onFocus={() => onSelect(f.id)}>
+                    {onLabel && <span className="ff-mini-cap">Your answer</span>}
+                    <FieldInput field={f} value={v} signature={signatures[f.id]} onChange={(val) => onChange(f.id, val)} onSign={() => onSign(f.id)} />
+                  </div>
                   {err && <div className="ff-error">{err}</div>}
                   {v?.note && v.source === "ai" && <div className="ff-note">{v.note}</div>}
                 </div>

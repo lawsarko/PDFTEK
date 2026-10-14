@@ -298,10 +298,15 @@ export function FormFiller({ wid, docId }: { wid: string; docId: string }) {
     setSelected(null);
   };
 
-  const finishLayout = async () => {
+  const finishLayout = async (focusId?: string) => {
     setMode("fill");
+    if (focusId) {
+      setSelected(focusId);
+      // Wait for the boxes to turn back into inputs, then put the cursor in this one.
+      setTimeout(() => scrollRef.current?.querySelector<HTMLElement>(`[data-fid="${focusId}"]`)?.focus(), 80);
+    }
     await persistFields(fields);
-    toast("Fields saved. This form is ready to fill again any time.", "success");
+    if (!focusId) toast("Fields saved. Type your answers in the boxes, or use the list on the right.", "success");
   };
 
   // ---------- signatures ----------
@@ -413,7 +418,7 @@ export function FormFiller({ wid, docId }: { wid: string; docId: string }) {
               </>
             ) : (
               <>
-                <span className="small"><b>Edit fields:</b> pick a type, then click the page to add it. Drag to move.</span>
+                <span className="small"><b>Edit fields:</b> pick a type and click the page to add a box. Drag to move, name it in the list. Double-click a box to type in it.</span>
                 <span className="row gap-4 wrap">
                   {NEW_TYPES.map(([t, l]) => (
                     <button key={t} className={`chip ${newType === t ? "active" : ""}`} onClick={() => setNewType(t)}>
@@ -422,7 +427,7 @@ export function FormFiller({ wid, docId }: { wid: string; docId: string }) {
                   ))}
                 </span>
                 <span className="grow" />
-                <button className="btn btn-primary btn-sm" onClick={finishLayout}>Done</button>
+                <button className="btn btn-primary btn-sm" onClick={() => finishLayout()}>Done – start filling</button>
               </>
             )}
             <span className="row gap-4">
@@ -452,6 +457,7 @@ export function FormFiller({ wid, docId }: { wid: string; docId: string }) {
                   onRect={moveField}
                   onAdd={addField}
                   onDelete={deleteField}
+                  onFillNow={(id) => void finishLayout(id)}
                 />
               )}
             />
