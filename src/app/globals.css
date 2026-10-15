@@ -758,3 +758,16 @@ select.ff-field { padding: 0 2px; appearance: auto; }
 .edit-layer.mode-select .edit-draw .hit-area { pointer-events: all; cursor: move; }
 .edit-draw .sel-box { fill: none; stroke: var(--amber); stroke-dasharray: 4 3; stroke-width: 1; }
 .edit-draw-del { position: absolute; width: 20px; height: 20px; border-radius: 50%; background: var(--bad); color: #fff; border: none; cursor: pointer; font-size: 12px; line-height: 20px; padding: 0; z-index: 6; }
+
+/* Contact page */
+.contact-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 520px); gap: 48px; align-items: start; max-width: 1080px; }
+.contact-intro { padding-top: 8px; }
+.contact-points { margin: 24px 0 0; padding: 0; list-style: none; display: grid; gap: 14px; }
+.contact-points li { padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--ink-2); line-height: 1.6; color: var(--text-lo); font-size: 14px; }
+.contact-points b { color: var(--text-hi); }
+.contact-card { max-width: none; position: relative; }
+.contact-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 860px) {
+  .contact-wrap { grid-template-columns: 1fr; gap: 24px; }
+  .contact-row { grid-template-columns: 1fr; }
+}

@@ -36,7 +36,7 @@ export const POST = route(async (req) => {
     }
   }
   if (!mailConfigured()) {
-    throw new HttpError(503, "Password reset by email isn't available yet. Contact support@pdftek.app and we'll help you get back in.", "mail_disabled");
+    throw new HttpError(503, "Password reset by email isn't available yet. Use the contact form at pdftek.com/contact and we'll help you get back in.", "mail_disabled");
   }
   const user = get<{ id: string; name: string }>("SELECT id, name FROM users WHERE email = ? AND is_guest = 0", email);
   if (user) {

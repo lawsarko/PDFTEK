@@ -27,6 +27,9 @@ export async function sendMail(opts: {
   heading: string;
   paragraphs: string[];
   cta?: { label: string; url: string };
+  /** Where replies go, e.g. the visitor who sent a contact message. */
+  replyTo?: string;
+  footer?: string;
 }): Promise<{ delivered: boolean }> {
   const text = [opts.heading, "", ...opts.paragraphs, "", opts.cta ? `${opts.cta.label}: ${opts.cta.url}` : ""].join("\n");
   const html = `<!doctype html><html><body style="margin:0;background:#f3f0e8;font-family:Helvetica,Arial,sans-serif;color:#2b2a26">
@@ -36,7 +39,7 @@ export async function sendMail(opts: {
 <tr><td style="padding-top:20px;font-size:20px;font-weight:600;color:#10151c">${escape(opts.heading)}</td></tr>
 ${opts.paragraphs.map((p) => `<tr><td style="padding-top:12px;font-size:14px;line-height:1.6">${escape(p)}</td></tr>`).join("")}
 ${opts.cta ? `<tr><td style="padding-top:24px"><a href="${escape(opts.cta.url)}" style="background:#d98e2b;color:#1a1206;text-decoration:none;font-weight:600;padding:12px 18px;border-radius:7px;display:inline-block">${escape(opts.cta.label)}</a></td></tr>` : ""}
-<tr><td style="padding-top:28px;font-size:12px;color:#8a8471">Sent by pdftek on behalf of your team.</td></tr>
+<tr><td style="padding-top:28px;font-size:12px;color:#8a8471">${escape(opts.footer ?? "Sent by pdftek on behalf of your team.")}</td></tr>
 </table></td></tr></table></body></html>`;
 
   const t = getTransport();
@@ -45,7 +48,7 @@ ${opts.cta ? `<tr><td style="padding-top:24px"><a href="${escape(opts.cta.url)}"
     return { delivered: false };
   }
   try {
-    await t.sendMail({ from: process.env.MAIL_FROM || "pdftek <no-reply@pdftek.app>", to: opts.to, subject: opts.subject, text, html });
+    await t.sendMail({ from: process.env.MAIL_FROM || "pdftek <no-reply@pdftek.app>", to: opts.to, replyTo: opts.replyTo, subject: opts.subject, text, html });
     return { delivered: true };
   } catch (err) {
     console.error("[pdftek mail] send failed", err);

@@ -322,6 +322,19 @@ CREATE TABLE IF NOT EXISTS form_free_uses (
   created_at INTEGER NOT NULL,
   PRIMARY KEY (workspace_id, month)
 );
+
+-- Messages from the contact form, kept even when email delivery fails.
+CREATE TABLE IF NOT EXISTS contact_messages (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  topic TEXT NOT NULL,
+  message TEXT NOT NULL,
+  user_id TEXT,
+  ip TEXT,
+  emailed INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL
+);
 `;
 
 /** Columns added after the first release; created on startup when missing. */

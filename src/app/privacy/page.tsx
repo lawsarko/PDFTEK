@@ -14,7 +14,7 @@ export default function Privacy() {
         ["OCR", "Optical character recognition runs in your browser; the resulting text is stored in your workspace to power search."],
         ["Sharing", "Documents are visible only to members of the workspace they belong to, and to external recipients you explicitly send signing or request links to."],
         ["Retention and deletion", "Deleted documents move to trash and can be restored. Deleting a workspace permanently removes its documents and versions. Self-hosted deployments keep all data on your own infrastructure."],
-        ["Contact", "Questions or data requests: privacy@pdftek.app."],
+        ["Contact", "Questions or data requests: use the contact form at pdftek.com/contact and choose \"Privacy & data request\"."],
       ]}
     />
   );

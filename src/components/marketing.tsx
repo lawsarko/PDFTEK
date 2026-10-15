@@ -15,6 +15,9 @@ export function MarketingNav({ signedIn }: { signedIn: boolean }) {
         <Link href="/pricing" className="mk-link hide-mobile">
           Pricing
         </Link>
+        <Link href="/contact" className="mk-link hide-mobile">
+          Contact
+        </Link>
         {signedIn ? (
           <Link className="btn btn-primary btn-sm" href="/app">
             Open workbench
@@ -61,7 +64,7 @@ export function MarketingFooter() {
           <Link href="/#faq">FAQ</Link>
           <Link href="/terms">Terms</Link>
           <Link href="/privacy">Privacy</Link>
-          <a href="mailto:support@pdftek.app">Support</a>
+          <Link href="/contact">Contact us</Link>
         </div>
         <span>© {new Date().getFullYear()} PDFTEK</span>
       </div>

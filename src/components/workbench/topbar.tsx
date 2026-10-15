@@ -110,6 +110,9 @@ export function TopBar() {
           <Link className="menu-item show-mobile" href={`/app/${wid}/compare`}>
             <I.compare size={14} /> Compare
           </Link>
+          <Link className="menu-item" href="/contact">
+            <I.mail size={14} /> Contact support
+          </Link>
           <div className="menu-sep" />
           <button className="menu-item" onClick={logout}>
             <I.logout size={14} /> Sign out

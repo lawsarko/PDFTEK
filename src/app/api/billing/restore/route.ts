@@ -25,7 +25,7 @@ export const POST = route(async (req) => {
     return json({ ok: true });
   }
   if (!mailConfigured()) {
-    throw new HttpError(503, "Purchase recovery by email isn't available yet. Contact support@pdftek.app with your receipt and we'll restore it.", "mail_disabled");
+    throw new HttpError(503, "Purchase recovery by email isn't available yet. Send us your receipt through the contact form at pdftek.com/contact and we'll restore it.", "mail_disabled");
   }
   const origin = publicOrigin(req);
   const purchase = get<{ workspace_id: string }>("SELECT workspace_id FROM purchases WHERE lower(email) = ? ORDER BY created_at DESC LIMIT 1", email);
