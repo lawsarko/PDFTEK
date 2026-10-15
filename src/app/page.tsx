@@ -10,7 +10,7 @@ import { ConvertDemo, CountUp, FlowSequence, LiveChat, Reveal, ScrollProgress, S
 export const dynamic = "force-dynamic";
 export const metadata = { alternates: { canonical: "/" }, openGraph: { url: "/" } };
 
-const POPULAR = ["fill-pdf-form", "pdf-to-word", "merge-pdf", "compress-pdf", "word-to-pdf", "jpg-to-pdf", "pdf-to-jpg", "split-pdf", "edit-pdf", "sign-pdf", "protect-pdf", "chat-with-pdf"];
+const POPULAR = ["fill-pdf-form", "bank-statement-to-excel", "pdf-to-word", "merge-pdf", "compress-pdf", "word-to-pdf", "jpg-to-pdf", "pdf-to-jpg", "split-pdf", "edit-pdf", "sign-pdf", "protect-pdf", "chat-with-pdf"];
 
 const TYPED = ["converted.", "edited.", "signed.", "understood.", "handled."];
 
@@ -25,6 +25,7 @@ const MARQUEE_B = [
 
 const FEATURES: { icon: React.ReactNode; title: string; body: string }[] = [
   { icon: <I.form size={18} />, title: "Forms that fill themselves", body: "Upload any form, even a scan. AI finds every field, explains each question, fills what it knows from your profile and documents, and you just check and sign." },
+  { icon: <I.table size={18} />, title: "Bank statements & invoices to Excel", body: "Turn statements into clean transaction rows and invoices into line items, checked against the balances and totals. Convert a whole year of statements or a folder of invoices into one spreadsheet." },
   { icon: <I.sparkle size={18} />, title: "Answers with receipts", body: "Ask anything about a contract, filing or report. Every answer links to the exact page and passage, highlighted in the document." },
   { icon: <I.layers size={18} />, title: "A searchable knowledge base", body: "Every upload is indexed page by page. Search or chat across your entire library, in any language, including scans after OCR." },
   { icon: <I.table size={18} />, title: "Extraction you can trust", body: "Pull key terms, deadlines, obligations, parties, financials and tables into clean spreadsheets. Risk flags are checked against your own playbook." },

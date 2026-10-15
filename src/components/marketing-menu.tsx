@@ -65,6 +65,16 @@ const CONVERT: Group[] = [
         icon: FMT("XLS", "#2a8a4f"),
       },
       {
+        href: "/go/bank-statement-to-excel",
+        label: "Bank statement to Excel",
+        icon: FMT("XLS", "#2a8a4f"),
+      },
+      {
+        href: "/go/invoice-to-excel",
+        label: "Invoice to Excel",
+        icon: FMT("XLS", "#2a8a4f"),
+      },
+      {
         href: "/go/pdf-to-powerpoint",
         label: "PDF to PowerPoint",
         icon: FMT("PPT", "#d0642b"),

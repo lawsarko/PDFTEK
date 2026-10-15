@@ -78,6 +78,10 @@ export const PRICING_FAQ: [string, string][] = [
     "I paid without an account. How do I keep it?",
     "Right after paying, pdftek offers to save your purchase to an account: just add a password. If you skipped that and changed devices or cleared your browser, use \"Restore a purchase\" on the sign-in page with the email you used at checkout.",
   ],
+  [
+    "How much do bank statement and invoice conversions cost?",
+    "Your first statement or invoice document each month (up to 10 pages) is free. After that they use AI credits, about 6 credits per page. Converting many files at once and combining them into one spreadsheet needs a Day Pass or Pro.",
+  ],
   ["What does the Day Pass include?", `24 hours of everything in Pro: unlimited tasks, files up to ${PAID_LIMITS.maxFileMb} MB, editing, read aloud and e-signatures, plus 50 AI credits. It doesn't renew.`],
   ["Can I cancel Pro anytime?", "Yes. Cancel from Settings → Billing in one click; Pro stays active until the end of the period you paid for."],
   ["Is my data safe?", "Files are encrypted in transit, never sold or used to train AI, and files from visitors without an account are deleted after 24 hours."],

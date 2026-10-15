@@ -189,6 +189,8 @@ export function DocumentPane() {
               <div className="menu-label">PDF to documents</div>
               <button className="menu-item" onClick={() => convert("docx")}>📝 Word (.docx)</button>
               <button className="menu-item" onClick={() => convert("xlsx")}>📊 Excel (.xlsx) <span className="sub">tables → cells</span></button>
+              <Link className="menu-item" href={`/app/${wid}/to-excel?kind=statement&doc=${active.id}`}>🏦 Bank statement → Excel <span className="sub">transactions</span></Link>
+              <Link className="menu-item" href={`/app/${wid}/to-excel?kind=invoice&doc=${active.id}`}>🧾 Invoice → Excel <span className="sub">line items</span></Link>
               <button className="menu-item" onClick={() => convert("pptx")}>📽️ PowerPoint (.pptx)</button>
               <button className="menu-item" onClick={() => convert("txt")}>📄 Plain text (.txt)</button>
               <div className="menu-label">Images — all {active.pageCount} pages</div>

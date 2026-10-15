@@ -14,8 +14,11 @@ import { ConvertToPdfModal } from "@/components/convert-to-pdf";
 
 type ToolKey = "merge" | "split" | "extract" | "organize" | "delete_pages" | "rotate" | "watermark" | "page_numbers" | "optimize" | "metadata" | "protect";
 
-const TOOLS: { key: ToolKey | "unlock" | "topdf" | "images" | "scan" | "convert" | "ocr" | "compare" | "fill"; title: string; desc: string; icon: React.ReactNode }[] = [
+const TOOLS: { key: ToolKey | "unlock" | "topdf" | "images" | "scan" | "convert" | "ocr" | "compare" | "fill" | "statement" | "invoice" | "bulk"; title: string; desc: string; icon: React.ReactNode }[] = [
   { key: "fill", title: "Fill a form", desc: "AI finds every field, fills it from your profile, and you sign. Works on scans.", icon: <I.form size={18} /> },
+  { key: "statement", title: "Bank statement → Excel", desc: "Clean transaction rows from any bank's PDF statement, checked against the balances.", icon: <I.table size={18} /> },
+  { key: "invoice", title: "Invoices → Excel", desc: "Vendor, dates, line items, tax and totals from invoices and receipts.", icon: <I.file size={18} /> },
+  { key: "bulk", title: "Bulk convert", desc: "Many PDFs to Word or Excel at once, downloaded as one ZIP. Day Pass / Pro.", icon: <I.layers size={18} /> },
   { key: "topdf", title: "Convert to PDF", desc: "Word, Excel, PowerPoint, text and images to PDF.", icon: <I.file size={18} /> },
   { key: "convert", title: "Convert PDF", desc: "To Word, Excel, PowerPoint, JPG, PNG, WEBP, TIFF.", icon: <I.convert size={18} /> },
   { key: "merge", title: "Merge PDFs", desc: "Combine several documents into one, in any order.", icon: <I.merge size={18} /> },
@@ -36,7 +39,7 @@ const TOOLS: { key: ToolKey | "unlock" | "topdf" | "images" | "scan" | "convert"
   { key: "compare", title: "Compare", desc: "Redline two documents or versions, with an AI summary.", icon: <I.compare size={18} /> },
 ];
 
-const NON_MODAL = ["unlock", "topdf", "images", "scan", "convert", "ocr", "compare", "pick", "fill"];
+const NON_MODAL = ["unlock", "topdf", "images", "scan", "convert", "ocr", "compare", "pick", "fill", "statement", "invoice", "bulk"];
 
 /** Uploads files to the workspace library and hands back the created documents. */
 function UploadButton({ wid, onDone, multiple = false, label = "Upload a PDF", accept = ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.rtf,.txt,.jpg,.jpeg,.png" }: { wid: string; onDone: (d: Doc[]) => void; multiple?: boolean; label?: string; accept?: string }) {
@@ -226,6 +229,7 @@ export function Tools({ wid }: { wid: string }) {
     else if (k === "images" || k === "scan") router.push(`/app/${wid}?add=${k}`);
     else if (k === "convert" || k === "ocr") router.push(`/app/${wid}${preselect ? `?doc=${preselect}` : ""}`);
     else if (k === "fill") setPick("fill");
+    else if (k === "statement" || k === "invoice" || k === "bulk") router.push(`/app/${wid}/to-excel?kind=${k}${preselect ? `&doc=${preselect}` : ""}`);
     else if (k === "compare") router.push(`/app/${wid}/compare${preselect ? `?a=${preselect}` : ""}`);
     else setOpen(k);
   };

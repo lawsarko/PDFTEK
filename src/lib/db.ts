@@ -323,6 +323,25 @@ CREATE TABLE IF NOT EXISTS form_free_uses (
   PRIMARY KEY (workspace_id, month)
 );
 
+-- Statements & invoices to Excel: AI results per document version (re-downloads are free).
+CREATE TABLE IF NOT EXISTS fin_extractions (
+  document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+  version_id TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  result_json TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (document_id, version_id, kind)
+);
+
+-- One statement or invoice document a month on the house.
+CREATE TABLE IF NOT EXISTS fin_free_uses (
+  workspace_id TEXT NOT NULL,
+  month TEXT NOT NULL,
+  document_id TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (workspace_id, month)
+);
+
 -- Messages from the contact form, kept even when email delivery fails.
 CREATE TABLE IF NOT EXISTS contact_messages (
   id TEXT PRIMARY KEY,
