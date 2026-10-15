@@ -4,12 +4,16 @@ import { CreditPacks, PlanCards } from "@/components/pricing";
 import { FREE_LIMITS, PRICING_FAQ } from "@/lib/plans";
 import { Reveal } from "@/components/motion";
 import { I } from "@/components/icons";
+import { alternatesFor, getI18n } from "@/lib/i18n/server";
 
-export const metadata = {
-  title: "Pricing – Free PDF Tools, $1.99 Day Pass, Pro $5.99/mo",
-  description: "Free PDF tools for everyone, no sign-up. Day Pass $1.99 for 24 hours, Pro $5.99/month, and pay-as-you-go AI credits that never expire.",
-  alternates: { canonical: "/pricing" },
-};
+export async function generateMetadata() {
+  const { t, locale } = await getI18n();
+  return {
+    title: t("Pricing – Free PDF Tools, $1.99 Day Pass, Pro $5.99/mo"),
+    description: t("Free PDF tools for everyone, no sign-up. Day Pass $1.99 for 24 hours, Pro $5.99/month, and pay-as-you-go AI credits that never expire."),
+    alternates: alternatesFor("/pricing", locale),
+  };
+}
 export const dynamic = "force-dynamic";
 
 const ROWS: [string, string, string, string, string][] = [
@@ -33,32 +37,32 @@ const ROWS: [string, string, string, string, string][] = [
 
 export default async function Pricing() {
   const user = await currentUser();
+  const { t } = await getI18n();
   return (
     <div className="mk">
       <MarketingNav signedIn={!!user} />
       <section className="mk-section" style={{ textAlign: "center", paddingBottom: 24 }}>
-        <div className="eyebrow">Pricing</div>
+        <div className="eyebrow">{t("Pricing")}</div>
         <h1 className="mk-h2" style={{ fontSize: "clamp(34px, 5vw, 54px)", marginTop: 10 }}>
-          Free for everyday PDFs. <span style={{ color: "var(--amber)" }}>Fair</span> when you need more.
+          {t("Free for everyday PDFs.")} <span style={{ color: "var(--amber)" }}>{t("Fair")}</span> {t("when you need more.")}
         </h1>
         <p className="mk-sub" style={{ margin: "14px auto 0" }}>
-          No account needed for the free tools. Pay once for a day, or go Pro for less than a coffee a month.
+          {t("No account needed for the free tools. Pay once for a day, or go Pro for less than a coffee a month.")}
         </p>
       </section>
       <section className="mk-section" style={{ paddingTop: 0 }}>
         <PlanCards />
         <p className="secure-note">
-          <I.lock size={14} /> Payments are processed securely by <b>Stripe</b>. pdftek never sees or stores your card details.
+          <I.lock size={14} /> {t("Payments are processed securely by Stripe. pdftek never sees or stores your card details.")}
         </p>
       </section>
       <section className="mk-section" style={{ paddingTop: 0 }}>
         <Reveal className="mk-split" style={{ alignItems: "start" }}>
           <div>
-            <div className="eyebrow">Pay as you go</div>
-            <h2 className="mk-h2" style={{ marginTop: 10 }}>AI credits, only when you use them.</h2>
+            <div className="eyebrow">{t("Pay as you go")}</div>
+            <h2 className="mk-h2" style={{ marginTop: 10 }}>{t("AI credits, only when you use them.")}</h2>
             <p className="mk-sub">
-              Ask questions about a contract, summarize a report or pull figures into Excel. AI is charged on what each request actually costs, so a quick
-              question uses a few credits. Credits also cover extra tasks beyond the free daily limit. They never expire.
+              {t("Ask questions about a contract, summarize a report or pull figures into Excel. AI is charged on what each request actually costs, so a quick question uses a few credits. Credits also cover extra tasks beyond the free daily limit. They never expire.")}
             </p>
           </div>
           <CreditPacks />
@@ -66,16 +70,16 @@ export default async function Pricing() {
       </section>
       <section className="mk-section">
         <Reveal>
-          <h2 className="mk-h2">Compare plans</h2>
+          <h2 className="mk-h2">{t("Compare plans")}</h2>
           <div className="table-wrap mt-16">
             <table className="table compare-table">
               <thead>
                 <tr>
                   <th />
-                  <th>Free</th>
-                  <th>Day Pass</th>
-                  <th>Pro</th>
-                  <th>Team</th>
+                  <th>{t("Free")}</th>
+                  <th>{t("Day Pass")}</th>
+                  <th>{t("Pro")}</th>
+                  <th>{t("Team")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -83,7 +87,7 @@ export default async function Pricing() {
                   <tr key={r[0]}>
                     {r.map((c, i) => (
                       <td key={i} className={i ? "small" : ""}>
-                        {c}
+                        {t(c)}
                       </td>
                     ))}
                   </tr>
@@ -94,11 +98,11 @@ export default async function Pricing() {
         </Reveal>
       </section>
       <section className="mk-section faq" style={{ maxWidth: 820 }}>
-        <h2 className="mk-h2">Pricing questions</h2>
+        <h2 className="mk-h2">{t("Pricing questions")}</h2>
         {PRICING_FAQ.map(([q, a]) => (
           <details key={q}>
-            <summary>{q}</summary>
-            <p>{a}</p>
+            <summary>{t(q)}</summary>
+            <p>{t(a)}</p>
           </details>
         ))}
       </section>

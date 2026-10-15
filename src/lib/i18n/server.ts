@@ -1,0 +1,122 @@
+import "server-only";
+import { cookies, headers } from "next/headers";
+import { all, get, run } from "../db";
+import { now } from "../ids";
+import { DEFAULT_LOCALE, LOCALE_COOKIE, LOCALE_HEADER, isLocale, localeInfo, localizePath, LOCALES } from "./locales";
+import { compile, fill, isPattern, norm, type Dict } from "./match";
+
+/**
+ * Server-side translation. Pages call `const { t } = await getI18n()` and wrap their English text in
+ * t(); text without a translation yet is shown in English and queued for the translator, so new
+ * copy is picked up without any extra step.
+ */
+
+type Cache = { version: string; checked: number; dict: Dict; lookup: (s: string) => string | null };
+const caches = new Map<string, Cache>();
+// The translator runs in its own copy of this module (instrumentation), so changes are noticed by
+// looking at the table itself, at most every few seconds.
+let version = 1;
+const RECHECK_MS = 5000;
+const known = new Set<string>();
+let knownLoaded = false;
+
+/** Called by the translator after it saves translations. */
+export function bumpI18n() {
+  version++;
+}
+
+function loadKnown() {
+  if (knownLoaded) return;
+  for (const r of all<{ text: string }>("SELECT text FROM i18n_source")) known.add(r.text);
+  knownLoaded = true;
+}
+
+/** Adds English strings to translate (from pages, the build catalog or data files). */
+export function registerSources(texts: string[], origin = "page") {
+  loadKnown();
+  for (const raw of texts) {
+    const text = norm(raw);
+    if (!text || text.length > 4000 || known.has(text) || !/\p{L}/u.test(text)) continue;
+    known.add(text);
+    run("INSERT OR IGNORE INTO i18n_source (text, origin, created_at) VALUES (?, ?, ?)", text, origin, now());
+  }
+}
+
+function stamp(locale: string) {
+  const r = get<{ n: number; last: number | null }>("SELECT count(*) AS n, max(created_at) AS last FROM i18n_text WHERE locale = ?", locale);
+  return `${r?.n ?? 0}-${r?.last ?? 0}-${version}`;
+}
+
+export function dictFor(locale: string): Cache {
+  const hit = caches.get(locale);
+  if (hit && Date.now() - hit.checked < RECHECK_MS) return hit;
+  const v = stamp(locale);
+  if (hit && hit.version === v) {
+    hit.checked = Date.now();
+    return hit;
+  }
+  const exact: Record<string, string> = {};
+  const patterns: [string, string][] = [];
+  for (const r of all<{ source: string; text: string }>("SELECT source, text FROM i18n_text WHERE locale = ?", locale)) {
+    if (isPattern(r.source)) patterns.push([r.source, r.text]);
+    else exact[r.source] = r.text;
+  }
+  const dict = { exact, patterns };
+  const c = { version: v, checked: Date.now(), dict, lookup: compile(dict) };
+  caches.set(locale, c);
+  return c;
+}
+
+export const i18nVersion = (locale: string) => dictFor(locale).version;
+
+/** The visitor's language: from the address prefix (set by middleware), else their saved choice. */
+export async function getLocale(): Promise<string> {
+  const h = (await headers()).get(LOCALE_HEADER);
+  if (isLocale(h)) return h;
+  const c = (await cookies()).get(LOCALE_COOKIE)?.value;
+  return isLocale(c) ? c : DEFAULT_LOCALE;
+}
+
+export type T = (english: string, vars?: Record<string, string | number>) => string;
+
+export function translator(locale: string): T {
+  if (locale === DEFAULT_LOCALE) return (s, vars) => fill(s, vars);
+  const { lookup } = dictFor(locale);
+  return (s, vars) => {
+    const hit = lookup(s);
+    if (hit === null) registerSources([s]);
+    return fill(hit ?? s, vars);
+  };
+}
+
+export async function getI18n() {
+  const locale = await getLocale();
+  const info = localeInfo(locale);
+  return {
+    locale,
+    info,
+    t: translator(locale),
+    /** Link to a page in the current language. */
+    lp: (path: string) => localizePath(path, locale),
+  };
+}
+
+/** hreflang links for a public page, plus its canonical address in the current language. */
+export function alternatesFor(path: string, locale: string) {
+  const languages: Record<string, string> = { "x-default": path };
+  for (const l of LOCALES) languages[l.tag] = localizePath(path, l.code);
+  return { canonical: localizePath(path, locale), languages };
+}
+
+/** Translations of a list of strings, for client components rendered on the server. */
+export function pick(locale: string, texts: string[]): Record<string, string> {
+  if (locale === DEFAULT_LOCALE) return {};
+  const { lookup } = dictFor(locale);
+  const out: Record<string, string> = {};
+  for (const s of texts) {
+    const hit = lookup(s);
+    if (hit !== null) out[norm(s)] = hit;
+    else registerSources([s]);
+  }
+  return out;
+}

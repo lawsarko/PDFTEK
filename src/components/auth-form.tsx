@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { api, errMsg, ApiError } from "@/lib/client/api";
 import { Logo, Wordmark } from "./icons";
+import { useLocalePath, useT } from "./i18n";
 
 const NOTICES: Record<string, string> = {
   google: "Google sign-in didn't complete. Try again, or use your email and password.",
@@ -24,12 +25,14 @@ export function AuthForm({
   google?: boolean;
 }) {
   const params = useSearchParams();
+  const t = useT();
+  const lp = useLocalePath();
   const next = params.get("next");
   const [form, setForm] = useState({ name: "", email: inviteEmail ?? "", password: "", workspaceName: "" });
   const [error, setError] = useState<string | null>(() => {
     const e = params.get("error");
-    if (e) return NOTICES[e] ?? NOTICES.google;
-    if (params.get("verified") === "0") return "That confirmation link has expired or was already used. Sign in and we'll send a new one.";
+    if (e) return t(NOTICES[e] ?? NOTICES.google);
+    if (params.get("verified") === "0") return t("That confirmation link has expired or was already used. Sign in and we'll send a new one.");
     return null;
   });
   const [busy, setBusy] = useState(false);
@@ -62,7 +65,7 @@ export function AuthForm({
     try {
       await api("/api/auth/verify/resend", { method: "POST", json: { email: form.email } });
       setUnconfirmed("sent");
-      setError(`We've sent a new confirmation link to ${form.email}.`);
+      setError(t("We've sent a new confirmation link to {email}.", { email: form.email }));
     } catch (err) {
       setError(errMsg(err));
     }
@@ -71,50 +74,50 @@ export function AuthForm({
   return (
     <div className="auth-wrap">
       <form className="auth-card" onSubmit={submit}>
-        <Link href="/" className="brand" style={{ marginBottom: 22 }}>
+        <Link href={lp("/")} className="brand" style={{ marginBottom: 22 }}>
           <Logo /> <Wordmark />
         </Link>
-        <h1 style={{ fontSize: 22 }}>{mode === "login" ? "Welcome back" : workspaceName ? `Join ${workspaceName}` : "Create your workspace"}</h1>
+        <h1 style={{ fontSize: 22 }}>{mode === "login" ? t("Welcome back") : workspaceName ? t("Join {name}", { name: workspaceName }) : t("Create your workspace")}</h1>
         <p className="small muted" style={{ margin: "6px 0 20px" }}>
-          {mode === "login" ? "Sign in to your document workbench." : "Free forever for the essentials. No credit card required."}
+          {mode === "login" ? t("Sign in to your document workbench.") : t("Free forever for the essentials. No credit card required.")}
         </p>
         {google && !inviteToken && (
           <>
             <a className="btn btn-lg btn-google" href={`/api/auth/google/start${next ? `?next=${encodeURIComponent(next)}` : ""}`}>
-              <GoogleG /> Continue with Google
+              <GoogleG /> {t("Continue with Google")}
             </a>
             <div className="auth-divider">
-              <span>or with email</span>
+              <span>{t("or with email")}</span>
             </div>
           </>
         )}
         <div className="col gap-12">
           {mode === "signup" && (
             <div className="field">
-              <label htmlFor="name">Full name</label>
+              <label htmlFor="name">{t("Full name")}</label>
               <input id="name" className="input" autoComplete="name" required value={form.name} onChange={set("name")} />
             </div>
           )}
           <div className="field">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">{t("Email")}</label>
             <input id="email" className="input" type="email" autoComplete="email" required value={form.email} onChange={set("email")} readOnly={!!inviteEmail && mode === "signup"} />
           </div>
           <div className="field">
             <div className="row between">
-              <label htmlFor="password">Password</label>
+              <label htmlFor="password">{t("Password")}</label>
               {mode === "login" && (
-                <Link href={`/forgot${form.email ? `?email=${encodeURIComponent(form.email)}` : ""}`} className="tiny" tabIndex={-1}>
-                  Forgot password?
+                <Link href={`${lp("/forgot")}${form.email ? `?email=${encodeURIComponent(form.email)}` : ""}`} className="tiny" tabIndex={-1}>
+                  {t("Forgot password?")}
                 </Link>
               )}
             </div>
             <input id="password" className="input" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} required minLength={mode === "signup" ? 8 : 1} value={form.password} onChange={set("password")} />
-            {mode === "signup" && <span className="tiny faint">At least 8 characters.</span>}
+            {mode === "signup" && <span className="tiny faint">{t("At least 8 characters.")}</span>}
           </div>
           {mode === "signup" && !inviteToken && (
             <div className="field">
-              <label htmlFor="ws">Workspace name (optional)</label>
-              <input id="ws" className="input" placeholder="e.g. Acme Legal" value={form.workspaceName} onChange={set("workspaceName")} />
+              <label htmlFor="ws">{t("Workspace name (optional)")}</label>
+              <input id="ws" className="input" placeholder={t("e.g. Acme Legal")} value={form.workspaceName} onChange={set("workspaceName")} />
             </div>
           )}
           {error && (
@@ -122,40 +125,40 @@ export function AuthForm({
               {error}{" "}
               {unconfirmed === "yes" && (
                 <button type="button" className="link-btn" onClick={resend}>
-                  Resend the link
+                  {t("Resend the link")}
                 </button>
               )}
             </div>
           )}
           <button className="btn btn-primary btn-lg" type="submit" disabled={busy}>
-            {busy && <span className="spinner" />} {mode === "login" ? "Sign in" : inviteToken ? "Join workspace" : "Create account"}
+            {busy && <span className="spinner" />} {mode === "login" ? t("Sign in") : inviteToken ? t("Join workspace") : t("Create account")}
           </button>
         </div>
         <p className="small muted" style={{ marginTop: 18, textAlign: "center" }}>
           {mode === "login" ? (
             <>
-              New to pdftek? <Link href={`/signup${inviteToken ? `?invite=${inviteToken}` : ""}`}>Create an account</Link>
+              {t("New to pdftek?")} <Link href={`${lp("/signup")}${inviteToken ? `?invite=${inviteToken}` : ""}`}>{t("Create an account")}</Link>
             </>
           ) : (
             <>
-              Already have an account? <Link href={`/login${inviteToken ? `?invite=${inviteToken}` : next ? `?next=${encodeURIComponent(next)}` : ""}`}>Sign in</Link>
+              {t("Already have an account?")} <Link href={`${lp("/login")}${inviteToken ? `?invite=${inviteToken}` : next ? `?next=${encodeURIComponent(next)}` : ""}`}>{t("Sign in")}</Link>
             </>
           )}
         </p>
         {!inviteToken && (
           <p className="small" style={{ textAlign: "center", marginTop: 10 }}>
-            <Link prefetch={false} href="/go/start">Continue without an account →</Link>
+            <Link prefetch={false} href="/go/start">{t("Continue without an account →")}</Link>
             {mode === "login" && (
               <>
                 <br />
-                <Link href="/restore" className="tiny">Bought without an account? Restore your purchase</Link>
+                <Link href="/restore" className="tiny">{t("Bought without an account? Restore your purchase")}</Link>
               </>
             )}
           </p>
         )}
         {mode === "signup" && (
           <p className="tiny faint" style={{ textAlign: "center", marginTop: 8 }}>
-            By creating an account you agree to the <Link href="/terms">Terms</Link> and <Link href="/privacy">Privacy Policy</Link>.
+            {t("By creating an account you agree to the")} <Link href={lp("/terms")}>{t("Terms")}</Link> {t("and")} <Link href={lp("/privacy")}>{t("Privacy Policy")}</Link>.
           </p>
         )}
       </form>

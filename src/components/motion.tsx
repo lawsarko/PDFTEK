@@ -5,6 +5,7 @@
  * visitor has asked the OS for reduced motion.
  */
 import { useEffect, useRef, useState } from "react";
+import { useT } from "./i18n";
 
 function reducedMotion() {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -218,6 +219,7 @@ const CONVERSIONS: [string, string, string][] = [
 /** A file card that visibly converts from one format to another, cycling through examples. */
 export function ConvertDemo() {
   const [ref, seen] = useInView<HTMLDivElement>(0.3);
+  const t = useT();
   const [i, setI] = useState(0);
   const [phase, setPhase] = useState<"from" | "working" | "to">("to");
   useEffect(() => {
@@ -256,30 +258,31 @@ export function ConvertDemo() {
           <i style={{ width: "90%" }} />
         </div>
         <div className="cd-name">
-          {name}.{fmt.toLowerCase()}
+          {t(name)}.{fmt.toLowerCase()}
         </div>
         <div className="cd-scan" />
       </div>
       <div className="cd-caption mono">
         {from} <span className="cd-arrow">→</span> {to}
-        <span className={`cd-status ${phase}`}>{phase === "working" ? "converting…" : phase === "to" ? "✓ formatting kept" : "ready"}</span>
+        <span className={`cd-status ${phase}`}>{phase === "working" ? t("converting…") : phase === "to" ? t("✓ formatting kept") : t("ready")}</span>
       </div>
     </div>
   );
 }
 
 const DEMO = [
-  { q: "What’s our exit path if we just want out, no cause needed?", a: "You can terminate for convenience with 90 days’ written notice. No breach is required.", cite: "p.2" },
-  { q: "When does this contract auto-renew?", a: "It renews every 24 months unless either party gives notice at least 60 days before the term ends.", cite: "p.2" },
-  { q: "Is there a liability cap?", a: "Yes. Liability is capped at the fees paid in the prior 12 months, except for confidentiality breaches.", cite: "p.9" },
+  { question: "What’s our exit path if we just want out, no cause needed?", answer: "You can terminate for convenience with 90 days’ written notice. No breach is required.", cite: "p.2" },
+  { question: "When does this contract auto-renew?", answer: "It renews every 24 months unless either party gives notice at least 60 days before the term ends.", cite: "p.2" },
+  { question: "Is there a liability cap?", answer: "Yes. Liability is capped at the fees paid in the prior 12 months, except for confidentiality breaches.", cite: "p.9" },
 ];
 
 /** Chat column of the product shot: the question types itself, then the cited answer streams in. */
 export function LiveChat() {
   const [ref, seen] = useInView<HTMLDivElement>(0.3);
+  const t = useT();
   const [k, setK] = useState(0);
-  const [q, setQ] = useState(DEMO[0].q);
-  const [a, setA] = useState(DEMO[0].a);
+  const [q, setQ] = useState(() => t(DEMO[0].question));
+  const [a, setA] = useState(() => t(DEMO[0].answer));
   const [thinking, setThinking] = useState(false);
   const [cite, setCite] = useState(true);
   useEffect(() => {
@@ -289,7 +292,8 @@ export function LiveChat() {
       await sleep(1500);
       let i = 0;
       while (alive) {
-        const d = DEMO[i % DEMO.length];
+        const src = DEMO[i % DEMO.length];
+        const d = { q: t(src.question), a: t(src.answer) };
         setK(i % DEMO.length);
         setQ("");
         setA("");
@@ -314,7 +318,7 @@ export function LiveChat() {
     return () => {
       alive = false;
     };
-  }, [seen]);
+  }, [seen, t]);
   return (
     <div ref={ref} className="col" style={{ gap: 10 }} data-demo={k}>
       {q && <div className="msg msg-user" style={{ fontSize: 12 }}>{q}</div>}

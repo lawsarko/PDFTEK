@@ -342,6 +342,21 @@ CREATE TABLE IF NOT EXISTS fin_free_uses (
   PRIMARY KEY (workspace_id, month)
 );
 
+-- Interface translations. Every English string shown on the site is a source; the translator fills
+-- in i18n_text for each language (see lib/i18n/worker.ts).
+CREATE TABLE IF NOT EXISTS i18n_source (
+  text TEXT PRIMARY KEY,
+  origin TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS i18n_text (
+  locale TEXT NOT NULL,
+  source TEXT NOT NULL,
+  text TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (locale, source)
+);
+
 -- Messages from the contact form, kept even when email delivery fails.
 CREATE TABLE IF NOT EXISTS contact_messages (
   id TEXT PRIMARY KEY,

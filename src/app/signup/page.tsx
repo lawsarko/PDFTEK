@@ -1,11 +1,15 @@
 import { Suspense } from "react";
+import { getI18n } from "@/lib/i18n/server";
 import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/auth-form";
 import { currentUser } from "@/lib/auth";
 import { sbGoogleEnabled } from "@/lib/supabase";
 import { get } from "@/lib/db";
 
-export const metadata = { title: "Create account" };
+export async function generateMetadata() {
+  const { t } = await getI18n();
+  return { title: t("Create account") };
+}
 export const dynamic = "force-dynamic";
 
 export default async function Signup({ searchParams }: { searchParams: Promise<{ invite?: string }> }) {

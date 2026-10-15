@@ -1,6 +1,10 @@
 import { LegalPage } from "@/components/legal";
+import { alternatesFor, getI18n } from "@/lib/i18n/server";
 
-export const metadata = { title: "Terms of Service" };
+export async function generateMetadata() {
+  const { t, locale } = await getI18n();
+  return { title: t("Terms of Service"), alternates: alternatesFor("/terms", locale) };
+}
 
 export default function Terms() {
   return (

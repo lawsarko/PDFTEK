@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { I } from "./icons";
+import { useLocalePath, useT } from "./i18n";
 
 type Item = {
   href: string;
@@ -164,17 +165,18 @@ const ENTRIES: Entry[] = [
 ];
 
 function Panel({ groups, onPick }: { groups: Group[]; onPick: () => void }) {
+  const t = useT();
   return (
     <div className="mega-cols">
       {groups.map((g) => (
         <div key={g.title} className="mega-col">
-          <div className="mega-title">{g.title}</div>
+          <div className="mega-title">{t(g.title)}</div>
           {g.items.map((it) => (
             <Link prefetch={false} key={it.href} href={it.href} className="mega-item" onClick={onPick}>
               <span className="mega-ico">{it.icon}</span>
               <span className="col" style={{ gap: 0 }}>
-                <span>{it.label}</span>
-                {it.sub && <span className="mega-sub">{it.sub}</span>}
+                <span>{t(it.label)}</span>
+                {it.sub && <span className="mega-sub">{t(it.sub)}</span>}
               </span>
             </Link>
           ))}
@@ -190,6 +192,8 @@ export function MarketingMenu() {
   const [sheet, setSheet] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const t = useT();
+  const lp = useLocalePath();
 
   useEffect(() => {
     const close = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(null);
@@ -226,7 +230,7 @@ export function MarketingMenu() {
                 aria-expanded={open === e.label}
                 onClick={() => setOpen(open === e.label ? null : e.label)}
               >
-                {e.label} <I.chevron size={13} />
+                {t(e.label)} <I.chevron size={13} />
               </button>
               {open === e.label && (
                 <div className="mega" role="menu">
@@ -236,34 +240,34 @@ export function MarketingMenu() {
             </div>
           ) : (
             <Link prefetch={false} key={e.label} href={e.href!} className={`mk-link ${e.accent ? "accent" : ""}`}>
-              {e.accent && e.icon} {e.label}
+              {e.accent && e.icon} {t(e.label)}
             </Link>
           ),
         )}
       </div>
 
-      <button className="mk-burger" aria-label="Open tools menu" onClick={() => setSheet(true)}>
+      <button className="mk-burger" aria-label={t("Open tools menu")} onClick={() => setSheet(true)}>
         <I.menu size={18} />
       </button>
       {sheet &&
         createPortal(
-          <div className="mk-sheet" role="dialog" aria-label="Tools">
+          <div className="mk-sheet" role="dialog" aria-label={t("Tools")}>
             <div className="row between" style={{ marginBottom: 12 }}>
-              <b>Tools</b>
-              <button className="icon-btn" aria-label="Close" onClick={() => setSheet(false)}>
+              <b>{t("Tools")}</b>
+              <button className="icon-btn" aria-label={t("Close")} onClick={() => setSheet(false)}>
                 <I.x size={18} />
               </button>
             </div>
             <div className="mk-sheet-quick">
               {ENTRIES.filter((e) => e.href).map((e) => (
                 <Link prefetch={false} key={e.label} href={e.href!} className={`mk-quick ${e.accent ? "accent" : ""}`} onClick={() => setSheet(false)}>
-                  {e.icon} {e.label}
+                  {e.icon} {t(e.label)}
                 </Link>
               ))}
             </div>
             <Panel groups={[...CONVERT, ...ORGANIZE]} onPick={() => setSheet(false)} />
             <div className="row gap-16 wrap small" style={{ marginTop: 16 }}>
-              <Link href="/pricing" onClick={() => setSheet(false)}>Pricing</Link>
+              <Link href={lp("/pricing")} onClick={() => setSheet(false)}>{t("Pricing")}</Link>
             </div>
           </div>,
           document.body,

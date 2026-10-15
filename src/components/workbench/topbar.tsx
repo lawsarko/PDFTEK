@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { api, errMsg, initials, timeAgo } from "@/lib/client/api";
 import { I, Logo, Wordmark } from "../icons";
 import { UsageMeter } from "../paywall";
+import { LanguageSwitcher } from "../i18n";
 import { Menu, Modal } from "../modal";
 import { useToast } from "../toast";
 import { useWB } from "./context";
@@ -84,6 +85,7 @@ export function TopBar() {
         <I.compare size={14} /> Compare
       </Link>
       <div className="grow show-mobile" />
+      <LanguageSwitcher variant="app" />
       <Notifications />
       <div className="menu-wrap">
         <button className="avatar" style={{ cursor: "pointer", width: 30, height: 30 }} onClick={() => setUserMenu((v) => !v)} aria-label="Account menu">

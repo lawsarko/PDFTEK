@@ -814,3 +814,30 @@ select.ff-field { padding: 0 2px; appearance: auto; }
 .secure-note svg { vertical-align: -2px; margin-right: 4px; color: var(--good); }
 .secure-note b { color: var(--text-hi); }
 .contact-hours { display: inline-flex; align-items: center; gap: 8px; margin: 4px 0 0; padding: 8px 12px; border-radius: 8px; background: var(--amber-soft); border: 1px solid var(--amber-line); color: var(--text-hi); font-size: 14px; }
+
+/* Language menu */
+.lang { position: relative; }
+.lang-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--text-hi); font: inherit; font-size: 14px; cursor: pointer; white-space: nowrap; }
+.lang-btn:hover { border-color: var(--steel); }
+.lang-footer .lang-btn { font-size: 13px; color: var(--text-lo); }
+.lang-pop { position: absolute; top: calc(100% + 6px); right: 0; z-index: 60; width: min(560px, calc(100vw - 24px)); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 10px; background: var(--ink-2); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 16px 40px rgba(0,0,0,.35); }
+.lang-footer .lang-pop { top: auto; bottom: calc(100% + 6px); left: 0; right: auto; }
+.lang-pop button { display: flex; align-items: center; gap: 6px; padding: 8px 8px; border: none; border-radius: 6px; background: transparent; color: var(--text-hi); font: inherit; font-size: 14px; font-weight: 500; text-align: start; cursor: pointer; }
+.lang-pop button:hover { background: var(--panel); }
+.lang-pop button.on { color: var(--amber); }
+.lang-check { width: 14px; display: inline-flex; flex: none; }
+@media (max-width: 640px) {
+  .lang-pop { grid-template-columns: repeat(2, minmax(0, 1fr)); position: fixed; top: 64px; left: 12px; right: 12px; width: auto; max-height: calc(100vh - 90px); overflow-y: auto; }
+  .lang-footer .lang-pop { top: auto; bottom: 16px; }
+  .lang-nav .lang-name { display: none; }
+}
+[dir="rtl"] .lang-pop { right: auto; left: 0; }
+.lang-app .lang-btn { padding: 5px 8px; font-size: 13px; }
+@media (max-width: 900px) { .lang-app .lang-name { display: none; } }
+@media (max-width: 520px) {
+  .mk-nav-inner { gap: 8px; }
+  .mk-nav-inner .btn-sm { max-width: 36vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; }
+  .lang-nav .lang-btn { padding: 6px 8px; }
+}
+/* The wordmark and the sample English document in the demo always read left to right. */
+.brand, .mk-shot, .convert-demo { direction: ltr; }

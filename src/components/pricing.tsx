@@ -4,6 +4,7 @@ import { PRODUCTS, FREE_LIMITS, type ProductId, usd } from "@/lib/plans";
 import { startCheckout } from "./paywall";
 import { I } from "./icons";
 import { useToast } from "./toast";
+import { useT } from "./i18n";
 
 function useBuy(workspaceId?: string) {
   const toast = useToast();
@@ -36,70 +37,71 @@ type Card = {
 /** The four plan cards. `current` hides the buy button for the plan already active. */
 export function PlanCards({ workspaceId, current, yearly: initialYearly = false }: { workspaceId?: string; current?: string; yearly?: boolean }) {
   const { busy, buy } = useBuy(workspaceId);
+  const t = useT();
   const [yearly, setYearly] = useState(initialYearly);
   const pro = yearly ? PRODUCTS.pro_year : PRODUCTS.pro_month;
   const cards: Card[] = [
     {
       key: "free",
-      name: "Free",
+      name: t("Free"),
       price: "$0",
-      note: "No account needed",
+      note: t("No account needed"),
       features: [
-        `${FREE_LIMITS.guest.tasksPerDay} tasks a day without an account, ${FREE_LIMITS.free.tasksPerDay} with a free account`,
-        "Convert to and from Word, Excel, PowerPoint, JPG",
-        "Merge, split, compress, rotate, watermark, protect",
-        `Files up to ${FREE_LIMITS.free.maxFileMb} MB, ${FREE_LIMITS.free.maxFiles} at a time`,
-        "View and search your PDFs",
+        t("{a} tasks a day without an account, {b} with a free account", { a: FREE_LIMITS.guest.tasksPerDay, b: FREE_LIMITS.free.tasksPerDay }),
+        t("Convert to and from Word, Excel, PowerPoint, JPG"),
+        t("Merge, split, compress, rotate, watermark, protect"),
+        t("Files up to {mb} MB, {n} at a time", { mb: FREE_LIMITS.free.maxFileMb, n: FREE_LIMITS.free.maxFiles }),
+        t("View and search your PDFs"),
       ],
-      cta: "Start now",
+      cta: t("Start now"),
       href: "/go/start",
     },
     {
       key: "pass",
-      name: "Day Pass",
+      name: t("Day Pass"),
       price: usd(PRODUCTS.pass.cents),
-      per: "one time",
-      note: "24 hours · no subscription",
-      features: ["Everything in Pro for 24 hours", "Unlimited tasks, files up to 100 MB", "Edit PDFs, read aloud, e-signatures", "50 AI credits included"],
-      cta: "Get a Day Pass",
+      per: t("one time"),
+      note: t("24 hours · no subscription"),
+      features: [t("Everything in Pro for 24 hours"), t("Unlimited tasks, files up to 100 MB"), t("Edit PDFs, read aloud, e-signatures"), t("50 AI credits included")],
+      cta: t("Get a Day Pass"),
       product: "pass",
     },
     {
       key: "pro",
-      name: "Pro",
+      name: t("Pro"),
       price: yearly ? usd(Math.round(PRODUCTS.pro_year.cents / 12)) : usd(PRODUCTS.pro_month.cents),
-      per: "/month",
-      note: yearly ? `${usd(PRODUCTS.pro_year.cents)} billed yearly` : "Billed monthly · cancel anytime",
+      per: t("/month"),
+      note: yearly ? t("{price} billed yearly", { price: usd(PRODUCTS.pro_year.cents) }) : t("Billed monthly · cancel anytime"),
       features: [
-        "Unlimited tasks, files up to 100 MB",
-        "Edit text, images and true redaction",
-        "Read aloud in 11 languages",
-        "E-signatures with audit certificates",
-        "400 AI credits every month",
+        t("Unlimited tasks, files up to 100 MB"),
+        t("Edit text, images and true redaction"),
+        t("Read aloud in 11 languages"),
+        t("E-signatures with audit certificates"),
+        t("400 AI credits every month"),
       ],
-      cta: "Go Pro",
+      cta: t("Go Pro"),
       product: pro === PRODUCTS.pro_year ? "pro_year" : "pro_month",
       featured: true,
     },
     {
       key: "team",
-      name: "Team",
+      name: t("Team"),
       price: usd(PRODUCTS.team_month.cents),
-      per: "/month",
-      note: "Up to 5 people",
-      features: ["Everything in Pro, for your whole team", "Automations and document requests", "Shared library, roles, hand-offs", "1,500 AI credits every month"],
-      cta: "Start Team",
+      per: t("/month"),
+      note: t("Up to 5 people"),
+      features: [t("Everything in Pro, for your whole team"), t("Automations and document requests"), t("Shared library, roles, hand-offs"), t("1,500 AI credits every month")],
+      cta: t("Start Team"),
       product: "team_month",
     },
   ];
   return (
     <div>
-      <div className="billing-toggle" role="tablist" aria-label="Billing period">
+      <div className="billing-toggle" role="tablist" aria-label={t("Billing period")}>
         <button role="tab" aria-selected={!yearly} className={!yearly ? "on" : ""} onClick={() => setYearly(false)}>
-          Monthly
+          {t("Monthly")}
         </button>
         <button role="tab" aria-selected={yearly} className={yearly ? "on" : ""} onClick={() => setYearly(true)}>
-          Yearly <span className="badge badge-good">4 months free</span>
+          {t("Yearly")} <span className="badge badge-good">{t("4 months free")}</span>
         </button>
       </div>
       <div className="price-grid price-grid-4">
@@ -109,7 +111,7 @@ export function PlanCards({ workspaceId, current, yearly: initialYearly = false 
             <div key={c.key} className={`price ${c.featured ? "featured" : ""}`}>
               <div className="row between">
                 <div className="eyebrow" style={c.featured ? { color: "var(--amber)" } : undefined}>{c.name}</div>
-                {c.featured && <span className="badge badge-warn">Most popular</span>}
+                {c.featured && <span className="badge badge-warn">{t("Most popular")}</span>}
               </div>
               <div className="amount">
                 {c.price}
@@ -123,7 +125,7 @@ export function PlanCards({ workspaceId, current, yearly: initialYearly = false 
               </ul>
               {isCurrent ? (
                 <span className="btn btn-lg" style={{ marginTop: "auto", pointerEvents: "none", opacity: 0.7 }}>
-                  <I.check size={14} /> Your plan
+                  <I.check size={14} /> {t("Your plan")}
                 </span>
               ) : c.href ? (
                 <a href={c.href} className="btn btn-lg" style={{ marginTop: "auto" }}>
@@ -145,7 +147,8 @@ export function PlanCards({ workspaceId, current, yearly: initialYearly = false 
 /** Pay-as-you-go credit packs (AI and extra tasks). */
 export function CreditPacks({ workspaceId }: { workspaceId?: string }) {
   const { busy, buy } = useBuy(workspaceId);
-  const packs: { id: ProductId; tag?: string }[] = [{ id: "credits_250" }, { id: "credits_900", tag: "Save 17%" }, { id: "credits_3000", tag: "Save 30%" }];
+  const t = useT();
+  const packs: { id: ProductId; tag?: string }[] = [{ id: "credits_250" }, { id: "credits_900", tag: t("Save {p}%", { p: 17 }) }, { id: "credits_3000", tag: t("Save {p}%", { p: 30 }) }];
   return (
     <div className="credit-packs">
       {packs.map(({ id, tag }) => {
@@ -154,10 +157,10 @@ export function CreditPacks({ workspaceId }: { workspaceId?: string }) {
           <button key={id} className="plan-option" disabled={!!busy} onClick={() => buy(id)}>
             <span className="grow" style={{ textAlign: "left" }}>
               <span className="row" style={{ gap: 8 }}>
-                <b>{p.credits!.toLocaleString()} credits</b>
+                <b>{t("{n} credits", { n: p.credits!.toLocaleString() })}</b>
                 {tag && <span className="badge badge-good">{tag}</span>}
               </span>
-              <span className="tiny muted">{usd(Math.round((p.cents / p.credits!) * 1000) / 10)} per 100 · never expire</span>
+              <span className="tiny muted">{t("{price} per 100 · never expire", { price: usd(Math.round((p.cents / p.credits!) * 1000) / 10) })}</span>
             </span>
             <span className="plan-price">{busy === id ? <span className="spinner" /> : usd(p.cents)}</span>
           </button>

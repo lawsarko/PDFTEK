@@ -4,9 +4,11 @@ import { useSearchParams } from "next/navigation";
 import { api, errMsg } from "@/lib/client/api";
 import { I } from "@/components/icons";
 import { CONTACT_TOPICS, type ContactTopic } from "@/lib/contact";
+import { useT } from "@/components/i18n";
 
 export function ContactForm({ me }: { me: { name: string; email: string } | null }) {
   const params = useSearchParams();
+  const t = useT();
   const asked = (params.get("topic") ?? "").toLowerCase();
   const [form, setForm] = useState({
     name: me?.name ?? "",
@@ -38,13 +40,13 @@ export function ContactForm({ me }: { me: { name: string; email: string } | null
     return (
       <div className="auth-card contact-card" role="status">
         <h2 style={{ fontSize: 20, margin: 0 }}>
-          <I.check size={18} /> Message sent
+          <I.check size={18} /> {t("Message sent")}
         </h2>
         <p className="small muted" style={{ lineHeight: 1.6 }}>
-          Thanks, {form.name.split(" ")[0]}. We&apos;ll reply to <b>{form.email}</b>. If you don&apos;t see it, check your spam folder.
+          {t("Thanks, {name}. We'll reply to {email}. If you don't see it, check your spam folder.", { name: form.name.split(" ")[0], email: form.email })}
         </p>
         <button className="btn" onClick={() => { setSent(false); setForm({ ...form, message: "" }); }}>
-          Send another message
+          {t("Send another message")}
         </button>
       </div>
     );
@@ -54,25 +56,27 @@ export function ContactForm({ me }: { me: { name: string; email: string } | null
     <form className="auth-card contact-card col gap-12" onSubmit={submit}>
       <div className="contact-row">
         <div className="field">
-          <label htmlFor="c-name">Name</label>
+          <label htmlFor="c-name">{t("Name")}</label>
           <input id="c-name" className="input" autoComplete="name" required maxLength={120} value={form.name} onChange={set("name")} />
         </div>
         <div className="field">
-          <label htmlFor="c-email">Email</label>
+          <label htmlFor="c-email">{t("Email")}</label>
           <input id="c-email" className="input" type="email" autoComplete="email" required maxLength={200} value={form.email} onChange={set("email")} />
         </div>
       </div>
       <div className="field">
-        <label htmlFor="c-topic">What is it about?</label>
+        <label htmlFor="c-topic">{t("What is it about?")}</label>
         <select id="c-topic" className="select" value={form.topic} onChange={set("topic")}>
-          {CONTACT_TOPICS.map((t) => (
-            <option key={t}>{t}</option>
+          {CONTACT_TOPICS.map((topic) => (
+            <option key={topic} value={topic}>
+              {t(topic)}
+            </option>
           ))}
         </select>
       </div>
       <div className="field">
-        <label htmlFor="c-message">Message</label>
-        <textarea id="c-message" className="input" rows={7} required minLength={10} maxLength={5000} value={form.message} onChange={set("message")} placeholder="How can we help?" style={{ resize: "vertical", minHeight: 140 }} />
+        <label htmlFor="c-message">{t("Message")}</label>
+        <textarea id="c-message" className="input" rows={7} required minLength={10} maxLength={5000} value={form.message} onChange={set("message")} placeholder={t("How can we help?")} style={{ resize: "vertical", minHeight: 140 }} />
       </div>
       {/* Hidden from people; bots fill it in. */}
       <div aria-hidden="true" style={{ position: "absolute", left: -9999, width: 1, height: 1, overflow: "hidden" }}>
@@ -81,7 +85,7 @@ export function ContactForm({ me }: { me: { name: string; email: string } | null
       </div>
       {error && <div className="error-text">{error}</div>}
       <button className="btn btn-primary btn-lg" disabled={busy}>
-        {busy && <span className="spinner" />} Send message
+        {busy && <span className="spinner" />} {t("Send message")}
       </button>
     </form>
   );

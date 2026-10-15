@@ -5,10 +5,14 @@ import { MarketingNav, MarketingFooter } from "@/components/marketing";
 import { JsonLd } from "@/components/json-ld";
 import { SEO_TOOLS, siteUrl } from "@/lib/seo-tools";
 import { PRODUCTS } from "@/lib/plans";
+import { alternatesFor, getI18n } from "@/lib/i18n/server";
 import { ConvertDemo, CountUp, FlowSequence, LiveChat, Reveal, ScrollProgress, Spotlight, TiltOnScroll, Typewriter } from "@/components/motion";
 
 export const dynamic = "force-dynamic";
-export const metadata = { alternates: { canonical: "/" }, openGraph: { url: "/" } };
+export async function generateMetadata() {
+  const { locale, lp } = await getI18n();
+  return { alternates: alternatesFor("/", locale), openGraph: { url: lp("/") } };
+}
 
 const POPULAR = ["fill-pdf-form", "bank-statement-to-excel", "pdf-to-word", "merge-pdf", "compress-pdf", "word-to-pdf", "jpg-to-pdf", "pdf-to-jpg", "split-pdf", "edit-pdf", "sign-pdf", "protect-pdf", "chat-with-pdf"];
 
@@ -40,6 +44,7 @@ const FEATURES: { icon: React.ReactNode; title: string; body: string }[] = [
 export default async function Home() {
   const user = await currentUser();
   const site = siteUrl();
+  const { t, lp } = await getI18n();
   return (
     <div className="mk">
       <JsonLd
@@ -61,9 +66,8 @@ export default async function Home() {
               url: site,
               applicationCategory: "BusinessApplication",
               operatingSystem: "Any (web browser)",
-              description:
-                "Online PDF workbench: convert, merge, split, compress, protect, OCR, edit, e-sign and chat with PDFs. Most tools are free without an account.",
-              featureList: SEO_TOOLS.map((t) => t.name),
+              description: t("Online PDF workbench: convert, merge, split, compress, protect, OCR, edit, e-sign and chat with PDFs. Most tools are free without an account."),
+              featureList: SEO_TOOLS.map((tool) => t(tool.name)),
               offers: [
                 { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD" },
                 { "@type": "Offer", name: "Day Pass", price: (PRODUCTS.pass.cents / 100).toFixed(2), priceCurrency: "USD" },
@@ -85,25 +89,25 @@ export default async function Home() {
         </div>
         <div className="mk-section" style={{ paddingTop: 0, paddingBottom: 0 }}>
           <span className="hero-kicker">
-            <span className="live" /> Convert · Edit · Sign · Ask AI
+            <span className="live" /> {t("Convert · Edit · Sign · Ask AI")}
           </span>
           <h1>
-            Every document,
+            {t("Every document,")}
             <br />
-            <Typewriter className="tw-word" words={TYPED} />
+            <Typewriter className="tw-word" words={TYPED.map((w) => t(w))} />
           </h1>
-          <p className="lead">Convert, edit, sign and understand your PDFs in one place.</p>
+          <p className="lead">{t("Convert, edit, sign and understand your PDFs in one place.")}</p>
           <div className="mk-cta">
             <Link prefetch={false} className="btn btn-primary btn-lg btn-glow" href={user ? "/app" : "/go/start"}>
-              {user ? "Open your workbench" : "Start free — no sign-up needed"}
+              {user ? t("Open your workbench") : t("Start free — no sign-up needed")}
             </Link>
             <a className="btn btn-lg" href="#how">
-              See how it works
+              {t("See how it works")}
             </a>
           </div>
           <TiltOnScroll>
             <div className="mk-shot" aria-hidden>
-              <ProductShot />
+              <ProductShot t={t} />
             </div>
           </TiltOnScroll>
         </div>
@@ -113,16 +117,16 @@ export default async function Home() {
         <div className="marquee-track">
           {[...MARQUEE_A, ...MARQUEE_A].map(([a, b], i) => (
             <span key={i} className="marquee-item">
-              {a} <b>→</b> {b}
+              {t(a)} <b>→</b> {t(b)}
             </span>
           ))}
         </div>
       </div>
       <div className="marquee rev" aria-hidden style={{ borderTop: 0 }}>
         <div className="marquee-track">
-          {[...MARQUEE_B, ...MARQUEE_B].map((t, i) => (
+          {[...MARQUEE_B, ...MARQUEE_B].map((m, i) => (
             <span key={i} className="marquee-item">
-              {t}
+              {t(m)}
             </span>
           ))}
         </div>
@@ -131,20 +135,20 @@ export default async function Home() {
       <section className="mk-section" style={{ paddingTop: 48, paddingBottom: 48 }}>
         <div className="stat-row">
           <Reveal className="stat" delay={0}>
-            <b><CountUp to={1} /> page</b>
-            <span>Every AI answer points to its source page</span>
+            <b><CountUp to={1} /> {t("page")}</b>
+            <span>{t("Every AI answer points to its source page")}</span>
           </Reveal>
           <Reveal className="stat" delay={120}>
-            <b><CountUp to={12} /> formats</b>
-            <span>In and out: Office, images, scans and text</span>
+            <b><CountUp to={12} /> {t("formats")}</b>
+            <span>{t("In and out: Office, images, scans and text")}</span>
           </Reveal>
           <Reveal className="stat" delay={240}>
-            <b><CountUp to={40} suffix="+" /> languages</b>
-            <span>Searched, read aloud and understood</span>
+            <b><CountUp to={40} suffix="+" /> {t("languages")}</b>
+            <span>{t("Searched, read aloud and understood")}</span>
           </Reveal>
           <Reveal className="stat" delay={360}>
-            <b>0 re-keying</b>
-            <span>Extract straight into Excel and CSV</span>
+            <b>{t("0 re-keying")}</b>
+            <span>{t("Extract straight into Excel and CSV")}</span>
           </Reveal>
         </div>
       </section>
@@ -152,14 +156,14 @@ export default async function Home() {
       <section className="mk-section" id="convert">
         <div className="mk-split">
           <Reveal>
-            <div className="eyebrow">Convert</div>
+            <div className="eyebrow">{t("Convert")}</div>
             <h2 className="mk-h2" style={{ marginTop: 10 }}>
-              Any format in. Any format out.
+              {t("Any format in. Any format out.")}
             </h2>
-            <p className="mk-sub">Word, Excel and PowerPoint to PDF and back, with fonts, tables, bullets and spacing exactly where they were. Even scans and receipts come out editable.</p>
+            <p className="mk-sub">{t("Word, Excel and PowerPoint to PDF and back, with fonts, tables, bullets and spacing exactly where they were. Even scans and receipts come out editable.")}</p>
             <div className="mk-cta" style={{ justifyContent: "flex-start" }}>
               <Link prefetch={false} className="btn btn-primary" href={user ? "/app" : "/go/start"}>
-                Convert a file now
+                {t("Convert a file now")}
               </Link>
             </div>
           </Reveal>
@@ -171,36 +175,36 @@ export default async function Home() {
 
       <section className="mk-section" id="tools" style={{ paddingTop: 24 }}>
         <Reveal>
-          <div className="eyebrow">PDF tools</div>
-          <h2 className="mk-h2" style={{ marginTop: 10 }}>Popular PDF tools, free online.</h2>
+          <div className="eyebrow">{t("PDF tools")}</div>
+          <h2 className="mk-h2" style={{ marginTop: 10 }}>{t("Popular PDF tools, free online.")}</h2>
           <div className="seo-grid">
-            {POPULAR.map((slug) => SEO_TOOLS.find((t) => t.slug === slug)!).map((t) => (
-              <Link key={t.slug} href={`/${t.slug}`} className="seo-tile">
-                <b>{t.name}</b>
-                <span>{t.description.split(". ")[0]}.</span>
+            {POPULAR.map((slug) => SEO_TOOLS.find((x) => x.slug === slug)!).map((tool) => (
+              <Link key={tool.slug} href={lp(`/${tool.slug}`)} className="seo-tile">
+                <b>{t(tool.name)}</b>
+                <span>{t(`${tool.description.split(". ")[0]}.`)}</span>
               </Link>
             ))}
           </div>
           <p style={{ marginTop: 18 }}>
-            <Link href="/tools">See all {SEO_TOOLS.length} PDF tools →</Link>
+            <Link href={lp("/tools")}>{t("See all {n} PDF tools →", { n: SEO_TOOLS.length })}</Link>
           </p>
         </Reveal>
       </section>
 
       <section className="mk-section" id="features">
         <Reveal>
-          <div className="eyebrow">Features</div>
+          <div className="eyebrow">{t("Features")}</div>
           <h2 className="mk-h2" style={{ marginTop: 10 }}>
-            Everything a document goes through, in one place.
+            {t("Everything a document goes through, in one place.")}
           </h2>
-          <p className="mk-sub">Replace the converter tab, the e-sign subscription, the shared-drive scramble and the “which version is final?” email thread.</p>
+          <p className="mk-sub">{t("Replace the converter tab, the e-sign subscription, the shared-drive scramble and the “which version is final?” email thread.")}</p>
         </Reveal>
         <Spotlight className="mk-grid">
           {FEATURES.map((f, i) => (
             <Reveal key={f.title} className="mk-card" delay={(i % 3) * 110}>
               <div className="mk-ico">{f.icon}</div>
-              <h3>{f.title}</h3>
-              <p>{f.body}</p>
+              <h3>{t(f.title)}</h3>
+              <p>{t(f.body)}</p>
             </Reveal>
           ))}
         </Spotlight>
@@ -209,24 +213,24 @@ export default async function Home() {
       <section className="mk-section" id="how">
         <div className="mk-split">
           <Reveal>
-            <div className="eyebrow">How teams use pdftek</div>
+            <div className="eyebrow">{t("How teams use pdftek")}</div>
             <h2 className="mk-h2" style={{ marginTop: 10 }}>
-              From inbox to executed, without leaving the page.
+              {t("From inbox to executed, without leaving the page.")}
             </h2>
             <ul className="mk-list">
-              <li>A vendor MSA lands. An automation extracts risk flags against your playbook and pings #legal.</li>
-              <li>Counsel asks “what&apos;s our exit path?” and gets the termination-for-convenience clause, with a link to page 2.</li>
-              <li>They check the document out, redline the notice period in place, and save v3. Nobody else can overwrite it.</li>
-              <li>They hand it to Contracts, who sends it for signature in order. Reminders go out automatically.</li>
-              <li>Once it&apos;s fully signed, key terms go to the tracker, and a renewal reminder is set for 60 days before expiry.</li>
+              <li>{t("A vendor MSA lands. An automation extracts risk flags against your playbook and pings #legal.")}</li>
+              <li>{t("Counsel asks “what's our exit path?” and gets the termination-for-convenience clause, with a link to page 2.")}</li>
+              <li>{t("They check the document out, redline the notice period in place, and save v3. Nobody else can overwrite it.")}</li>
+              <li>{t("They hand it to Contracts, who sends it for signature in order. Reminders go out automatically.")}</li>
+              <li>{t("Once it's fully signed, key terms go to the tracker, and a renewal reminder is set for 60 days before expiry.")}</li>
             </ul>
           </Reveal>
           <Reveal delay={150} className="card" style={{ padding: 20 }}>
-            <FlowSequence steps={["📥 New PDF in library", "🔍 Extract risk flags", "🔔 Notify team"]} note="Instant, on upload" />
+            <FlowSequence steps={[t("📥 New PDF in library"), t("🔍 Extract risk flags"), t("🔔 Notify team")]} note={t("Instant, on upload")} />
             <hr className="divider" />
-            <FlowSequence steps={["✍️ Contract fully signed", "🔍 Extract key terms", "🔗 Webhook → tracker"]} note="Instant" />
+            <FlowSequence steps={[t("✍️ Contract fully signed"), t("🔍 Extract key terms"), t("🔗 Webhook → tracker")]} note={t("Instant")} />
             <hr className="divider" />
-            <FlowSequence steps={["📅 Renewal in 60 days", "✉️ Email reminder"]} note="Daily check, 9:00 AM" />
+            <FlowSequence steps={[t("📅 Renewal in 60 days"), t("✉️ Email reminder")]} note={t("Daily check, 9:00 AM")} />
           </Reveal>
         </div>
       </section>
@@ -242,33 +246,33 @@ export default async function Home() {
                 ["Audit trails", "Activity logs, signer IP addresses and timestamps, and certificates of completion."],
                 ["Private OCR", "Text recognition runs in your browser. Scans never go to a third-party OCR service."],
                 ["Self-hostable", "Run pdftek on your own infrastructure, with your documents on your disks."],
-              ].map(([t, b]) => (
-                <div key={t} className="row" style={{ alignItems: "flex-start", gap: 12 }}>
+              ].map(([h, b]) => (
+                <div key={h} className="row" style={{ alignItems: "flex-start", gap: 12 }}>
                   <span style={{ color: "var(--good)" }}>
                     <I.shield size={16} />
                   </span>
                   <div>
-                    <b>{t}</b>
-                    <div className="small muted">{b}</div>
+                    <b>{t(h)}</b>
+                    <div className="small muted">{t(b)}</div>
                   </div>
                 </div>
               ))}
             </div>
           </Reveal>
           <Reveal delay={150}>
-            <div className="eyebrow">Security</div>
+            <div className="eyebrow">{t("Security")}</div>
             <h2 className="mk-h2" style={{ marginTop: 10 }}>
-              Built for documents you can&apos;t afford to leak.
+              {t("Built for documents you can't afford to leak.")}
             </h2>
             <p className="mk-sub">
-              Contracts, financials and patient records need more than a free converter site. pdftek keeps your files in your workspace, logs who touched what, and can run entirely on your own servers.
+              {t("Contracts, financials and patient records need more than a free converter site. pdftek keeps your files in your workspace, logs who touched what, and can run entirely on your own servers.")}
             </p>
           </Reveal>
         </div>
       </section>
 
       <section className="mk-section faq" id="faq" style={{ maxWidth: 820 }}>
-        <h2 className="mk-h2">Questions, answered</h2>
+        <h2 className="mk-h2">{t("Questions, answered")}</h2>
         {[
           ["Does the AI make things up?", "pdftek answers only from your documents and cites the page for every claim. Click a citation and the passage is highlighted in the viewer, so you can check any answer in seconds."],
           ["Can it read scanned documents and other languages?", "Yes. The assistant reads scans directly, and in-browser OCR adds a searchable text layer in 13 languages. Search, read-aloud and conversions work across 40+ languages."],
@@ -277,8 +281,8 @@ export default async function Home() {
           ["Can we host it ourselves?", "Yes. pdftek ships as a single Docker image with a built-in database and file storage. Bring your own Anthropic API key for the AI features and your own SMTP server for email."],
         ].map(([q, a]) => (
           <details key={q}>
-            <summary>{q}</summary>
-            <p>{a}</p>
+            <summary>{t(q)}</summary>
+            <p>{t(a)}</p>
           </details>
         ))}
       </section>
@@ -286,11 +290,11 @@ export default async function Home() {
       <Reveal as="section" className="mk-section" style={{ textAlign: "center", paddingTop: 40 }}>
         <Logo size={40} />
         <h2 className="mk-h2" style={{ marginTop: 16 }}>
-          Your documents, finally under control.
+          {t("Your documents, finally under control.")}
         </h2>
         <div className="mk-cta">
           <Link prefetch={false} className="btn btn-primary btn-lg" href={user ? "/app" : "/go/start"}>
-            {user ? "Open your workbench" : "Create your free workspace"}
+            {user ? t("Open your workbench") : t("Create your free workspace")}
           </Link>
         </div>
       </Reveal>
@@ -300,17 +304,17 @@ export default async function Home() {
   );
 }
 
-function ProductShot() {
+function ProductShot({ t }: { t: (s: string) => string }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "210px 1fr 290px", minHeight: 420, fontSize: 12 }} className="shot-grid">
       <div style={{ borderRight: "1px solid var(--line)", padding: 12 }}>
-        <div className="eyebrow">Library</div>
+        <div className="eyebrow">{t("Library")}</div>
         {["MSA — Northwind Supply.pdf", "DPA Amendment — Q3.pdf", "Vendor NDA — draft v4.pdf", "Board deck — FY25.pptx"].map((n, i) => (
           <div key={n} className={`doc-item ${i === 0 ? "active" : ""}`} style={{ marginTop: 6 }}>
             <div className="doc-icon">PDF</div>
             <div className="grow">
               <div className="doc-name ellipsis" style={{ fontSize: 12 }}>{n}</div>
-              <div className="doc-sub">{[14, 6, 4, 22][i]} pages</div>
+              <div className="doc-sub">{[14, 6, 4, 22][i]} {t("pages")}</div>
             </div>
           </div>
         ))}
@@ -329,14 +333,14 @@ function ProductShot() {
       </div>
       <div style={{ borderLeft: "1px solid var(--line)", padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
         <div className="row gap-4">
-          <span className="chip active">Chat</span>
-          <span className="chip">Extract</span>
-          <span className="chip">Automate</span>
+          <span className="chip active">{t("Chat")}</span>
+          <span className="chip">{t("Extract")}</span>
+          <span className="chip">{t("Automate")}</span>
         </div>
         <LiveChat />
         <div className="row gap-4 wrap" style={{ marginTop: "auto" }}>
-          <span className="chip">Compare to playbook</span>
-          <span className="chip">Summarize §9</span>
+          <span className="chip">{t("Compare to playbook")}</span>
+          <span className="chip">{t("Summarize §9")}</span>
         </div>
       </div>
     </div>

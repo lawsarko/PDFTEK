@@ -3,4 +3,8 @@ export async function register() {
     const { startScheduler } = await import("./lib/automations");
     startScheduler();
   }
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    const { startTranslator } = await import("./lib/i18n/worker");
+    startTranslator();
+  }
 }

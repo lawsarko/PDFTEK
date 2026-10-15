@@ -13,8 +13,8 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "postinstall": "node scripts/copy-pdf-worker.mjs",
-    "prebuild": "node scripts/copy-pdf-worker.mjs",
-    "predev": "node scripts/copy-pdf-worker.mjs"
+    "prebuild": "node scripts/copy-pdf-worker.mjs && node scripts/i18n-extract.mjs",
+    "predev": "node scripts/copy-pdf-worker.mjs && node scripts/i18n-extract.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",

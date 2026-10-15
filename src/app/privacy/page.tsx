@@ -1,6 +1,10 @@
 import { LegalPage } from "@/components/legal";
+import { alternatesFor, getI18n } from "@/lib/i18n/server";
 
-export const metadata = { title: "Privacy Policy" };
+export async function generateMetadata() {
+  const { t, locale } = await getI18n();
+  return { title: t("Privacy Policy"), alternates: alternatesFor("/privacy", locale) };
+}
 
 export default function Privacy() {
   return (
