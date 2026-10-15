@@ -15,9 +15,6 @@ export function MarketingNav({ signedIn }: { signedIn: boolean }) {
         <Link href="/pricing" className="mk-link hide-mobile">
           Pricing
         </Link>
-        <Link href="/contact" className="mk-link hide-mobile">
-          Contact
-        </Link>
         {signedIn ? (
           <Link className="btn btn-primary btn-sm" href="/app">
             Open workbench

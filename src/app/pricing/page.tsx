@@ -3,6 +3,7 @@ import { MarketingNav, MarketingFooter } from "@/components/marketing";
 import { CreditPacks, PlanCards } from "@/components/pricing";
 import { FREE_LIMITS, PRICING_FAQ } from "@/lib/plans";
 import { Reveal } from "@/components/motion";
+import { I } from "@/components/icons";
 
 export const metadata = {
   title: "Pricing – Free PDF Tools, $1.99 Day Pass, Pro $5.99/mo",
@@ -46,6 +47,9 @@ export default async function Pricing() {
       </section>
       <section className="mk-section" style={{ paddingTop: 0 }}>
         <PlanCards />
+        <p className="secure-note">
+          <I.lock size={14} /> Payments are processed securely by <b>Stripe</b>. pdftek never sees or stores your card details.
+        </p>
       </section>
       <section className="mk-section" style={{ paddingTop: 0 }}>
         <Reveal className="mk-split" style={{ alignItems: "start" }}>

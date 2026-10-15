@@ -809,3 +809,8 @@ select.ff-field { padding: 0 2px; appearance: auto; }
   .fx-row > .grow { flex: 1 1 calc(100% - 70px); }
   .fx-row-actions { order: 3; width: 100%; padding-left: 28px; }
 }
+
+.secure-note { margin: 18px auto 0; text-align: center; color: var(--text-lo); font-size: 14px; }
+.secure-note svg { vertical-align: -2px; margin-right: 4px; color: var(--good); }
+.secure-note b { color: var(--text-hi); }
+.contact-hours { display: inline-flex; align-items: center; gap: 8px; margin: 4px 0 0; padding: 8px 12px; border-radius: 8px; background: var(--amber-soft); border: 1px solid var(--amber-line); color: var(--text-hi); font-size: 14px; }
