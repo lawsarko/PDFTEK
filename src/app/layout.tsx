@@ -4,7 +4,8 @@ import { ToastProvider } from "@/components/toast";
 import { PaywallHost } from "@/components/paywall";
 import { AuthLinkCatcher } from "@/components/auth-link-catcher";
 import { DomTranslator, I18nProvider } from "@/components/i18n";
-import { getI18n, pick } from "@/lib/i18n/server";
+import { coverage, getI18n, pick } from "@/lib/i18n/server";
+import { IN_PROGRESS } from "@/lib/i18n/locales";
 import SITE_STRINGS from "@/i18n/catalog-site.json";
 
 const SITE = (process.env.APP_URL || "https://pdftek.com").replace(/\/$/, "");
@@ -64,6 +65,7 @@ export default async function RootLayout({
 }) {
   const { locale, info } = await getI18n();
   const dict = pick(locale, SITE_STRINGS as string[]);
+  const translating = locale !== "en" && coverage(locale) < 0.9 ? IN_PROGRESS[locale] : null;
   return (
     <html lang={info.tag} dir={info.rtl ? "rtl" : "ltr"}>
       <head>
@@ -80,6 +82,11 @@ export default async function RootLayout({
       </head>
       <body>
         <I18nProvider locale={locale} dict={dict}>
+          {translating && (
+            <div className="i18n-note" role="status" data-no-translate>
+              {translating}
+            </div>
+          )}
           <ToastProvider>
             {children}
             <PaywallHost />

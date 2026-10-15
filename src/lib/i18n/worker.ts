@@ -92,18 +92,19 @@ async function translateBatch(locale: string, rows: { text: string }[]) {
   bumpI18n();
 }
 
-/** Missing strings for a language, page copy and short UI text first. */
-function missing(locale: string) {
+/** Missing strings for a language (page copy and short UI text first), skipping ones in flight. */
+function missing(locale: string, skip: Set<string>) {
   const rows = all<{ text: string }>(
     `SELECT s.text FROM i18n_source s
       WHERE NOT EXISTS (SELECT 1 FROM i18n_text x WHERE x.locale = ? AND x.source = s.text)
       ORDER BY CASE s.origin WHEN 'page' THEN 0 WHEN 'data' THEN 1 ELSE 2 END, length(s.text)
-      LIMIT 400`,
+      LIMIT 600`,
     locale,
   );
   const batch: { text: string }[] = [];
   let chars = 0;
   for (const r of rows) {
+    if (skip.has(r.text)) continue;
     if (batch.length && (chars + r.text.length > BATCH_CHARS || batch.length >= BATCH_MAX)) break;
     batch.push(r);
     chars += r.text.length;
@@ -111,28 +112,58 @@ function missing(locale: string) {
   return batch;
 }
 
+function setState(key: string, value: string) {
+  run("INSERT INTO i18n_state (key, value, at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, at = excluded.at", key, value, now());
+}
+
+const inFlight = new Map<string, Set<string>>(); // locale -> source texts being translated
+const batchesFor = new Map<string, number>();
+let rotate = 0;
+
+function start(locale: string, batch: { text: string }[]) {
+  const texts = inFlight.get(locale) ?? new Set<string>();
+  inFlight.set(locale, texts);
+  batch.forEach((b) => texts.add(b.text));
+  batchesFor.set(locale, (batchesFor.get(locale) ?? 0) + 1);
+  busy++;
+  translateBatch(locale, batch)
+    .then(() => setState("lastOk", `${locale} · ${batch.length} strings`))
+    .catch((err) => {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`[pdftek] translation to ${locale} failed`, msg);
+      setState("lastError", `${locale}: ${msg}`);
+      pausedUntil = Date.now() + 2 * 60_000; // back off (rate limits, billing)
+    })
+    .finally(() => {
+      busy--;
+      batch.forEach((b) => texts.delete(b.text));
+      batchesFor.set(locale, (batchesFor.get(locale) ?? 1) - 1);
+    });
+}
+
+/**
+ * Languages someone is reading right now come first and may use every slot, so a visitor who picks
+ * a language sees it within minutes. The rest are translated in rotation in the background.
+ */
 async function tick() {
   if (Date.now() < pausedUntil) return;
-  for (const l of LOCALES) {
-    if (l.code === DEFAULT_LOCALE || (ONLY.length && !ONLY.includes(l.code))) continue;
+  const allowed = (code: string) => code !== DEFAULT_LOCALE && (!ONLY.length || ONLY.includes(code));
+  const demanded = all<{ locale: string }>("SELECT locale FROM i18n_demand WHERE at > ? ORDER BY at DESC", now() - 6 * 3_600_000)
+    .map((r) => r.locale)
+    .filter((c) => allowed(c) && LOCALES.some((l) => l.code === c));
+  const others = LOCALES.map((l) => l.code).filter((c) => allowed(c) && !demanded.includes(c));
+  rotate = (rotate + 1) % Math.max(1, others.length);
+  const order = [...demanded, ...others.slice(rotate), ...others.slice(0, rotate)];
+  for (const code of order) {
+    const slots = demanded.includes(code) ? PARALLEL : 1;
+    while (busy < PARALLEL && (batchesFor.get(code) ?? 0) < slots) {
+      const batch = missing(code, inFlight.get(code) ?? new Set());
+      if (!batch.length) break;
+      start(code, batch);
+    }
     if (busy >= PARALLEL) return;
-    if (inFlight.has(l.code)) continue;
-    const batch = missing(l.code);
-    if (!batch.length) continue;
-    busy++;
-    inFlight.add(l.code);
-    translateBatch(l.code, batch)
-      .catch((err) => {
-        console.error(`[pdftek] translation to ${l.code} failed`, err instanceof Error ? err.message : err);
-        pausedUntil = Date.now() + 5 * 60_000; // back off (rate limits, billing)
-      })
-      .finally(() => {
-        busy--;
-        inFlight.delete(l.code);
-      });
   }
 }
-const inFlight = new Set<string>();
 
 export function startTranslator() {
   if (started || process.env.PDFTEK_TRANSLATE === "0") return;
@@ -140,6 +171,7 @@ export function startTranslator() {
   void registerAll().catch((e) => console.error("[pdftek] i18n registration failed", e));
   if (!aiConfigured()) {
     console.info("[pdftek] translator idle: no Anthropic API key");
+    setState("lastError", "No Anthropic API key: set ANTHROPIC_API_KEY on the server to translate the site.");
     return;
   }
   console.info("[pdftek] translator started");
@@ -147,9 +179,19 @@ export function startTranslator() {
   setTimeout(() => void tick(), 3000);
 }
 
-/** Progress per language, for the admin status endpoint. */
+/** Progress per language, for the admin status page. */
 export function translationStatus() {
   const total = all<{ n: number }>("SELECT count(*) AS n FROM i18n_source")[0]?.n ?? 0;
   const done = new Map(all<{ locale: string; n: number }>("SELECT locale, count(*) AS n FROM i18n_text GROUP BY locale").map((r) => [r.locale, r.n]));
-  return { total, locales: LOCALES.filter((l) => l.code !== DEFAULT_LOCALE).map((l) => ({ code: l.code, done: done.get(l.code) ?? 0 })) };
+  const state = Object.fromEntries(all<{ key: string; value: string; at: number }>("SELECT key, value, at FROM i18n_state").map((r) => [r.key, { message: r.value, at: new Date(r.at).toISOString() }]));
+  return {
+    translator: process.env.PDFTEK_TRANSLATE === "0" ? "switched off (PDFTEK_TRANSLATE=0)" : aiConfigured() ? "on" : "idle: no ANTHROPIC_API_KEY",
+    strings: total,
+    lastSuccess: state.lastOk ?? null,
+    lastError: state.lastError ?? null,
+    languages: LOCALES.filter((l) => l.code !== DEFAULT_LOCALE).map((l) => {
+      const n = done.get(l.code) ?? 0;
+      return { code: l.code, name: l.name, translated: n, percent: total ? Math.min(100, Math.round((n / total) * 100)) : 0 };
+    }),
+  };
 }

@@ -841,3 +841,4 @@ select.ff-field { padding: 0 2px; appearance: auto; }
 }
 /* The wordmark and the sample English document in the demo always read left to right. */
 .brand, .mk-shot, .convert-demo { direction: ltr; }
+.i18n-note { padding: 7px 16px; text-align: center; font-size: 13px; background: var(--amber-soft); border-bottom: 1px solid var(--amber-line); color: var(--text-hi); }

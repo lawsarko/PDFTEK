@@ -79,14 +79,33 @@ export async function getLocale(): Promise<string> {
 
 export type T = (english: string, vars?: Record<string, string | number>) => string;
 
+const demandAt = new Map<string, number>();
+/** Notes that someone is reading the site in this language, so the translator does it first. */
+export function noteDemand(locale: string) {
+  if (locale === DEFAULT_LOCALE || Date.now() - (demandAt.get(locale) ?? 0) < 30_000) return;
+  demandAt.set(locale, Date.now());
+  run("INSERT INTO i18n_demand (locale, at) VALUES (?, ?) ON CONFLICT(locale) DO UPDATE SET at = excluded.at", locale, now());
+}
+
 export function translator(locale: string): T {
   if (locale === DEFAULT_LOCALE) return (s, vars) => fill(s, vars);
   const { lookup } = dictFor(locale);
   return (s, vars) => {
     const hit = lookup(s);
-    if (hit === null) registerSources([s]);
+    if (hit === null) {
+      registerSources([s]);
+      noteDemand(locale);
+    }
     return fill(hit ?? s, vars);
   };
+}
+
+/** Share of the interface translated into a language (0–1). */
+export function coverage(locale: string): number {
+  if (locale === DEFAULT_LOCALE) return 1;
+  const total = get<{ n: number }>("SELECT count(*) AS n FROM i18n_source")?.n ?? 0;
+  if (!total) return 0;
+  return Object.keys(dictFor(locale).dict.exact).length / total + dictFor(locale).dict.patterns.length / total;
 }
 
 export async function getI18n() {
@@ -116,7 +135,10 @@ export function pick(locale: string, texts: string[]): Record<string, string> {
   for (const s of texts) {
     const hit = lookup(s);
     if (hit !== null) out[norm(s)] = hit;
-    else registerSources([s]);
+    else {
+      registerSources([s]);
+      noteDemand(locale);
+    }
   }
   return out;
 }

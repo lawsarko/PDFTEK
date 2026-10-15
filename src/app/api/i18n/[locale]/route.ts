@@ -1,4 +1,4 @@
-import { dictFor, i18nVersion } from "@/lib/i18n/server";
+import { dictFor, i18nVersion, noteDemand } from "@/lib/i18n/server";
 import { isLocale } from "@/lib/i18n/locales";
 
 type P = { params: Promise<{ locale: string }> };
@@ -7,6 +7,7 @@ type P = { params: Promise<{ locale: string }> };
 export async function GET(req: Request, { params }: { params: P["params"] }) {
   const { locale } = await params;
   if (!isLocale(locale) || locale === "en") return Response.json({ v: 0, exact: {}, patterns: [] });
+  noteDemand(locale);
   const v = i18nVersion(locale);
   const etag = `"${locale}-${v}"`;
   if (req.headers.get("if-none-match") === etag) return new Response(null, { status: 304, headers: { etag } });

@@ -71,3 +71,32 @@ export function isSitePath(path: string): boolean {
   if (path === "/") return true;
   return !/^\/(app|api|_next|sign|request|invite|go|auth|restore)(\/|$)/.test(path) && !/\.[a-z0-9]+$/i.test(path);
 }
+
+/** Shown while a language is still being translated (the rest of the page falls back to English). */
+export const IN_PROGRESS: Record<string, string> = {
+  es: "Estamos traduciendo pdftek al español. Algunos textos pueden aparecer en inglés durante unos minutos.",
+  fr: "La traduction de pdftek en français est en cours. Certains textes peuvent rester en anglais pendant quelques minutes.",
+  de: "pdftek wird gerade ins Deutsche übersetzt. Einige Texte können noch einige Minuten auf Englisch erscheinen.",
+  it: "Stiamo traducendo pdftek in italiano. Alcuni testi potrebbero apparire in inglese per qualche minuto.",
+  pt: "Estamos traduzindo o pdftek para o português. Alguns textos podem aparecer em inglês por alguns minutos.",
+  ja: "pdftek を日本語に翻訳しています。数分間、一部のテキストが英語で表示される場合があります。",
+  ru: "Мы переводим pdftek на русский язык. В течение нескольких минут часть текста может отображаться на английском.",
+  ko: "pdftek을 한국어로 번역하고 있습니다. 몇 분 동안 일부 텍스트가 영어로 표시될 수 있습니다.",
+  "zh-cn": "我们正在将 pdftek 翻译成简体中文。几分钟内，部分文字可能仍以英文显示。",
+  "zh-tw": "我們正在將 pdftek 翻譯成繁體中文。幾分鐘內，部分文字可能仍以英文顯示。",
+  ar: "نعمل على ترجمة pdftek إلى العربية. قد يظهر بعض النص باللغة الإنجليزية لبضع دقائق.",
+  bg: "Превеждаме pdftek на български. Част от текста може да се показва на английски още няколко минути.",
+  ca: "Estem traduint pdftek al català. Alguns textos poden aparèixer en anglès durant uns minuts.",
+  nl: "We vertalen pdftek naar het Nederlands. Sommige tekst kan nog een paar minuten in het Engels verschijnen.",
+  el: "Μεταφράζουμε το pdftek στα ελληνικά. Ορισμένο κείμενο μπορεί να εμφανίζεται στα αγγλικά για λίγα λεπτά.",
+  hi: "हम pdftek का हिन्दी में अनुवाद कर रहे हैं। कुछ मिनटों तक कुछ टेक्स्ट अंग्रेज़ी में दिख सकता है।",
+  id: "Kami sedang menerjemahkan pdftek ke Bahasa Indonesia. Beberapa teks mungkin masih tampil dalam bahasa Inggris selama beberapa menit.",
+  ms: "Kami sedang menterjemah pdftek ke Bahasa Melayu. Sesetengah teks mungkin dipaparkan dalam bahasa Inggeris selama beberapa minit.",
+  pl: "Tłumaczymy pdftek na język polski. Przez kilka minut część tekstu może być wyświetlana po angielsku.",
+  sv: "Vi översätter pdftek till svenska. En del text kan visas på engelska i några minuter.",
+  th: "เรากำลังแปล pdftek เป็นภาษาไทย ข้อความบางส่วนอาจแสดงเป็นภาษาอังกฤษสักครู่",
+  tr: "pdftek'i Türkçeye çeviriyoruz. Bazı metinler birkaç dakika boyunca İngilizce görünebilir.",
+  uk: "Ми перекладаємо pdftek українською. Протягом кількох хвилин частина тексту може відображатися англійською.",
+  vi: "Chúng tôi đang dịch pdftek sang tiếng Việt. Một số nội dung có thể hiển thị bằng tiếng Anh trong vài phút.",
+  sw: "Tunatafsiri pdftek kwa Kiswahili. Baadhi ya maandishi yanaweza kuonekana kwa Kiingereza kwa dakika chache.",
+};

@@ -357,6 +357,17 @@ CREATE TABLE IF NOT EXISTS i18n_text (
   PRIMARY KEY (locale, source)
 );
 
+-- Languages people are reading the site in right now (translated first), and translator state.
+CREATE TABLE IF NOT EXISTS i18n_demand (
+  locale TEXT PRIMARY KEY,
+  at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS i18n_state (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  at INTEGER NOT NULL
+);
+
 -- Messages from the contact form, kept even when email delivery fails.
 CREATE TABLE IF NOT EXISTS contact_messages (
   id TEXT PRIMARY KEY,
