@@ -24,7 +24,7 @@ export default async function Contact() {
             Questions, billing, a file that won&apos;t convert, or an idea for pdftek? Send a message and a real person will reply by email.
           </p>
           <p className="contact-hours">
-            <I.clock size={15} /> We respond within 24 hours, Monday to Friday, 9am to 5pm CDT.
+            <I.clock size={15} /> We respond within 24 hours, Monday to Friday, 9am to 5pm Central Time (CT).
           </p>
           <ul className="contact-points">
             <li>
