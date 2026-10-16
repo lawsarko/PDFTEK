@@ -1,0 +1,121 @@
+import { currentUser } from "@/lib/auth";
+import { MarketingNav, MarketingFooter } from "@/components/marketing";
+import { CreditPacks, PlanCards } from "@/components/pricing";
+import { FREE_LIMITS, PRICING_FAQ } from "@/lib/plans";
+import { Reveal } from "@/components/motion";
+import { I } from "@/components/icons";
+import { JsonLd } from "@/components/json-ld";
+import { alternatesFor, getI18n } from "@/lib/i18n/server";
+
+export async function generateMetadata() {
+  const { t, locale } = await getI18n();
+  return {
+    title: t("Pricing – Free PDF Tools, $1.99 Day Pass, Pro $5.99/mo"),
+    description: t("Free PDF tools for everyone, no sign-up. Day Pass $1.99 for 24 hours, Pro $5.99/month, and pay-as-you-go AI credits that never expire."),
+    alternates: alternatesFor("/pricing", locale),
+  };
+}
+export const dynamic = "force-dynamic";
+
+const ROWS: [string, string, string, string, string][] = [
+  ["Convert, merge, split, compress, protect…", `${FREE_LIMITS.guest.tasksPerDay}–${FREE_LIMITS.free.tasksPerDay} / day`, "Unlimited", "Unlimited", "Unlimited"],
+  ["Max file size", "20 MB", "100 MB", "100 MB", "100 MB"],
+  ["Files at once", "5", "50", "50", "50"],
+  ["Read and search PDFs", "✓", "✓", "✓", "✓"],
+  ["Fill & sign forms yourself", "✓", "✓", "✓", "✓"],
+  ["AI form filler", "1 form / month", "✓ (credits)", "✓ (credits)", "✓ (credits)"],
+  ["Bank statements & invoices to Excel", "1 document / month", "✓ (credits)", "✓ (credits)", "✓ (credits)"],
+  ["Bulk: many files at once, one combined spreadsheet", "—", "✓", "✓", "✓"],
+  ["Bulk convert PDFs to Word / Excel (ZIP)", "—", "✓", "✓", "✓"],
+  ["Fill many forms from a spreadsheet", "—", "✓", "✓", "✓"],
+  ["Edit text, images, redact", "—", "✓", "✓", "✓"],
+  ["Read aloud", "—", "✓", "✓", "✓"],
+  ["E-signatures with audit trail", "—", "✓", "✓", "✓"],
+  ["Automations & document requests", "—", "✓", "✓", "✓"],
+  ["AI credits included", "Buy as needed", "50", "400 / month", "1,500 / month"],
+  ["People", "1", "1", "1", "Up to 5"],
+];
+
+export default async function Pricing() {
+  const user = await currentUser();
+  const { t, info } = await getI18n();
+  return (
+    <div className="mk">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          inLanguage: info.tag,
+          mainEntity: PRICING_FAQ.map(([q, a]) => ({ "@type": "Question", name: t(q), acceptedAnswer: { "@type": "Answer", text: t(a) } })),
+        }}
+      />
+      <MarketingNav signedIn={!!user} />
+      <section className="mk-section" style={{ textAlign: "center", paddingBottom: 24 }}>
+        <div className="eyebrow">{t("Pricing")}</div>
+        <h1 className="mk-h2" style={{ fontSize: "clamp(34px, 5vw, 54px)", marginTop: 10 }}>
+          {t("Free for everyday PDFs.")} <span style={{ color: "var(--amber)" }}>{t("Fair")}</span> {t("when you need more.")}
+        </h1>
+        <p className="mk-sub" style={{ margin: "14px auto 0" }}>
+          {t("No account needed for the free tools. Pay once for a day, or go Pro for less than a coffee a month.")}
+        </p>
+      </section>
+      <section className="mk-section" style={{ paddingTop: 0 }}>
+        <PlanCards />
+        <p className="secure-note">
+          <I.lock size={14} /> {t("Payments are processed securely by Stripe. pdftek never sees or stores your card details.")}
+        </p>
+      </section>
+      <section className="mk-section" style={{ paddingTop: 0 }}>
+        <Reveal className="mk-split" style={{ alignItems: "start" }}>
+          <div>
+            <div className="eyebrow">{t("Pay as you go")}</div>
+            <h2 className="mk-h2" style={{ marginTop: 10 }}>{t("AI credits, only when you use them.")}</h2>
+            <p className="mk-sub">
+              {t("Ask questions about a contract, summarize a report or pull figures into Excel. AI is charged on what each request actually costs, so a quick question uses a few credits. Credits also cover extra tasks beyond the free daily limit. They never expire.")}
+            </p>
+          </div>
+          <CreditPacks />
+        </Reveal>
+      </section>
+      <section className="mk-section">
+        <Reveal>
+          <h2 className="mk-h2">{t("Compare plans")}</h2>
+          <div className="table-wrap mt-16">
+            <table className="table compare-table">
+              <thead>
+                <tr>
+                  <th />
+                  <th>{t("Free")}</th>
+                  <th>{t("Day Pass")}</th>
+                  <th>{t("Pro")}</th>
+                  <th>{t("Team")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ROWS.map((r) => (
+                  <tr key={r[0]}>
+                    {r.map((c, i) => (
+                      <td key={i} className={i ? "small" : ""}>
+                        {t(c)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Reveal>
+      </section>
+      <section className="mk-section faq" style={{ maxWidth: 820 }}>
+        <h2 className="mk-h2">{t("Pricing questions")}</h2>
+        {PRICING_FAQ.map(([q, a]) => (
+          <details key={q}>
+            <summary>{t(q)}</summary>
+            <p>{t(a)}</p>
+          </details>
+        ))}
+      </section>
+      <MarketingFooter />
+    </div>
+  );
+}
