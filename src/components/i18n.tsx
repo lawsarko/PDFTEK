@@ -87,9 +87,18 @@ export function DomTranslator({ locale }: { locale: string }) {
         else attrs(n as Element);
       }
     };
+    // Setting the title fires the title observer even when the text is the same, so only write a
+    // title that actually changes, and never translate a title we wrote ourselves. (Without this, a
+    // translation identical to its English — "PDF", brand names — looped forever and froze the page.)
+    let ownTitle = "";
     const title = () => {
-      const tr = lookup?.(document.title.replace(/ \| PDFTEK$/, ""));
-      if (tr) document.title = document.title.includes(" | PDFTEK") ? `${tr} | PDFTEK` : tr;
+      const cur = document.title;
+      if (!lookup || cur === ownTitle) return;
+      const tr = lookup(cur.replace(/ \| PDFTEK$/, ""));
+      if (!tr) return;
+      const next = cur.endsWith(" | PDFTEK") ? `${tr} | PDFTEK` : tr;
+      ownTitle = next;
+      if (next !== cur) document.title = next;
     };
     const all = () => {
       walk(document.body);
