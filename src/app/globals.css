@@ -346,7 +346,8 @@ button.chip:hover { border-color: var(--steel); color: var(--text-hi); }
 .mk-list li { display: flex; gap: 10px; color: var(--text-lo); font-size: 15px; }
 .mk-list li::before { content: "→"; color: var(--amber); font-family: var(--font-mono); }
 .price-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 40px; }
-.price { background: var(--ink-2); border: 1px solid var(--line); border-radius: 16px; padding: 26px; display: flex; flex-direction: column; gap: 14px; }
+.price { background: var(--ink-2); border: 1px solid var(--line); border-radius: 16px; padding: 26px; display: flex; flex-direction: column; gap: 14px; transition: border-color .18s, box-shadow .18s; }
+.price .btn { transition: background .18s, color .18s, border-color .18s; }
 .price.featured { border-color: var(--amber); box-shadow: 0 0 0 1px var(--amber), 0 30px 60px -30px rgba(217,142,43,.35); }
 .price .amount { font-family: var(--font-display); font-size: 40px; font-weight: 700; }
 .price ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 9px; font-size: 13.5px; color: var(--text-lo); }

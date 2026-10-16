@@ -39,6 +39,8 @@ export function PlanCards({ workspaceId, current, yearly: initialYearly = false 
   const { busy, buy } = useBuy(workspaceId);
   const t = useT();
   const [yearly, setYearly] = useState(initialYearly);
+  // The highlight follows the plan being pointed at, tapped or tabbed to; Pro when none is.
+  const [active, setActive] = useState<string | null>(null);
   const pro = yearly ? PRODUCTS.pro_year : PRODUCTS.pro_month;
   const cards: Card[] = [
     {
@@ -104,13 +106,20 @@ export function PlanCards({ workspaceId, current, yearly: initialYearly = false 
           {t("Yearly")} <span className="badge badge-good">{t("4 months free")}</span>
         </button>
       </div>
-      <div className="price-grid price-grid-4">
+      <div className="price-grid price-grid-4" onMouseLeave={() => setActive(null)}>
         {cards.map((c) => {
           const isCurrent = current === c.key;
+          const lit = (active ?? cards.find((x) => x.featured)?.key) === c.key;
           return (
-            <div key={c.key} className={`price ${c.featured ? "featured" : ""}`}>
+            <div
+              key={c.key}
+              className={`price ${lit ? "featured" : ""}`}
+              onMouseEnter={() => setActive(c.key)}
+              onFocus={() => setActive(c.key)}
+              onClick={() => setActive(c.key)}
+            >
               <div className="row between">
-                <div className="eyebrow" style={c.featured ? { color: "var(--amber)" } : undefined}>{c.name}</div>
+                <div className="eyebrow" style={lit ? { color: "var(--amber)" } : undefined}>{c.name}</div>
                 {c.featured && <span className="badge badge-warn">{t("Most popular")}</span>}
               </div>
               <div className="amount">
@@ -128,11 +137,11 @@ export function PlanCards({ workspaceId, current, yearly: initialYearly = false 
                   <I.check size={14} /> {t("Your plan")}
                 </span>
               ) : c.href ? (
-                <a href={c.href} className="btn btn-lg" style={{ marginTop: "auto" }}>
+                <a href={c.href} className={`btn btn-lg ${lit ? "btn-primary" : ""}`} style={{ marginTop: "auto" }}>
                   {c.cta}
                 </a>
               ) : (
-                <button className={`btn btn-lg ${c.featured ? "btn-primary" : ""}`} style={{ marginTop: "auto" }} disabled={!!busy} onClick={() => buy(c.product!)}>
+                <button className={`btn btn-lg ${lit ? "btn-primary" : ""}`} style={{ marginTop: "auto" }} disabled={!!busy} onClick={() => buy(c.product!)}>
                   {busy === c.product && <span className="spinner" />} {c.cta}
                 </button>
               )}
