@@ -61,7 +61,12 @@ export const POST = route(async (req) => {
     metadata: { workspace_id: wid, product: input.product },
     ...(product.mode === "subscription"
       ? { subscription_data: { metadata: { workspace_id: wid, product: input.product, plan: product.plan } } }
-      : { customer_creation: "if_required", payment_intent_data: { metadata: { workspace_id: wid, product: input.product } } }),
+      : {
+          // Stripe refuses customer_creation together with an existing customer (someone who has
+          // bought before), so it's only sent for first-time buyers.
+          ...(ws?.stripe_customer_id ? {} : { customer_creation: "if_required" }),
+          payment_intent_data: { metadata: { workspace_id: wid, product: input.product } },
+        }),
     allow_promotion_codes: true,
   });
   return json({ url: session.url });
