@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import { LOCALES, LOCALE_COOKIE, DEFAULT_LOCALE, isSitePath, localeInfo, localizePath, stripLocale } from "@/lib/i18n/locales";
 import { compile, fill, norm, type Dict } from "@/lib/i18n/match";
 import { I } from "./icons";
+import { Modal } from "./modal";
 
 /**
  * Client side of translation.
@@ -212,4 +213,37 @@ export function LanguageSwitcher({ variant = "nav" }: { variant?: "nav" | "foote
       )}
     </div>
   );
+}
+
+/** The language list as a dialog (used from the app's account menu). */
+export function LanguageDialog({ onClose }: { onClose: () => void }) {
+  const locale = useLocale();
+  return (
+    <Modal title="Language" onClose={onClose}>
+      <div className="lang-grid" role="listbox" aria-label="Language" data-no-translate>
+        {LOCALES.map((l) => (
+          <button
+            key={l.code}
+            role="option"
+            aria-selected={l.code === locale}
+            lang={l.tag}
+            dir={l.rtl ? "rtl" : undefined}
+            className={l.code === locale ? "on" : ""}
+            onClick={() => {
+              onClose();
+              if (l.code !== locale) switchLanguage(l.code);
+            }}
+          >
+            <span className="lang-check">{l.code === locale ? <I.check size={13} /> : null}</span>
+            {l.name}
+          </button>
+        ))}
+      </div>
+    </Modal>
+  );
+}
+
+/** Name of the current language, for menu entries. */
+export function useLanguageName() {
+  return localeInfo(useLocale()).name;
 }

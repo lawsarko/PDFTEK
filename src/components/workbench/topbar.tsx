@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { api, errMsg, initials, timeAgo } from "@/lib/client/api";
 import { I, Logo, Wordmark } from "../icons";
 import { UsageMeter } from "../paywall";
-import { LanguageSwitcher } from "../i18n";
+import { LanguageDialog, useLanguageName } from "../i18n";
 import { Menu, Modal } from "../modal";
 import { useToast } from "../toast";
 import { useWB } from "./context";
@@ -21,6 +21,8 @@ export function TopBar() {
   const [workspaces, setWorkspaces] = useState<WsLite[]>([]);
   const [wsMenu, setWsMenu] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
+  const languageName = useLanguageName();
   const [newWs, setNewWs] = useState(false);
 
   useEffect(() => {
@@ -85,7 +87,6 @@ export function TopBar() {
         <I.compare size={14} /> Compare
       </Link>
       <div className="grow show-mobile" />
-      <LanguageSwitcher variant="app" />
       <Notifications />
       <div className="menu-wrap">
         <button className="avatar" style={{ cursor: "pointer", width: 30, height: 30 }} onClick={() => setUserMenu((v) => !v)} aria-label="Account menu">
@@ -112,6 +113,16 @@ export function TopBar() {
           <Link className="menu-item show-mobile" href={`/app/${wid}/compare`}>
             <I.compare size={14} /> Compare
           </Link>
+          <button
+            className="menu-item"
+            data-no-translate
+            onClick={() => {
+              setUserMenu(false);
+              setLangOpen(true);
+            }}
+          >
+            <I.globe size={14} /> {languageName}
+          </button>
           <Link className="menu-item" href="/contact">
             <I.mail size={14} /> Contact support
           </Link>
@@ -122,6 +133,7 @@ export function TopBar() {
         </Menu>
       </div>
 
+      {langOpen && <LanguageDialog onClose={() => setLangOpen(false)} />}
       {newWs && (
         <NewWorkspaceModal
           onClose={() => setNewWs(false)}

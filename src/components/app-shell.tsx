@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { Logo, Wordmark, I } from "./icons";
 import { UsageMeter } from "./paywall";
-import { LanguageSwitcher } from "./i18n";
 
 /** Header for full-page app screens (settings, tools, compare, signature setup). */
 export function AppShell({ wid, title, children, actions }: { wid: string; title: string; children: React.ReactNode; actions?: React.ReactNode }) {
@@ -19,7 +18,6 @@ export function AppShell({ wid, title, children, actions }: { wid: string; title
         <span className="viewer-title ellipsis">{title}</span>
         <span className="grow" />
         <UsageMeter wid={wid} />
-        <LanguageSwitcher variant="app" />
         {actions}
         <Link href={`/app/${wid}/tools`} className="tool-btn hide-mobile">
           <I.tools size={13} /> Tools

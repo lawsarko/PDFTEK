@@ -18,7 +18,6 @@ export async function MarketingNav({ signedIn }: { signedIn: boolean }) {
         <Link href={lp("/pricing")} className="mk-link hide-mobile">
           {t("Pricing")}
         </Link>
-        <LanguageSwitcher />
         {signedIn ? (
           <Link className="btn btn-primary btn-sm" href="/app">
             {t("Open workbench")}
