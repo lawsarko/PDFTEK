@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { ToastProvider } from "@/components/toast";
 import { PaywallHost } from "@/components/paywall";
@@ -7,6 +8,9 @@ import { DomTranslator, I18nProvider } from "@/components/i18n";
 import { coverage, getI18n, pick } from "@/lib/i18n/server";
 import { IN_PROGRESS, LOCALES } from "@/lib/i18n/locales";
 import SITE_STRINGS from "@/i18n/catalog-site.json";
+
+// Google Analytics (GA4). GA_MEASUREMENT_ID can override it; set it to "off" to disable.
+const GA_ID = process.env.GA_MEASUREMENT_ID === "off" ? "" : process.env.GA_MEASUREMENT_ID || "G-V6BFFW3SN2";
 
 const SITE = (process.env.APP_URL || "https://pdftek.com").replace(/\/$/, "");
 const DESCRIPTION =
@@ -89,6 +93,17 @@ export default async function RootLayout({
         />
       </head>
       <body>
+        {GA_ID && (
+          <>
+            <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
+            <Script id="google-tag" strategy="afterInteractive">
+              {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${GA_ID}');`}
+            </Script>
+          </>
+        )}
         <I18nProvider locale={locale} dict={dict}>
           {translating && (
             <div className="i18n-note" role="status" data-no-translate>
