@@ -5,7 +5,7 @@ import { PaywallHost } from "@/components/paywall";
 import { AuthLinkCatcher } from "@/components/auth-link-catcher";
 import { DomTranslator, I18nProvider } from "@/components/i18n";
 import { coverage, getI18n, pick } from "@/lib/i18n/server";
-import { IN_PROGRESS } from "@/lib/i18n/locales";
+import { IN_PROGRESS, LOCALES } from "@/lib/i18n/locales";
 import SITE_STRINGS from "@/i18n/catalog-site.json";
 
 const SITE = (process.env.APP_URL || "https://pdftek.com").replace(/\/$/, "");
@@ -13,7 +13,10 @@ const DESCRIPTION =
   "Free online PDF tools: convert PDF to Word, Excel, PowerPoint and JPG and back, merge, split, compress, protect, edit, e-sign and chat with PDFs. No sign-up needed.";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t, info } = await getI18n();
+  const { t, info, locale } = await getI18n();
+  // A language that's still being translated would show mostly English under its own address:
+  // keep it out of search results until it's done, so each language is indexed in its language.
+  const ready = locale === "en" || coverage(locale) >= 0.9;
   const description = t(DESCRIPTION);
   const tagline = `PDFTEK – ${t("Every document, handled.")}`;
   return {
@@ -30,8 +33,10 @@ export async function generateMetadata(): Promise<Metadata> {
       title: tagline,
       description,
       locale: info.tag.replace("-", "_"),
+      alternateLocale: LOCALES.filter((l) => l.code !== locale).map((l) => l.tag.replace("-", "_")),
     },
     twitter: { card: "summary_large_image", title: tagline, description },
+    robots: ready ? { index: true, follow: true } : { index: false, follow: true },
     // favicon.ico (src/app) is picked up automatically; Google's results use a square raster icon.
     icons: {
       icon: [

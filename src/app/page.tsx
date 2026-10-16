@@ -6,6 +6,7 @@ import { JsonLd } from "@/components/json-ld";
 import { SEO_TOOLS, siteUrl } from "@/lib/seo-tools";
 import { PRODUCTS } from "@/lib/plans";
 import { alternatesFor, getI18n } from "@/lib/i18n/server";
+import { LOCALES } from "@/lib/i18n/locales";
 import { ConvertDemo, CountUp, FlowSequence, LiveChat, Reveal, ScrollProgress, Spotlight, TiltOnScroll, Typewriter } from "@/components/motion";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +15,15 @@ export async function generateMetadata() {
   return { alternates: alternatesFor("/", locale), openGraph: { url: lp("/") } };
 }
 
-const POPULAR = ["fill-pdf-form", "bank-statement-to-excel", "pdf-to-word", "merge-pdf", "compress-pdf", "word-to-pdf", "jpg-to-pdf", "pdf-to-jpg", "split-pdf", "edit-pdf", "sign-pdf", "protect-pdf", "chat-with-pdf"];
+const POPULAR = ["fill-pdf-form", "bank-statement-to-excel", "invoice-to-excel", "pdf-to-word", "merge-pdf", "compress-pdf", "word-to-pdf", "jpg-to-pdf", "pdf-to-jpg", "split-pdf", "edit-pdf", "sign-pdf", "protect-pdf", "chat-with-pdf"];
+
+const HOME_FAQ: [string, string][] = [
+          ["Does the AI make things up?", "pdftek answers only from your documents and cites the page for every claim. Click a citation and the passage is highlighted in the viewer, so you can check any answer in seconds."],
+          ["Can it read scanned documents and other languages?", "Yes. The assistant reads scans directly, and in-browser OCR adds a searchable text layer in 13 languages. Search, read-aloud and conversions work across 40+ languages."],
+          ["Are the e-signatures legally binding?", "pdftek captures consent, signer identity via unique email links, IP addresses and timestamps, and adds a certificate of completion to the signed PDF. That's the standard evidence under ESIGN and eIDAS for simple electronic signatures. Check your jurisdiction's requirements for regulated documents."],
+          ["What happens when two people edit at once?", "They can't overwrite each other. Editing checks the document out to one person, and teammates see who holds the lock. You can hand it off or check it back in at any time, and admins can release a stale lock."],
+          ["Can we host it ourselves?", "Yes. pdftek ships as a single Docker image with a built-in database and file storage. Bring your own Anthropic API key for the AI features and your own SMTP server for email."],
+];
 
 const TYPED = ["converted.", "edited.", "signed.", "understood.", "handled."];
 
@@ -44,7 +53,7 @@ const FEATURES: { icon: React.ReactNode; title: string; body: string }[] = [
 export default async function Home() {
   const user = await currentUser();
   const site = siteUrl();
-  const { t, lp } = await getI18n();
+  const { t, lp, info } = await getI18n();
   return (
     <div className="mk">
       <JsonLd
@@ -59,7 +68,12 @@ export default async function Home() {
               // Google needs a raster logo (at least 112 px) for search results and knowledge panels.
               logo: `${site}/icon-512.png`,
             },
-            { "@type": "WebSite", "@id": `${site}/#site`, name: "PDFTEK", url: site, publisher: { "@id": `${site}/#org` } },
+            { "@type": "WebSite", "@id": `${site}/#site`, name: "PDFTEK", url: site, inLanguage: LOCALES.map((l) => l.tag), publisher: { "@id": `${site}/#org` } },
+            {
+              "@type": "FAQPage",
+              inLanguage: info.tag,
+              mainEntity: HOME_FAQ.map(([q, a]) => ({ "@type": "Question", name: t(q), acceptedAnswer: { "@type": "Answer", text: t(a) } })),
+            },
             {
               "@type": "SoftwareApplication",
               name: "PDFTEK",
@@ -273,13 +287,7 @@ export default async function Home() {
 
       <section className="mk-section faq" id="faq" style={{ maxWidth: 820 }}>
         <h2 className="mk-h2">{t("Questions, answered")}</h2>
-        {[
-          ["Does the AI make things up?", "pdftek answers only from your documents and cites the page for every claim. Click a citation and the passage is highlighted in the viewer, so you can check any answer in seconds."],
-          ["Can it read scanned documents and other languages?", "Yes. The assistant reads scans directly, and in-browser OCR adds a searchable text layer in 13 languages. Search, read-aloud and conversions work across 40+ languages."],
-          ["Are the e-signatures legally binding?", "pdftek captures consent, signer identity via unique email links, IP addresses and timestamps, and adds a certificate of completion to the signed PDF. That's the standard evidence under ESIGN and eIDAS for simple electronic signatures. Check your jurisdiction's requirements for regulated documents."],
-          ["What happens when two people edit at once?", "They can't overwrite each other. Editing checks the document out to one person, and teammates see who holds the lock. You can hand it off or check it back in at any time, and admins can release a stale lock."],
-          ["Can we host it ourselves?", "Yes. pdftek ships as a single Docker image with a built-in database and file storage. Bring your own Anthropic API key for the AI features and your own SMTP server for email."],
-        ].map(([q, a]) => (
+        {HOME_FAQ.map(([q, a]) => (
           <details key={q}>
             <summary>{t(q)}</summary>
             <p>{t(a)}</p>

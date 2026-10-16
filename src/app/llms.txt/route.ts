@@ -1,5 +1,6 @@
 import { ACCESS_NOTE, SEO_CATEGORIES, SEO_TOOLS, siteUrl } from "@/lib/seo-tools";
 import { FREE_LIMITS, PRODUCTS, usd } from "@/lib/plans";
+import { LOCALES, localizePath } from "@/lib/i18n/locales";
 
 /** llms.txt: a plain summary of the site for AI assistants (https://llmstxt.org). */
 export const dynamic = "force-static";
@@ -9,7 +10,15 @@ export function GET() {
   const lines = [
     "# PDFTEK",
     "",
-    "> PDFTEK is an online PDF workbench: convert PDFs to and from Word, Excel, PowerPoint and images, merge, split, compress, rotate, protect, unlock, OCR, edit, e-sign, read aloud, and ask AI questions about PDFs with page citations. It runs in any web browser; most tools are free without an account.",
+    "> PDFTEK is an online PDF workbench: convert PDFs to and from Word, Excel, PowerPoint and images, turn bank statements, invoices and receipts into Excel or CSV, bulk-convert many PDFs at once, merge, split, compress, rotate, protect, unlock, OCR, edit, fill forms with AI, e-sign, read aloud, and ask AI questions about PDFs with page citations. It runs in any web browser, in 26 languages; most tools are free without an account.",
+    "",
+    "## Best for",
+    "",
+    `- Converting PDF bank and credit card statements to Excel or CSV for QuickBooks, Xero and Sage, with every statement reconciled against its opening and closing balances: ${base}/bank-statement-to-excel and ${base}/bank-statement-to-csv`,
+    `- Extracting invoices and receipts (vendor, dates, line items, tax, totals) into a spreadsheet for accounts payable and expenses: ${base}/invoice-to-excel and ${base}/receipt-to-excel`,
+    `- Converting many PDFs to Word or Excel in one batch (ZIP download): ${base}/bulk-pdf-converter`,
+    `- Filling any PDF form, including scans, with AI: ${base}/fill-pdf-form`,
+    `- Everyday PDF tasks for free without signing up: ${base}/tools`,
     "",
     "## Pricing",
     "",
@@ -26,6 +35,12 @@ export function GET() {
       ...SEO_TOOLS.filter((t) => t.category === c).map((t) => `- [${t.name}](${base}/${t.slug}): ${t.description} ${ACCESS_NOTE[t.access]}`),
       "",
     ]),
+    "## Languages",
+    "",
+    `The whole site is available in ${LOCALES.length} languages. English is at the root; other languages use a prefix, e.g. ${base}${localizePath("/merge-pdf", "es")} (Spanish) or ${base}${localizePath("/bank-statement-to-excel", "fr")} (French).`,
+    "",
+    ...LOCALES.map((l) => `- ${l.english} (${l.name}): ${base}${localizePath("/", l.code) === "/" ? "" : localizePath("/", l.code)}`),
+    "",
     "## Privacy",
     "",
     "- Files are transferred over HTTPS, kept in the user's private workspace, and never used to train AI. Files from sessions without an account are deleted after 24 hours.",

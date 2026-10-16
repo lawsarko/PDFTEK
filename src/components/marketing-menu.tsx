@@ -76,6 +76,12 @@ const CONVERT: Group[] = [
         icon: FMT("XLS", "#2a8a4f"),
       },
       {
+        href: "/go/bulk-convert",
+        label: "Bulk convert",
+        sub: "Many PDFs at once",
+        icon: <I.layers size={15} />,
+      },
+      {
         href: "/go/pdf-to-powerpoint",
         label: "PDF to PowerPoint",
         icon: FMT("PPT", "#d0642b"),

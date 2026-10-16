@@ -120,10 +120,25 @@ export async function getI18n() {
   };
 }
 
-/** hreflang links for a public page, plus its canonical address in the current language. */
+let readyCache: { at: number; codes: Set<string> } | null = null;
+/**
+ * Languages whose translation is (nearly) complete. Only these are offered to search engines
+ * (hreflang, sitemap); the rest are noindex until the translator finishes them.
+ */
+export function readyLocales(): Set<string> {
+  if (readyCache && Date.now() - readyCache.at < 60_000) return readyCache.codes;
+  const total = get<{ n: number }>("SELECT count(*) AS n FROM i18n_source")?.n ?? 0;
+  const codes = new Set<string>([DEFAULT_LOCALE]);
+  if (total) for (const r of all<{ locale: string; n: number }>("SELECT locale, count(*) AS n FROM i18n_text GROUP BY locale")) if (r.n / total >= 0.9) codes.add(r.locale);
+  readyCache = { at: Date.now(), codes };
+  return codes;
+}
+
+/** hreflang links for a public page (languages that are ready), plus its canonical address. */
 export function alternatesFor(path: string, locale: string) {
+  const ready = readyLocales();
   const languages: Record<string, string> = { "x-default": path };
-  for (const l of LOCALES) languages[l.tag] = localizePath(path, l.code);
+  for (const l of LOCALES) if (ready.has(l.code)) languages[l.tag] = localizePath(path, l.code);
   return { canonical: localizePath(path, locale), languages };
 }
 

@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: P): Promise<Metadata> {
 export default async function ToolPage({ params }: P) {
   const tool = SEO_TOOL_BY_SLUG.get((await params).tool);
   if (!tool) notFound();
-  const { t, lp } = await getI18n();
+  const { t, lp, info } = await getI18n();
   const url = `${siteUrl()}${lp(`/${tool.slug}`)}`;
   const related = tool.related.map((s) => SEO_TOOL_BY_SLUG.get(s)!).filter(Boolean);
   const free = tool.access === "free";
@@ -56,6 +56,7 @@ export default async function ToolPage({ params }: P) {
               "@id": `${url}#app`,
               name: `PDFTEK ${name}`,
               url,
+              inLanguage: info.tag,
               description: t(tool.description),
               applicationCategory: "BusinessApplication",
               operatingSystem: "Any (web browser)",
@@ -67,6 +68,7 @@ export default async function ToolPage({ params }: P) {
             },
             {
               "@type": "HowTo",
+              inLanguage: info.tag,
               name: how,
               description: t(tool.lead),
               tool: { "@type": "HowToTool", name: t("PDFTEK (web browser)") },
@@ -74,6 +76,7 @@ export default async function ToolPage({ params }: P) {
             },
             {
               "@type": "FAQPage",
+              inLanguage: info.tag,
               mainEntity: faq.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })),
             },
             {

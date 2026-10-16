@@ -4,6 +4,7 @@ import { CreditPacks, PlanCards } from "@/components/pricing";
 import { FREE_LIMITS, PRICING_FAQ } from "@/lib/plans";
 import { Reveal } from "@/components/motion";
 import { I } from "@/components/icons";
+import { JsonLd } from "@/components/json-ld";
 import { alternatesFor, getI18n } from "@/lib/i18n/server";
 
 export async function generateMetadata() {
@@ -37,9 +38,17 @@ const ROWS: [string, string, string, string, string][] = [
 
 export default async function Pricing() {
   const user = await currentUser();
-  const { t } = await getI18n();
+  const { t, info } = await getI18n();
   return (
     <div className="mk">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          inLanguage: info.tag,
+          mainEntity: PRICING_FAQ.map(([q, a]) => ({ "@type": "Question", name: t(q), acceptedAnswer: { "@type": "Answer", text: t(a) } })),
+        }}
+      />
       <MarketingNav signedIn={!!user} />
       <section className="mk-section" style={{ textAlign: "center", paddingBottom: 24 }}>
         <div className="eyebrow">{t("Pricing")}</div>

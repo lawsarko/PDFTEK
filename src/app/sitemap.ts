@@ -1,12 +1,17 @@
 import type { MetadataRoute } from "next";
 import { SEO_TOOLS, siteUrl } from "@/lib/seo-tools";
 import { LOCALES, localizePath } from "@/lib/i18n/locales";
+import { readyLocales } from "@/lib/i18n/server";
+
+export const dynamic = "force-dynamic";
 
 type Freq = MetadataRoute.Sitemap[number]["changeFrequency"];
 
-/** Every public page in every language, each listing its translations (hreflang) for search engines. */
+/** Every public page in every finished language, each listing its translations (hreflang). */
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = siteUrl();
+  const ready = readyLocales();
+  const langs = LOCALES.filter((l) => ready.has(l.code));
   const now = new Date();
   const pages: [string, Freq, number][] = [
     ["/", "weekly", 1],
@@ -23,9 +28,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     return p === "/" ? base : `${base}${p}`;
   };
   return pages.flatMap(([path, changeFrequency, priority]) => {
-    const languages: Record<string, string> = Object.fromEntries(LOCALES.map((l) => [l.tag, url(path, l.code)]));
+    const languages: Record<string, string> = Object.fromEntries(langs.map((l) => [l.tag, url(path, l.code)]));
     languages["x-default"] = url(path, "en");
-    return LOCALES.map((l) => ({
+    return langs.map((l) => ({
       url: url(path, l.code),
       lastModified: now,
       changeFrequency,
