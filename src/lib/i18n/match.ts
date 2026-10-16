@@ -13,33 +13,48 @@ export const isPattern = (s: string) => /\{\d+\}|\(s\)/.test(s);
 export const norm = (s: string) => s.replace(/\s+/g, " ").trim();
 
 export function compile(dict: Dict) {
-  const pats = dict.patterns
-    .map(([src, tr]) => {
-      const order: string[] = [];
-      const re = src.split(/(\{\d+\}|\(s\))/).map((part) => {
-        if (/^\{\d+\}$/.test(part)) {
-          order.push(part);
-          return "(.+?)";
-        }
-        if (part === "(s)") return "s?";
-        return esc(part);
-      });
-      // Patterns that are mostly placeholders would match anything.
-      if (src.replace(/\{\d+\}|\(s\)/g, "").replace(/[^\p{L}]/gu, "").length < 3) return null;
-      return { re: new RegExp(`^${re.join("")}$`), order, tr };
-    })
-    .filter((p): p is { re: RegExp; order: string[]; tr: string } => !!p);
+  type P = { re: RegExp; order: string[]; tr: string };
+  // Patterns are grouped by their first two letters, so a lookup tests only the few that could match.
+  const byStart = new Map<string, P[]>();
+  const anyStart: P[] = [];
+  for (const [src, tr] of dict.patterns) {
+    // Patterns that are mostly placeholders would match anything.
+    if (src.replace(/\{\d+\}|\(s\)/g, "").replace(/[^\p{L}]/gu, "").length < 3) continue;
+    const order: string[] = [];
+    const re = src.split(/(\{\d+\}|\(s\))/).map((part) => {
+      if (/^\{\d+\}$/.test(part)) {
+        order.push(part);
+        return "(.+?)";
+      }
+      if (part === "(s)") return "s?";
+      return esc(part);
+    });
+    let p: P;
+    try {
+      p = { re: new RegExp(`^${re.join("")}$`), order, tr };
+    } catch {
+      continue;
+    }
+    const lead = src.split(/\{\d+\}|\(s\)/)[0];
+    if (lead.length >= 2) {
+      const k = lead.slice(0, 2);
+      byStart.set(k, [...(byStart.get(k) ?? []), p]);
+    } else anyStart.push(p);
+  }
   return (text: string): string | null => {
     const key = norm(text);
     if (!key) return null;
     const hit = dict.exact[key];
     if (hit !== undefined) return hit;
-    for (const p of pats) {
-      const m = p.re.exec(key);
-      if (!m) continue;
-      let out = p.tr;
-      p.order.forEach((ph, i) => (out = out.split(ph).join(m[i + 1])));
-      return out.replace(/\{\d+\}/g, "");
+    for (const list of [byStart.get(key.slice(0, 2)), anyStart]) {
+      if (!list) continue;
+      for (const p of list) {
+        const m = p.re.exec(key);
+        if (!m) continue;
+        let out = p.tr;
+        p.order.forEach((ph, i) => (out = out.split(ph).join(m[i + 1])));
+        return out.replace(/\{\d+\}/g, "");
+      }
     }
     return null;
   };

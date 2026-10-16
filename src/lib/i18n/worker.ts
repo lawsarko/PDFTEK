@@ -2,6 +2,7 @@ import "server-only";
 import { all, run, tx } from "../db";
 import { now } from "../ids";
 import { aiConfigured, structured } from "../ai";
+import { HttpError } from "../http";
 import { LOCALES, DEFAULT_LOCALE } from "./locales";
 import { bumpI18n, registerSources } from "./server";
 import catalog from "../../i18n/catalog.json";
@@ -94,6 +95,7 @@ async function translateBatch(locale: string, rows: { text: string }[]) {
 
 /** Missing strings for a language (page copy and short UI text first), skipping ones in flight. */
 function missing(locale: string, skip: Set<string>) {
+  const cap = batchCap.get(locale) ?? BATCH_MAX;
   const rows = all<{ text: string }>(
     `SELECT s.text FROM i18n_source s
       WHERE NOT EXISTS (SELECT 1 FROM i18n_text x WHERE x.locale = ? AND x.source = s.text)
@@ -105,7 +107,7 @@ function missing(locale: string, skip: Set<string>) {
   let chars = 0;
   for (const r of rows) {
     if (skip.has(r.text)) continue;
-    if (batch.length && (chars + r.text.length > BATCH_CHARS || batch.length >= BATCH_MAX)) break;
+    if (batch.length && (chars + r.text.length > BATCH_CHARS * (cap / BATCH_MAX) || batch.length >= cap)) break;
     batch.push(r);
     chars += r.text.length;
   }
@@ -117,6 +119,7 @@ function setState(key: string, value: string) {
 }
 
 const inFlight = new Map<string, Set<string>>(); // locale -> source texts being translated
+const batchCap = new Map<string, number>(); // smaller batches after a batch failed
 const batchesFor = new Map<string, number>();
 let rotate = 0;
 
@@ -127,12 +130,25 @@ function start(locale: string, batch: { text: string }[]) {
   batchesFor.set(locale, (batchesFor.get(locale) ?? 0) + 1);
   busy++;
   translateBatch(locale, batch)
-    .then(() => setState("lastOk", `${locale} · ${batch.length} strings`))
+    .then(() => {
+      setState("lastOk", `${locale} · ${batch.length} strings`);
+      if (batchCap.has(locale)) batchCap.set(locale, Math.min(BATCH_MAX, (batchCap.get(locale) ?? 1) * 2));
+    })
     .catch((err) => {
       const msg = err instanceof Error ? err.message : String(err);
+      const status = (err as { status?: number }).status;
       console.error(`[pdftek] translation to ${locale} failed`, msg);
       setState("lastError", `${locale}: ${msg}`);
-      pausedUntil = Date.now() + 2 * 60_000; // back off (rate limits, billing)
+      // A problem with this batch's text (too long, unreadable answer, a refusal): split it up and
+      // carry on, and leave a single string that keeps failing in English, so one bad string can
+      // never stall the translator.
+      const batchProblem = err instanceof HttpError || status === 400 || status === 413;
+      if (!batchProblem) {
+        pausedUntil = Date.now() + 2 * 60_000; // the API itself: rate limits, billing, outages
+        return;
+      }
+      if (batch.length > 1) batchCap.set(locale, Math.max(1, Math.floor(batch.length / 3)));
+      else run("INSERT OR REPLACE INTO i18n_text (locale, source, text, created_at) VALUES (?, ?, ?, ?)", locale, batch[0].text, batch[0].text, now());
     })
     .finally(() => {
       busy--;

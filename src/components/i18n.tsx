@@ -96,8 +96,12 @@ export function DomTranslator({ locale }: { locale: string }) {
       title();
     };
     const use = (d: Dict) => {
-      lookup = compile(d);
-      all();
+      try {
+        lookup = compile(d);
+        all();
+      } catch (e) {
+        console.warn("[pdftek] translation skipped", e);
+      }
     };
 
     let cachedV = "";
@@ -122,11 +126,13 @@ export function DomTranslator({ locale }: { locale: string }) {
 
     // Text the app renders later (dialogs, toasts, new rows) is translated as it appears.
     const obs = new MutationObserver((list) => {
-      for (const m of list) {
-        if (m.type === "characterData") textNode(m.target as Text);
-        else if (m.type === "attributes") attrs(m.target as Element);
-        else m.addedNodes.forEach(walk);
-      }
+      try {
+        for (const m of list) {
+          if (m.type === "characterData") textNode(m.target as Text);
+          else if (m.type === "attributes") attrs(m.target as Element);
+          else m.addedNodes.forEach(walk);
+        }
+      } catch {}
     });
     obs.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: [...ATTRS] });
     const head = document.querySelector("title");

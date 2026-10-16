@@ -75,8 +75,11 @@ export function Typewriter({ words, className }: { words: string[]; className?: 
 /** Fades and lifts its children in when scrolled into view. */
 export function Reveal({ children, delay = 0, className = "", as: Tag = "div", style }: { children: React.ReactNode; delay?: number; className?: string; as?: "div" | "section" | "li"; style?: React.CSSProperties }) {
   const [ref, seen] = useInView<HTMLDivElement>(0.15);
+  // Hidden only once this runs in the browser: if scripts fail or are blocked, content stays visible.
+  const [armed, setArmed] = useState(false);
+  useEffect(() => setArmed(true), []);
   return (
-    <Tag ref={ref as React.Ref<never>} className={`reveal ${seen ? "in" : ""} ${className}`} style={{ ...style, transitionDelay: `${delay}ms` }}>
+    <Tag ref={ref as React.Ref<never>} className={`reveal ${armed ? "armed" : ""} ${seen ? "in" : ""} ${className}`} style={{ ...style, transitionDelay: `${delay}ms` }}>
       {children}
     </Tag>
   );

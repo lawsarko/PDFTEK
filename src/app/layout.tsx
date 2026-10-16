@@ -67,8 +67,11 @@ export default async function RootLayout({
   const dict = pick(locale, SITE_STRINGS as string[]);
   const translating = locale !== "en" && coverage(locale) < 0.9 ? IN_PROGRESS[locale] : null;
   return (
-    <html lang={info.tag} dir={info.rtl ? "rtl" : "ltr"}>
+    <html lang={info.tag} dir={info.rtl ? "rtl" : "ltr"} translate="no">
       <head>
+        {/* pdftek translates itself. Browser translation (Chrome/Google Translate) rewrites the page
+            behind React's back, which breaks menus and leaves sections blank. */}
+        <meta name="google" content="notranslate" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"

@@ -448,7 +448,8 @@ button.chip:hover { border-color: var(--steel); color: var(--text-hi); }
 .marquee-item b { color: var(--amber); font-weight: 500; }
 @keyframes marquee { to { transform: translateX(-50%); } }
 
-.reveal { opacity: 0; transform: translateY(28px); transition: opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1); }
+.reveal { transition: opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1); }
+.reveal.armed:not(.in) { opacity: 0; transform: translateY(28px); }
 .reveal.in { opacity: 1; transform: none; }
 
 .spotlight .mk-card { position: relative; overflow: hidden; transition: transform .25s ease, border-color .25s ease; }
@@ -494,7 +495,7 @@ button.chip:hover { border-color: var(--steel); color: var(--text-hi); }
 
 @media (prefers-reduced-motion: reduce) {
   .orb, .hero-bg::before, .marquee-track, .tw-caret, .tw-word, .btn-glow::after, .hero-kicker .live { animation: none !important; }
-  .reveal { opacity: 1; transform: none; transition: none; }
+  .reveal, .reveal.armed:not(.in) { opacity: 1; transform: none; transition: none; }
   .mk-hero h1, .mk-hero p.lead, .mk-hero .mk-cta, .hero-kicker { animation: none; }
 }
 
