@@ -42,7 +42,7 @@ const TOOLS: { key: ToolKey | "unlock" | "topdf" | "images" | "scan" | "convert"
 const NON_MODAL = ["unlock", "topdf", "images", "scan", "convert", "ocr", "compare", "pick", "fill", "statement", "invoice", "bulk"];
 
 /** Uploads files to the workspace library and hands back the created documents. */
-function UploadButton({ wid, onDone, multiple = false, label = "Upload a PDF", accept = ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.rtf,.txt,.jpg,.jpeg,.png" }: { wid: string; onDone: (d: Doc[]) => void; multiple?: boolean; label?: string; accept?: string }) {
+function UploadButton({ wid, onDone, multiple = false, label = "Upload a PDF", accept = ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.rtf,.txt,.jpg,.jpeg,.png,.tif,.tiff" }: { wid: string; onDone: (d: Doc[]) => void; multiple?: boolean; label?: string; accept?: string }) {
   const toast = useToast();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);

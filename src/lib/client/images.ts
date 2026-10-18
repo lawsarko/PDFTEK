@@ -1,11 +1,48 @@
 "use client";
 import { PDFDocument } from "pdf-lib";
 
-/** Decodes any browser-supported image and re-encodes it as JPEG (max 2400px on the long edge). */
-export async function toJpeg(blob: Blob, opts: { enhance?: boolean; maxEdge?: number } = {}): Promise<{ bytes: Uint8Array; width: number; height: number; url: string }> {
-  const bmp = await createImageBitmap(blob).catch(() => {
-    throw new Error("This image format isn't supported by your browser. Use JPG, PNG or WEBP.");
+export const isTiffName = (name: string) => /\.tiff?$/i.test(name);
+
+/**
+ * Every page of a TIFF as a canvas. Most browsers can't display TIFF, so it's decoded here (utif2);
+ * multi-page TIFFs (scans, faxes) give one canvas per page.
+ */
+export async function tiffPages(blob: Blob): Promise<HTMLCanvasElement[]> {
+  const mod = await import("utif2");
+  const UTIF = (mod as unknown as { default?: typeof mod }).default ?? mod;
+  const buf = await blob.arrayBuffer();
+  const ifds = UTIF.decode(buf).filter((ifd) => {
+    const sub = ifd.t254 as number[] | undefined;
+    return !((sub?.[0] ?? 0) & 1) && ifd.t256 && ifd.t257;
   });
+  const pages: HTMLCanvasElement[] = [];
+  for (const ifd of ifds) {
+    UTIF.decodeImage(buf, ifd);
+    if (!ifd.width || !ifd.height) continue;
+    const canvas = document.createElement("canvas");
+    canvas.width = ifd.width;
+    canvas.height = ifd.height;
+    const ctx = canvas.getContext("2d")!;
+    const img = ctx.createImageData(ifd.width, ifd.height);
+    img.data.set(UTIF.toRGBA8(ifd));
+    ctx.putImageData(img, 0, 0);
+    pages.push(canvas);
+  }
+  if (!pages.length) throw new Error("This TIFF file couldn't be read.");
+  return pages;
+}
+
+/** Decodes any browser-supported image (or a canvas, or a TIFF's first page) and re-encodes it as JPEG (max 2400px on the long edge). */
+export async function toJpeg(blob: Blob | HTMLCanvasElement, opts: { enhance?: boolean; maxEdge?: number } = {}): Promise<{ bytes: Uint8Array; width: number; height: number; url: string }> {
+  const source: CanvasImageSource & { width: number; height: number } =
+    blob instanceof HTMLCanvasElement
+      ? blob
+      : blob instanceof File && isTiffName(blob.name)
+        ? (await tiffPages(blob))[0]
+        : await createImageBitmap(blob).catch(() => {
+            throw new Error("This image format isn't supported by your browser. Use JPG, PNG, WEBP or TIFF.");
+          });
+  const bmp = source;
   const max = opts.maxEdge ?? 2400;
   const s = Math.min(1, max / Math.max(bmp.width, bmp.height));
   const canvas = document.createElement("canvas");

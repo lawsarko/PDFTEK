@@ -2,14 +2,15 @@
 import { useEffect, useRef, useState } from "react";
 import { api, errMsg } from "@/lib/client/api";
 import type { Doc } from "@/lib/client/types";
-import { enhance, imagesToPdf, toJpeg } from "@/lib/client/images";
+import { enhance, imagesToPdf, toJpeg, isTiffName, tiffPages } from "@/lib/client/images";
 import { I } from "../icons";
 import { Modal } from "../modal";
 import { useToast } from "../toast";
 import { useWB } from "./context";
 
 const ACCEPT = ".pdf,.doc,.docx,.odt,.rtf,.txt,.md,.ppt,.pptx,.odp,.xls,.xlsx,.ods,.csv,.html,.jpg,.jpeg,.png,.webp,.heic,.gif,.bmp,.tif,.tiff";
-const IMAGE_RE = /\.(webp|heic|gif|bmp|tiff?)$/i;
+const IMAGE_RE = /\.(webp|heic|gif|bmp)$/i;
+// TIFF is converted on the server (most browsers can't read it), with every page of multi-page files.
 
 type Tab = "upload" | "images" | "scan";
 
@@ -143,8 +144,12 @@ function ImagesToPdf({ onDone }: { onDone: () => void }) {
   const add = async (files: FileList | File[]) => {
     for (const f of files) {
       try {
-        const j = await toJpeg(f);
-        setImages((l) => [...l, { id: Math.random().toString(36).slice(2), ...j }]);
+        // Every page of a multi-page TIFF becomes its own image.
+        const sources = isTiffName(f.name) ? await tiffPages(f) : [f];
+        for (const src of sources) {
+          const j = await toJpeg(src);
+          setImages((l) => [...l, { id: Math.random().toString(36).slice(2), ...j }]);
+        }
       } catch (e) {
         toast(`${f.name}: ${errMsg(e)}`, "error");
       }
@@ -199,7 +204,7 @@ function ImagesToPdf({ onDone }: { onDone: () => void }) {
           <span className="small">Add images</span>
         </button>
       </div>
-      <input ref={input} type="file" multiple accept="image/*" hidden onChange={(e) => e.target.files && add(e.target.files)} />
+      <input ref={input} type="file" multiple accept="image/*,.tif,.tiff" hidden onChange={(e) => e.target.files && add(e.target.files)} />
       <div className="small muted">Drag thumbnails to reorder pages · JPG, PNG, WEBP, HEIC (Safari) accepted</div>
       <div className="row wrap gap-12">
         <div className="field grow">

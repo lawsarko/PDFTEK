@@ -45,7 +45,7 @@ const FEATURES: { icon: React.ReactNode; title: string; body: string }[] = [
   { icon: <I.edit size={18} />, title: "Real PDF editing", body: "Click any line to change it. Add text and images, highlight, and redact for real. Redacted pages are flattened, so hidden text is gone." },
   { icon: <I.sign size={18} />, title: "E-signatures built in", body: "Place fields, route to signers in order, send reminders. Every signed PDF ships with a certificate of completion and a SHA-256 fingerprint." },
   { icon: <I.bolt size={18} />, title: "Automations", body: "Risk review on upload, weekday digests, renewal reminders 60 days out, and Slack or Teams webhooks. No-code, and it runs while you sleep." },
-  { icon: <I.convert size={18} />, title: "Convert anything", body: "Word, Excel, PowerPoint, text and images to PDF, and PDF back to Word, Excel, PowerPoint, JPG, PNG, WEBP and TIFF, with the formatting intact. Camera scans to PDF. Merge, split, reorder, watermark." },
+  { icon: <I.convert size={18} />, title: "Convert anything", body: "Word, Excel, PowerPoint, text and images (JPG, PNG, multi-page TIFF) to PDF, and PDF back to Word, Excel, PowerPoint, JPG, PNG, WEBP and TIFF, with the formatting intact. Camera scans to PDF. Merge, split, reorder, watermark." },
   { icon: <I.lock size={18} />, title: "Team-grade control", body: "Check-out locks prevent conflicting edits. Hand-offs keep ownership clear. Every version is kept, with a full activity trail." },
   { icon: <I.inbox size={18} />, title: "Document requests", body: "Collect NDAs, W-9s and certificates from clients through a secure upload link, with due dates and reminders. No account needed on their side." },
 ];

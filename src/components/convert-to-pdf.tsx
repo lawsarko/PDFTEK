@@ -9,7 +9,8 @@ import { Modal } from "./modal";
 import { useToast } from "./toast";
 
 const OFFICE_RE = /\.(docx?|odt|rtf|pptx?|odp|xlsx?|ods|html?)$/i;
-const BROWSER_IMAGE_RE = /\.(webp|heic|gif|bmp|tiff?)$/i;
+const BROWSER_IMAGE_RE = /\.(webp|heic|gif|bmp)$/i;
+// TIFF is converted on the server (most browsers can't read it), with every page of multi-page files.
 const ACCEPT = ".doc,.docx,.odt,.rtf,.ppt,.pptx,.odp,.xls,.xlsx,.ods,.html,.htm,.txt,.md,.csv,.jpg,.jpeg,.png,.webp,.heic,.gif,.bmp,.tif,.tiff";
 
 type Item = { file: File; status: "queued" | "converting" | "done" | "error"; doc?: Doc; error?: string };

@@ -67,6 +67,9 @@ export function looksScanned(pages: PageText[]): boolean {
 
 export const OFFICE_EXT = ["doc", "docx", "odt", "rtf", "ppt", "pptx", "odp", "xls", "xlsx", "ods", "html"];
 export const IMAGE_EXT = ["jpg", "jpeg", "png"];
+export const TIFF_EXT = ["tif", "tiff"];
+/** TIFF files start with "II*\0" (little-endian) or "MM\0*" (big-endian). */
+const isTiff = (d: Uint8Array) => d.length > 4 && ((d[0] === 0x49 && d[1] === 0x49 && d[2] === 0x2a && d[3] === 0) || (d[0] === 0x4d && d[1] === 0x4d && d[2] === 0 && d[3] === 0x2a));
 export const TEXT_EXT = ["txt", "md", "csv"];
 
 /** Lays out plain text on Letter pages (no external dependencies). */
@@ -210,6 +213,15 @@ export async function normalizeToPdf(name: string, data: Buffer): Promise<{ pdf:
     }
     return { pdf: data, sourceType: "pdf" };
   }
+  if (TIFF_EXT.includes(ext) || isTiff(data)) {
+    const { tiffToPdf } = await import("./tiff");
+    try {
+      return { pdf: await tiffToPdf(data), sourceType: "image" };
+    } catch (err) {
+      console.error("[pdftek] TIFF conversion failed", err);
+      throw badRequest("This TIFF file couldn't be read. It may be damaged or use an unusual compression; try exporting it as TIFF or PNG again.");
+    }
+  }
   if (IMAGE_EXT.includes(ext)) {
     return { pdf: await imagesToPdf([{ data, type: ext === "png" ? "png" : "jpg" }], "fit"), sourceType: "image" };
   }
@@ -219,7 +231,7 @@ export async function normalizeToPdf(name: string, data: Buffer): Promise<{ pdf:
   if (OFFICE_EXT.includes(ext)) {
     return { pdf: await officeToPdf(data, ext), sourceType: ext };
   }
-  throw badRequest(`.${ext || "unknown"} files aren't supported. Upload PDF, Office documents, text, or JPG/PNG images.`);
+  throw badRequest(`.${ext || "unknown"} files aren't supported. Upload PDF, Office documents, text, or JPG/PNG/TIFF images.`);
 }
 
 // ---------- page operations ----------

@@ -45,6 +45,11 @@ const CONVERT: Group[] = [
         icon: FMT("JPG", "#8a5cd6"),
       },
       {
+        href: "/go/to-pdf",
+        label: "TIFF to PDF",
+        icon: FMT("TIF", "#5c7cd6"),
+      },
+      {
         href: "/go/scan-to-pdf",
         label: "Scan to PDF",
         sub: "Use your camera",
