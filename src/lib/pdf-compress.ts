@@ -5,6 +5,7 @@ import fs from "node:fs/promises";
 import zlib from "node:zlib";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { heavy } from "./heavy";
 import { PDFDocument, PDFName, PDFNumber, PDFRawStream, PDFDict, PDFArray, PDFRef, PDFStream, type PDFObject } from "pdf-lib";
 
 /**
@@ -287,25 +288,27 @@ async function ghostscript(data: Buffer, level: CompressLevel): Promise<Buffer |
     const input = path.join(dir, "in.pdf");
     const output = path.join(dir, "out.pdf");
     await fs.writeFile(input, data);
-    await execFileAsync(
-      bin,
-      [
-        "-sDEVICE=pdfwrite",
-        "-dCompatibilityLevel=1.6",
-        `-dPDFSETTINGS=${gs}`,
-        "-dNOPAUSE",
-        "-dQUIET",
-        "-dBATCH",
-        "-dSAFER",
-        "-dDetectDuplicateImages=true",
-        "-dCompressFonts=true",
-        "-dSubsetFonts=true",
-        `-dColorImageResolution=${gsDpi}`,
-        `-dGrayImageResolution=${gsDpi}`,
-        `-sOutputFile=${output}`,
-        input,
-      ],
-      { timeout: 180_000 },
+    await heavy(() =>
+      execFileAsync(
+        bin,
+        [
+          "-sDEVICE=pdfwrite",
+          "-dCompatibilityLevel=1.6",
+          `-dPDFSETTINGS=${gs}`,
+          "-dNOPAUSE",
+          "-dQUIET",
+          "-dBATCH",
+          "-dSAFER",
+          "-dDetectDuplicateImages=true",
+          "-dCompressFonts=true",
+          "-dSubsetFonts=true",
+          `-dColorImageResolution=${gsDpi}`,
+          `-dGrayImageResolution=${gsDpi}`,
+          `-sOutputFile=${output}`,
+          input,
+        ],
+        { timeout: 180_000 },
+      ),
     );
     return await fs.readFile(output);
   } finally {

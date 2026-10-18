@@ -132,6 +132,9 @@ export async function tiffToPdf(data: Uint8Array): Promise<Buffer> {
     console.warn("[pdftek] sharp unavailable, using the built-in TIFF decoder", err);
   }
   if (sharp) {
+    // Keep libvips lean: no cache of decoded images between requests, and one worker thread.
+    sharp.cache(false);
+    sharp.concurrency(1);
     try {
       return await tiffToPdfSharp(sharp, data);
     } catch (err) {

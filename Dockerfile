@@ -18,7 +18,10 @@ ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     PORT=3000 \
     HOSTNAME=0.0.0.0 \
-    DATA_DIR=/data
+    DATA_DIR=/data \
+    MALLOC_ARENA_MAX=2
+# MALLOC_ARENA_MAX=2: image work (sharp/libvips) on many threads otherwise leaves memory fragmented
+# across allocator arenas and never handed back, which can push a small instance over its limit.
 # LibreOffice powers Word/Excel/PowerPoint -> PDF. Carlito/Caladea/Liberation are metric-compatible with
 # Calibri/Cambria/Arial/Times, so converted documents keep their line breaks and page layout.
 # Ghostscript gives Compress PDF extra savings on fonts and vector-heavy files.

@@ -7,6 +7,7 @@ import { promisify } from "node:util";
 import { PDFDocument, StandardFonts, rgb, degrees } from "pdf-lib";
 import { id } from "./ids";
 import { badRequest } from "./http";
+import { heavy } from "./heavy";
 
 const execFileAsync = promisify(execFile);
 
@@ -140,10 +141,12 @@ export async function officeToPdf(data: Buffer, ext: string): Promise<Buffer> {
   try {
     const input = path.join(dir, `input.${ext}`);
     await fs.writeFile(input, data);
-    await execFileAsync(
-      bin,
-      [`-env:UserInstallation=file://${path.join(dir, "profile")}`, "--headless", "--convert-to", "pdf", "--outdir", dir, input],
-      { timeout: 120_000 },
+    await heavy(() =>
+      execFileAsync(
+        bin,
+        [`-env:UserInstallation=file://${path.join(dir, "profile")}`, "--headless", "--convert-to", "pdf", "--outdir", dir, input],
+        { timeout: 120_000 },
+      ),
     );
     return await fs.readFile(path.join(dir, "input.pdf"));
   } catch (err) {
@@ -216,7 +219,7 @@ export async function normalizeToPdf(name: string, data: Buffer): Promise<{ pdf:
   if (TIFF_EXT.includes(ext) || isTiff(data)) {
     const { tiffToPdf } = await import("./tiff");
     try {
-      return { pdf: await tiffToPdf(data), sourceType: "image" };
+      return { pdf: await heavy(() => tiffToPdf(data)), sourceType: "image" };
     } catch (err) {
       console.error("[pdftek] TIFF conversion failed", err);
       throw badRequest("This TIFF file couldn't be read. It may be damaged or use an unusual compression; try exporting it as TIFF or PNG again.");
