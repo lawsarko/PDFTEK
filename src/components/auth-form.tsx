@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { api, errMsg, ApiError } from "@/lib/client/api";
-import { Logo, Wordmark } from "./icons";
+import { I, Logo, Wordmark } from "./icons";
 import { useLocalePath, useT } from "./i18n";
 
 const NOTICES: Record<string, string> = {
@@ -28,6 +28,9 @@ export function AuthForm({
   const t = useT();
   const lp = useLocalePath();
   const next = params.get("next");
+  // Arriving from "Go Pro" / "Start Team": say why an account is needed first.
+  const planId = params.get("plan");
+  const plan = planId === "team_month" ? "pdftek Team" : planId === "pro_month" || planId === "pro_year" ? "pdftek Pro" : null;
   const [form, setForm] = useState({ name: "", email: inviteEmail ?? "", password: "", workspaceName: "" });
   const [error, setError] = useState<string | null>(() => {
     const e = params.get("error");
@@ -81,6 +84,14 @@ export function AuthForm({
         <p className="small muted" style={{ margin: "6px 0 20px" }}>
           {mode === "login" ? t("Sign in to your document workbench.") : t("Free forever for the essentials. No credit card required.")}
         </p>
+        {plan && (
+          <div className="notice" style={{ margin: "-6px 0 18px" }}>
+            <I.lock size={13} />{" "}
+            {mode === "login"
+              ? t("Sign in to continue to {plan}. Your subscription is tied to your account, so you can manage it and never lose it.", { plan })
+              : t("Create your free account to continue to {plan}. Your subscription is tied to your account, so you can manage it and never lose it.", { plan })}
+          </div>
+        )}
         {google && !inviteToken && (
           <>
             <a className="btn btn-lg btn-google" href={`/api/auth/google/start${next ? `?next=${encodeURIComponent(next)}` : ""}`}>
@@ -137,15 +148,15 @@ export function AuthForm({
         <p className="small muted" style={{ marginTop: 18, textAlign: "center" }}>
           {mode === "login" ? (
             <>
-              {t("New to pdftek?")} <Link href={`${lp("/signup")}${inviteToken ? `?invite=${inviteToken}` : ""}`}>{t("Create an account")}</Link>
+              {t("New to pdftek?")} <Link href={`${lp("/signup")}${inviteToken ? `?invite=${inviteToken}` : next ? `?next=${encodeURIComponent(next)}${planId ? `&plan=${planId}` : ""}` : ""}`}>{t("Create an account")}</Link>
             </>
           ) : (
             <>
-              {t("Already have an account?")} <Link href={`${lp("/login")}${inviteToken ? `?invite=${inviteToken}` : next ? `?next=${encodeURIComponent(next)}` : ""}`}>{t("Sign in")}</Link>
+              {t("Already have an account?")} <Link href={`${lp("/login")}${inviteToken ? `?invite=${inviteToken}` : next ? `?next=${encodeURIComponent(next)}${planId ? `&plan=${planId}` : ""}` : ""}`}>{t("Sign in")}</Link>
             </>
           )}
         </p>
-        {!inviteToken && (
+        {!inviteToken && !plan && (
           <p className="small" style={{ textAlign: "center", marginTop: 10 }}>
             <Link prefetch={false} href="/go/start">{t("Continue without an account →")}</Link>
             {mode === "login" && (

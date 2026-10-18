@@ -14,8 +14,8 @@ const Input = z.object({
 });
 
 /**
- * Starts a purchase. Works without an account: visitors get a guest workspace, and Stripe asks for
- * an email. Prices are defined in code (billing.PRODUCTS), so no Stripe price IDs need configuring.
+ * Starts a purchase. The Day Pass and credit packs work without an account (visitors get a guest
+ * workspace and Stripe asks for an email); subscriptions need a signed-in account. Prices are defined in code (billing.PRODUCTS), so no Stripe price IDs need configuring.
  */
 export const POST = route(async (req) => {
   const input = await body(req, Input);
@@ -28,6 +28,11 @@ export const POST = route(async (req) => {
   }
   const product = PRODUCTS[input.product];
   if (product.mode === "subscription") {
+    // Subscriptions belong to an account, so they can be managed, cancelled and never lost. The
+    // Day Pass and credit packs still work without one.
+    if (user.is_guest) {
+      throw new HttpError(403, "Create a free account or sign in to subscribe. Your plan is then tied to your email, so you can always get back to it.", "account_required");
+    }
     const role = membership(wid, user.id)?.role;
     if (role !== "owner") throw badRequest("Only the workspace owner can start a subscription.");
     const ws = get<{ plan: string }>("SELECT plan FROM workspaces WHERE id = ?", wid);

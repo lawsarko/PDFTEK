@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { PRODUCTS, EXTRA_TASK_CREDITS, FREE_LIMITS, type Entitlements, type ProductId, usd } from "@/lib/plans";
 import { I } from "./icons";
+import { stripLocale } from "@/lib/i18n/locales";
 import { Modal } from "./modal";
 import { useToast } from "./toast";
 
@@ -34,9 +35,33 @@ export async function startCheckout(product: ProductId, workspaceId?: string) {
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ product, workspaceId, returnTo: window.location.pathname + window.location.search.replace(/[?&]purchased=[^&]*/, "") }),
   });
-  const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+  const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string; code?: string };
+  if (data.code === "account_required") {
+    // Sign up (or sign in) first, then come back here and continue to checkout automatically.
+    const here = new URL(window.location.href);
+    here.searchParams.delete("purchased");
+    here.searchParams.set("buy", product);
+    const path = window.location.pathname;
+    const prefix = path.slice(0, path.length - stripLocale(path).length);
+    window.location.href = `${prefix}/signup?plan=${product}&next=${encodeURIComponent(here.pathname + here.search)}`;
+    return;
+  }
   if (!res.ok || !data.url) throw new Error(data.error ?? "Checkout couldn't start. Try again.");
   window.location.href = data.url;
+}
+
+/** After signing up for a subscription, continue to its checkout (the ?buy= left by startCheckout). */
+function useResumeCheckout(onError: (msg: string) => void) {
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const buy = url.searchParams.get("buy") as ProductId | null;
+    if (!buy || !(buy in PRODUCTS)) return;
+    url.searchParams.delete("buy");
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+    const wid = window.location.pathname.match(/^\/app\/(ws_[^/]+)/)?.[1];
+    startCheckout(buy, wid).catch((e) => onError(e instanceof Error ? e.message : "Checkout couldn't start. Try again."));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 }
 
 const PURCHASED: Record<string, string> = {
@@ -56,6 +81,7 @@ export function PaywallHost() {
   const [busy, setBusy] = useState<ProductId | null>(null);
   const [wid, setWid] = useState<string | undefined>();
   const [save, setSave] = useState<{ email: string | null } | null>(null);
+  useResumeCheckout((msg) => toast(msg, "error"));
 
   // Guests who paid are asked to create an account right away, so the purchase isn't tied to one browser.
   const offerSave = useCallback(async (force = false) => {
