@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  serverExternalPackages: ["pdfjs-dist", "nodemailer", "tesseract.js", "@napi-rs/canvas"],
+  serverExternalPackages: ["pdfjs-dist", "nodemailer", "tesseract.js", "@napi-rs/canvas", "sharp"],
   // OCR (for scans and outlined-text PDFs) loads its engine and English model at runtime.
   outputFileTracingIncludes: {
     "/api/documents/[id]/convert": [
