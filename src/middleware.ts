@@ -47,8 +47,24 @@ export function middleware(req: NextRequest) {
     const prefetch = req.headers.has("next-router-prefetch") || req.headers.get("purpose") === "prefetch";
     return req.method === "GET" && !prefetch && saved && saved !== DEFAULT_LOCALE ? remember(res, DEFAULT_LOCALE) : res;
   }
-  headers.set(LOCALE_HEADER, isLocale(saved) ? saved : DEFAULT_LOCALE);
+  // People opening a request or signing link (clients, tenants…) have usually never been to pdftek:
+  // without a saved choice, show those pages in their browser's language.
+  const visitor = !isLocale(saved) && /^\/(request|sign)\//.test(pathname) ? fromBrowser(req.headers.get("accept-language")) : null;
+  headers.set(LOCALE_HEADER, isLocale(saved) ? saved : (visitor ?? DEFAULT_LOCALE));
   return NextResponse.next({ request: { headers } });
+}
+
+/** First supported language in an Accept-Language header ("pt-BR,pt;q=0.9,en;q=0.8" → "pt"). */
+function fromBrowser(header: string | null): string | null {
+  for (const part of (header ?? "").split(",")) {
+    const tag = part.split(";")[0].trim().toLowerCase();
+    if (!tag) continue;
+    if (tag.startsWith("zh")) return /tw|hk|mo|hant/.test(tag) ? "zh-tw" : "zh-cn";
+    const base = tag.split("-")[0];
+    if (base === "en") return null;
+    if (isLocale(base)) return base;
+  }
+  return null;
 }
 
 function canonicalRedirect(req: NextRequest) {
