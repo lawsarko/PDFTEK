@@ -27,6 +27,8 @@ type Card = {
   price: string;
   per?: string;
   note: string;
+  /** What the list builds on, e.g. "Everything in Free, plus:". */
+  lead: string;
   features: string[];
   cta: string;
   product?: ProductId;
@@ -48,12 +50,14 @@ export function PlanCards({ workspaceId, current, yearly: initialYearly = false 
       name: t("Free"),
       price: "$0",
       note: t("No account needed"),
+      lead: t("Everyday PDF tools:"),
       features: [
         t("{a} tasks a day without an account, {b} with a free account", { a: FREE_LIMITS.guest.tasksPerDay, b: FREE_LIMITS.free.tasksPerDay }),
-        t("Convert to and from Word, Excel, PowerPoint, JPG"),
-        t("Merge, split, compress, rotate, watermark, protect"),
+        t("Convert PDF to and from Word, Excel, PowerPoint, JPG and TIFF"),
+        t("Merge, split, compress, rotate, watermark, protect, OCR"),
+        t("Fill and sign forms yourself"),
+        t("1 AI-filled form and 1 statement or invoice to Excel a month"),
         t("Files up to {mb} MB, {n} at a time", { mb: FREE_LIMITS.free.maxFileMb, n: FREE_LIMITS.free.maxFiles }),
-        t("View and search your PDFs"),
       ],
       cta: t("Start now"),
       href: "/go/start",
@@ -64,7 +68,15 @@ export function PlanCards({ workspaceId, current, yearly: initialYearly = false 
       price: usd(PRODUCTS.pass.cents),
       per: t("one time"),
       note: t("24 hours · no subscription"),
-      features: [t("Everything in Pro for 24 hours"), t("Unlimited tasks, files up to 100 MB"), t("Edit PDFs, read aloud, e-signatures"), t("50 AI credits included")],
+      lead: t("Everything in Pro, for 24 hours:"),
+      features: [
+        t("Unlimited conversions and tasks"),
+        t("Files up to 100 MB, 50 at a time"),
+        t("Edit text and images, true redaction"),
+        t("Bulk convert, e-signatures, read aloud"),
+        t("50 AI credits included"),
+        t("Pay once, nothing renews"),
+      ],
       cta: t("Get a Day Pass"),
       product: "pass",
     },
@@ -74,12 +86,16 @@ export function PlanCards({ workspaceId, current, yearly: initialYearly = false 
       price: yearly ? usd(Math.round(PRODUCTS.pro_year.cents / 12)) : usd(PRODUCTS.pro_month.cents),
       per: t("/month"),
       note: yearly ? t("{price} billed yearly", { price: usd(PRODUCTS.pro_year.cents) }) : t("Billed monthly · cancel anytime"),
+      lead: t("Everything in Free, plus:"),
       features: [
-        t("Unlimited tasks, files up to 100 MB"),
-        t("Edit text, images and true redaction"),
+        t("Unlimited conversions and tasks, no daily limit"),
+        t("Files up to 100 MB, 50 at a time"),
+        t("Edit text and images, highlight, draw, true redaction"),
+        t("Bulk convert many PDFs to Word or Excel in one ZIP"),
+        t("E-signature requests with audit certificates"),
         t("Read aloud in 11 languages"),
-        t("E-signatures with audit certificates"),
-        t("400 AI credits every month"),
+        t("Automations and document requests"),
+        t("400 AI credits a month: chat with PDFs, AI form filling, statements and invoices to Excel"),
       ],
       cta: t("Go Pro"),
       product: pro === PRODUCTS.pro_year ? "pro_year" : "pro_month",
@@ -91,7 +107,8 @@ export function PlanCards({ workspaceId, current, yearly: initialYearly = false 
       price: usd(PRODUCTS.team_month.cents),
       per: t("/month"),
       note: t("Up to 5 people"),
-      features: [t("Everything in Pro, for your whole team"), t("Automations and document requests"), t("Shared library, roles, hand-offs"), t("1,500 AI credits every month")],
+      lead: t("Everything in Pro, plus:"),
+      features: [t("Up to 5 people in one workspace"), t("Shared document library"), t("Roles and hand-offs between teammates"), t("1,500 AI credits a month, shared by the team")],
       cta: t("Start Team"),
       product: "team_month",
     },
@@ -127,6 +144,7 @@ export function PlanCards({ workspaceId, current, yearly: initialYearly = false 
                 {c.per && <span className="small muted" style={{ fontSize: 14, fontWeight: 400 }}> {c.per}</span>}
               </div>
               <div className="small muted">{c.note}</div>
+              <div className="price-lead">{c.lead}</div>
               <ul>
                 {c.features.map((f) => (
                   <li key={f}>{f}</li>
