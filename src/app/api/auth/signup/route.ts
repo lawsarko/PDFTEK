@@ -4,6 +4,8 @@ import { id, now } from "@/lib/ids";
 import { body, clientIp, conflict, json, publicOrigin, route, badRequest, HttpError } from "@/lib/http";
 import { createSession, createWorkspace, currentUser, firstWorkspaceFor, hashPassword, rateLimit, sendVerificationEmail } from "@/lib/auth";
 import { logActivity } from "@/lib/activity";
+import { assertSeatFree } from "@/lib/billing";
+import type { User } from "@/lib/auth";
 import { sbAdminCreateUser, sbSignUp, supabaseAdminEnabled, supabaseEnabled } from "@/lib/supabase";
 import { SUPABASE_PASSWORD, supabaseHttpError } from "@/lib/identity";
 
@@ -21,9 +23,14 @@ export const POST = route(async (req) => {
   if (get("SELECT 1 FROM users WHERE email = ?", input.email)) throw conflict("An account with that email already exists. Sign in instead.");
 
   const invite = input.inviteToken
-    ? get<{ id: string; workspace_id: string; email: string; role: string; accepted_at: number | null }>("SELECT * FROM invites WHERE token = ?", input.inviteToken)
+    ? get<{ id: string; workspace_id: string; email: string; role: string; invited_by: string; accepted_at: number | null }>("SELECT * FROM invites WHERE token = ?", input.inviteToken)
     : undefined;
   if (input.inviteToken && (!invite || invite.accepted_at)) throw badRequest("That invitation is no longer valid.");
+  if (invite) {
+    // Checked before the account is created, so a full workspace doesn't leave a half-made signup.
+    const inviter = get<User>("SELECT * FROM users WHERE id = ?", invite.invited_by);
+    if (inviter) assertSeatFree(invite.workspace_id, inviter);
+  }
 
   // An accepted invite already proves the email works.
   const inviteMatches = Boolean(invite && invite.email.toLowerCase() === input.email);

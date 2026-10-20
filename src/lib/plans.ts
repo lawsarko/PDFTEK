@@ -8,6 +8,8 @@ export const FREE_LIMITS = {
   free: { tasksPerDay: 6, maxFileMb: 20, maxFiles: 5 },
 } as const;
 export const PAID_LIMITS = { tasksPerDay: 2000, maxFileMb: 100, maxFiles: 50 } as const; // fair use
+/** People in a workspace (you included) on a Day Pass or Pro. Team has no limit; Free is just you. */
+export const PRO_SEATS = 5;
 
 /** A task beyond the free daily limit costs this many credits. */
 export const EXTRA_TASK_CREDITS = 2;
@@ -35,9 +37,9 @@ export const PRODUCTS: Record<ProductId, Product> = {
     passHours: 24,
     credits: 50,
   },
-  pro_month: { name: "pdftek Pro", description: "Unlimited tasks, editing, read aloud, e-signatures and 400 AI credits every month.", cents: 599, mode: "subscription", interval: "month", plan: "pro" },
+  pro_month: { name: "pdftek Pro", description: "Unlimited tasks, editing, read aloud, e-signatures, up to 5 people and 400 AI credits every month.", cents: 599, mode: "subscription", interval: "month", plan: "pro" },
   pro_year: { name: "pdftek Pro (yearly)", description: "Everything in Pro, billed yearly: 4 months free.", cents: 4799, mode: "subscription", interval: "year", plan: "pro" },
-  team_month: { name: "pdftek Team", description: "Pro for up to 5 people, with automations, document requests and 1,500 AI credits every month.", cents: 1499, mode: "subscription", interval: "month", plan: "business" },
+  team_month: { name: "pdftek Team", description: "Everything in Pro for unlimited people, with 1,500 AI credits every month.", cents: 1499, mode: "subscription", interval: "month", plan: "business" },
   credits_250: { name: "250 AI credits", description: "Pay as you go. Credits never expire.", cents: 299, mode: "payment", credits: 250 },
   credits_900: { name: "900 AI credits", description: "Pay as you go. Credits never expire.", cents: 899, mode: "payment", credits: 900 },
   credits_3000: { name: "3,000 AI credits", description: "Pay as you go. Credits never expire.", cents: 2499, mode: "payment", credits: 3000 },

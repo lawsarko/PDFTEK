@@ -1,4 +1,4 @@
-const PAYWALL_CODES = new Set(["limit_reached", "membership_required", "credits_required", "file_too_large", "batch_limit"]);
+const PAYWALL_CODES = new Set(["limit_reached", "membership_required", "credits_required", "file_too_large", "batch_limit", "seat_limit"]);
 
 export class ApiError extends Error {
   constructor(

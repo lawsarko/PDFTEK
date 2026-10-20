@@ -8,7 +8,7 @@ import { Modal } from "./modal";
 import { useToast } from "./toast";
 
 /** Error codes from the API that mean "this needs a purchase". */
-export const PAYWALL_CODES = new Set(["limit_reached", "membership_required", "credits_required", "file_too_large", "batch_limit"]);
+export const PAYWALL_CODES = new Set(["limit_reached", "membership_required", "credits_required", "file_too_large", "batch_limit", "seat_limit"]);
 
 type Reason = { code: string; message: string } | { code: "browse"; message?: string };
 
@@ -141,8 +141,11 @@ export function PaywallHost() {
   if (!reason) return null;
   const code = reason.code;
   const ai = code === "credits_required";
+  const seats = code === "seat_limit";
   const title = ai
     ? "Get AI credits"
+    : seats
+      ? "Add more people with Team"
     : code === "limit_reached"
       ? "You've reached today's free limit"
       : code === "membership_required"
@@ -151,7 +154,9 @@ export function PaywallHost() {
           ? "pdftek plans"
           : "This file needs a Day Pass or Pro";
 
-  const options: { id: ProductId; badge?: string; sub: string }[] = ai
+  const options: { id: ProductId; badge?: string; sub: string }[] = seats
+    ? [{ id: "team_month", badge: "Unlimited people", sub: "Everything in Pro for your whole team, plus 1,500 AI credits a month" }]
+    : ai
     ? [
         { id: "credits_250", sub: "About 10–20 questions on a typical contract" },
         { id: "credits_900", badge: "Best value", sub: "Never expire" },
@@ -171,7 +176,7 @@ export function PaywallHost() {
           {options.map((o) => {
             const p = PRODUCTS[o.id];
             return (
-              <button key={o.id} className={`plan-option ${o.badge === "Most popular" || (ai && o.badge) ? "featured" : ""}`} onClick={() => buy(o.id)} disabled={!!busy}>
+              <button key={o.id} className={`plan-option ${o.badge === "Most popular" || ((ai || seats) && o.badge) ? "featured" : ""}`} onClick={() => buy(o.id)} disabled={!!busy}>
                 <span className="grow" style={{ textAlign: "left" }}>
                   <span className="row" style={{ gap: 8 }}>
                     <b>{p.name.replace("pdftek ", "")}</b>

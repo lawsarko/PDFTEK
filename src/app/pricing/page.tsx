@@ -2,7 +2,7 @@ import { Fragment } from "react";
 import { currentUser } from "@/lib/auth";
 import { MarketingNav, MarketingFooter } from "@/components/marketing";
 import { CreditPacks, PlanCards } from "@/components/pricing";
-import { FREE_LIMITS, PRICING_FAQ } from "@/lib/plans";
+import { FREE_LIMITS, PRICING_FAQ, PRO_SEATS } from "@/lib/plans";
 import { Reveal } from "@/components/motion";
 import { I } from "@/components/icons";
 import { JsonLd } from "@/components/json-ld";
@@ -33,7 +33,7 @@ function compareGroups(t: (s: string, v?: Record<string, string | number>) => st
         [t("Max file size"), `${FREE_LIMITS.free.maxFileMb} MB`, "100 MB", "100 MB", "100 MB"],
         [t("Files at once"), String(FREE_LIMITS.free.maxFiles), "50", "50", "50"],
         [t("AI credits included"), t("Buy as needed"), "50", t("400 / month"), t("1,500 / month")],
-        [t("People"), "1", "1", "1", t("Up to 5")],
+        [t("People"), t("Just you"), t("Up to {n}", { n: PRO_SEATS }), t("Up to {n}", { n: PRO_SEATS }), unlimited],
       ],
     },
     {
@@ -88,7 +88,8 @@ function compareGroups(t: (s: string, v?: Record<string, string | number>) => st
       group: t("Workflow and teams"),
       rows: [
         [t("Automations"), false, true, true, true],
-        [t("Shared library, roles and hand-offs"), false, false, false, true],
+        [t("Invite teammates"), false, t("Up to {n}", { n: PRO_SEATS - 1 }), t("Up to {n}", { n: PRO_SEATS - 1 }), unlimited],
+        [t("Shared library, roles and hand-offs"), false, true, true, true],
       ],
     },
   ];

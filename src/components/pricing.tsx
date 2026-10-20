@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { PRODUCTS, FREE_LIMITS, type ProductId, usd } from "@/lib/plans";
+import { PRODUCTS, FREE_LIMITS, PRO_SEATS, type ProductId, usd } from "@/lib/plans";
 import { startCheckout } from "./paywall";
 import { I } from "./icons";
 import { useToast } from "./toast";
@@ -74,6 +74,7 @@ export function PlanCards({ workspaceId, current, yearly: initialYearly = false 
         t("Files up to 100 MB, 50 at a time"),
         t("Edit text and images, true redaction"),
         t("Bulk convert, e-signatures, read aloud"),
+        t("Invite up to {n} people", { n: PRO_SEATS - 1 }),
         t("50 AI credits included"),
         t("Pay once, nothing renews"),
       ],
@@ -95,6 +96,7 @@ export function PlanCards({ workspaceId, current, yearly: initialYearly = false 
         t("E-signature requests with audit certificates"),
         t("Read aloud in 11 languages"),
         t("Automations and document requests"),
+        t("Up to {n} people: you and {m} teammates", { n: PRO_SEATS, m: PRO_SEATS - 1 }),
         t("400 AI credits a month: chat with PDFs, AI form filling, statements and invoices to Excel"),
       ],
       cta: t("Go Pro"),
@@ -106,9 +108,14 @@ export function PlanCards({ workspaceId, current, yearly: initialYearly = false 
       name: t("Team"),
       price: usd(PRODUCTS.team_month.cents),
       per: t("/month"),
-      note: t("Up to 5 people"),
+      note: t("Unlimited people"),
       lead: t("Everything in Pro, plus:"),
-      features: [t("Up to 5 people in one workspace"), t("Shared document library"), t("Roles and hand-offs between teammates"), t("1,500 AI credits a month, shared by the team")],
+      features: [
+        t("Unlimited people in one workspace"),
+        t("Shared document library for everyone"),
+        t("Roles and hand-offs between teammates"),
+        t("1,500 AI credits a month, shared by the team"),
+      ],
       cta: t("Start Team"),
       product: "team_month",
     },

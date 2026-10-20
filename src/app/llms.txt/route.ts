@@ -25,7 +25,7 @@ export function GET() {
     `- Free: ${FREE_LIMITS.guest.tasksPerDay} tasks per day without an account, ${FREE_LIMITS.free.tasksPerDay} with a free account; files up to ${FREE_LIMITS.free.maxFileMb} MB, ${FREE_LIMITS.free.maxFiles} at a time; no watermark.`,
     `- Day Pass: ${usd(PRODUCTS.pass.cents)} one time for 24 hours of everything (editing, e-signatures, read aloud, unlimited tasks, 100 MB files) plus 50 AI credits. No subscription.`,
     `- Pro: ${usd(PRODUCTS.pro_month.cents)}/month or ${usd(PRODUCTS.pro_year.cents)}/year, with 400 AI credits a month.`,
-    `- Team: ${usd(PRODUCTS.team_month.cents)}/month for up to 5 people, with 1,500 AI credits a month.`,
+    `- Team: ${usd(PRODUCTS.team_month.cents)}/month for unlimited people, with 1,500 AI credits a month (Day Pass and Pro allow up to 5 people).`,
     `- AI credits (pay as you go, never expire): 250 for ${usd(PRODUCTS.credits_250.cents)}, 900 for ${usd(PRODUCTS.credits_900.cents)}, 3,000 for ${usd(PRODUCTS.credits_3000.cents)}.`,
     `- Details: ${base}/pricing`,
     "",

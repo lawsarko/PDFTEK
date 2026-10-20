@@ -11,14 +11,15 @@ import type { Ctx } from "./auth";
  *  - Past the limit, a task costs credits; or buy a Day Pass / Pro for unlimited tasks.
  *  - Edit, Read aloud, e-signatures, document requests and automations need a Day Pass or a
  *    membership.
+ *  - Teammates: Free is just you, a Day Pass or Pro allows up to 5 people, Team is unlimited.
  *  - Anything that calls the AI is paid with credits, metered on the real API cost. Passes and
  *    memberships include credits; credit packs top up and never expire.
  */
 
 export type Tier = "guest" | "free" | "pass" | "pro" | "team" | "admin";
 
-export { FREE_LIMITS, PAID_LIMITS, EXTRA_TASK_CREDITS, AI_MIN_CREDITS, PRODUCTS, type ProductId } from "./plans";
-import { FREE_LIMITS, PAID_LIMITS, EXTRA_TASK_CREDITS, AI_MIN_CREDITS, PRODUCTS, type ProductId, type Entitlements } from "./plans";
+export { FREE_LIMITS, PAID_LIMITS, PRO_SEATS, EXTRA_TASK_CREDITS, AI_MIN_CREDITS, PRODUCTS, type ProductId } from "./plans";
+import { FREE_LIMITS, PAID_LIMITS, PRO_SEATS, EXTRA_TASK_CREDITS, AI_MIN_CREDITS, PRODUCTS, type ProductId, type Entitlements } from "./plans";
 export type { Entitlements };
 /** 1 credit buys this many dollars of AI usage at the API's list price (≈1.8× markup at pack prices). */
 const USD_PER_CREDIT = 1 / 150;
@@ -113,6 +114,38 @@ const totalCredits = (e: Entitlements) => e.credits + e.allowance;
 export function requireMembership(ctx: Ctx, feature: string) {
   if (entitlements(ctx).membership) return;
   throw new HttpError(402, `${feature} needs a Day Pass ($1.99 for 24 hours) or pdftek Pro.`, "membership_required");
+}
+
+// ---------- people ----------
+
+/** How many people (you included) a workspace on this tier can have. */
+export function seatLimit(tier: Tier): number {
+  if (tier === "team" || tier === "admin") return Infinity;
+  if (tier === "pass" || tier === "pro") return PRO_SEATS;
+  return 1;
+}
+
+/** Members plus invitations not yet accepted: invited people count, so the limit can't be outrun. */
+function seatsTaken(workspaceId: string, { pending }: { pending: boolean }) {
+  const members = get<{ n: number }>("SELECT COUNT(*) AS n FROM memberships WHERE workspace_id = ?", workspaceId)!.n;
+  if (!pending) return members;
+  return members + get<{ n: number }>("SELECT COUNT(*) AS n FROM invites WHERE workspace_id = ? AND accepted_at IS NULL", workspaceId)!.n;
+}
+
+/** Before inviting someone. Workspaces already over the limit keep their people; they just can't add more. */
+export function assertCanInvite(ctx: Ctx) {
+  const tier = tierOf(ctx);
+  const limit = seatLimit(tier);
+  if (seatsTaken(ctx.workspace.id, { pending: true }) < limit) return;
+  if (limit === 1) throw new HttpError(402, `Inviting teammates needs a Day Pass or Pro (up to ${PRO_SEATS} people) or Team (unlimited people).`, "membership_required");
+  throw new HttpError(402, `Day Pass and Pro workspaces have up to ${PRO_SEATS} people, including invitations not yet accepted. Upgrade to Team for unlimited people.`, "seat_limit");
+}
+
+/** When an invitation is accepted (the plan may have changed since it was sent). `inviter` decides admin status. */
+export function assertSeatFree(workspaceId: string, inviter: Ctx["user"]) {
+  const limit = seatLimit(tierOf({ user: inviter, workspace: { id: workspaceId } } as Ctx));
+  if (seatsTaken(workspaceId, { pending: false }) < limit) return;
+  throw new HttpError(403, "This workspace is full. Ask the person who invited you to upgrade their plan, then open the invitation again.", "workspace_full");
 }
 
 export function assertFileSize(ctx: Ctx, bytes: number, name?: string) {

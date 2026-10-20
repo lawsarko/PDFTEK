@@ -4,6 +4,7 @@ import { id, now, token } from "@/lib/ids";
 import { body, json, route, conflict } from "@/lib/http";
 import { requireMember } from "@/lib/auth";
 import { appUrl, sendMail } from "@/lib/mail";
+import { assertCanInvite } from "@/lib/billing";
 
 type P = { params: Promise<{ wid: string }> };
 
@@ -15,6 +16,7 @@ export const POST = route<P>(async (req, { params }) => {
   const input = await body(req, Input);
   const existing = get("SELECT 1 FROM memberships m JOIN users u ON u.id = m.user_id WHERE m.workspace_id = ? AND u.email = ?", wid, input.email);
   if (existing) throw conflict("That person is already a member.");
+  assertCanInvite(ctx);
   const t = token();
   insert("invites", { id: id("inv_"), workspace_id: wid, email: input.email, role: input.role, token: t, invited_by: ctx.user.id, created_at: now() });
   const link = appUrl(`/invite/${t}`);
