@@ -105,7 +105,7 @@ export default async function ToolPage({ params }: P) {
             </Link>
           </div>
           <p className="small muted" style={{ marginTop: 14 }}>
-            {free ? t("Free · no sign-up · no watermark") : tool.access === "member" ? t("Day Pass or Pro") : t("Pay as you go with AI credits")}
+            {free ? t("Free · no sign-up · no watermark") : tool.access === "member" ? t("Day Pass, Pro or Team") : t("Pay as you go with AI credits")}
           </p>
         </div>
       </section>

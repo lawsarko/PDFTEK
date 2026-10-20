@@ -23,7 +23,7 @@ export type SeoTool = {
 };
 
 const FREE_NOTE = `Free without an account: ${FREE_LIMITS.guest.tasksPerDay} tasks a day (${FREE_LIMITS.free.tasksPerDay} with a free account), files up to ${FREE_LIMITS.free.maxFileMb} MB.`;
-const MEMBER_NOTE = `Included with a ${usd(PRODUCTS.pass.cents)} Day Pass (24 hours, no subscription) or Pro at ${usd(PRODUCTS.pro_month.cents)}/month.`;
+const MEMBER_NOTE = `Included with a ${usd(PRODUCTS.pass.cents)} Day Pass (24 hours, no subscription), Pro at ${usd(PRODUCTS.pro_month.cents)}/month, or Team for your whole team.`;
 const AI_NOTE = `Uses AI credits: 250 credits cost ${usd(PRODUCTS.credits_250.cents)} and never expire, and Pro includes 400 a month.`;
 
 export const ACCESS_NOTE: Record<Access, string> = { free: FREE_NOTE, member: MEMBER_NOTE, ai: AI_NOTE };
@@ -272,7 +272,7 @@ export const SEO_TOOLS: SeoTool[] = [
       ["Does the person I ask need an account?", "No. They open the link, confirm the code, and upload. It works on phones too, so they can photograph a document and send it straight away."],
       ["How is it secure?", "The link is long and random and expires. With an email code, only someone with access to the recipient's inbox can open it; with an access code, a forwarded email isn't enough. Five wrong codes lock the link for 15 minutes, and until the code is entered the link shows nothing but who is asking. Files travel over HTTPS and go only to your private workspace."],
       ["What file types can people upload?", "PDF, Word, Excel, PowerPoint, JPG, PNG, TIFF and HEIC. You can limit any item to PDFs only or photos and scans. Everything arrives as a PDF."],
-      ["How much does it cost?", `Document requests are included with a ${usd(PRODUCTS.pass.cents)} Day Pass and with Pro at ${usd(PRODUCTS.pro_month.cents)}/month. The people you ask never pay anything.`],
+      ["How much does it cost?", `Document requests are included with a ${usd(PRODUCTS.pass.cents)} Day Pass, Pro at ${usd(PRODUCTS.pro_month.cents)}/month and Team at ${usd(PRODUCTS.team_month.cents)}/month, where everyone on the team can send requests. The people you ask never pay anything.`],
       ["Can I see when they opened it?", "Yes. Every request has an audit trail showing when it was opened, verified and uploaded to, and from which IP address."],
     ],
     related: ["sign-pdf", "merge-pdf", "jpg-to-pdf", "fill-pdf-form"],

@@ -99,13 +99,13 @@ export function Requests({ wid }: { wid: string }) {
   useEffect(() => {
     if (creating && info && !info.billing.membership) {
       setCreating(false);
-      notifyPaywall({ code: "membership_required", message: "Document requests need a Day Pass or Pro." });
+      notifyPaywall({ code: "membership_required", message: "Document requests need a Day Pass, Pro or Team." });
     }
   }, [creating, info]);
 
   const select = (id: string | null) => router.replace(`/app/${wid}/requests${id ? `?id=${id}` : ""}`, { scroll: false });
   const startNew = () => {
-    if (info && !info.billing.membership) return notifyPaywall({ code: "membership_required", message: "Document requests need a Day Pass or Pro." });
+    if (info && !info.billing.membership) return notifyPaywall({ code: "membership_required", message: "Document requests need a Day Pass, Pro or Team." });
     setCreating(true);
   };
 
