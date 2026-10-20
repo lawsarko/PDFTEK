@@ -904,5 +904,5 @@ select.ff-field { padding: 0 2px; appearance: auto; }
 .rq-events li { display: flex; flex-direction: column; gap: 2px; position: relative; }
 .rq-events li::before { content: ""; position: absolute; left: -20px; top: 5px; width: 10px; height: 10px; border-radius: 50%; background: var(--panel-2); border: 2px solid var(--ink-2); }
 .rq-events li.ev-submitted::before, .rq-events li.ev-verified::before, .rq-events li.ev-uploaded::before { background: var(--good); }
-.rq-events li.ev-verify_failed::before, .rq-events li.ev-locked::before { background: var(--warn); }
+.rq-events li.ev-verify_failed::before, .rq-events li.ev-locked::before, .rq-events li.ev-email_failed::before { background: var(--warn); }
 @media (max-width: 860px) { .rq-page { grid-template-columns: 1fr; } .rq-list { position: static; max-height: none; } }

@@ -30,7 +30,7 @@ export async function sendMail(opts: {
   /** Where replies go, e.g. the visitor who sent a contact message. */
   replyTo?: string;
   footer?: string;
-}): Promise<{ delivered: boolean }> {
+}): Promise<{ delivered: boolean; error?: string }> {
   const text = [opts.heading, "", ...opts.paragraphs, "", opts.cta ? `${opts.cta.label}: ${opts.cta.url}` : ""].join("\n");
   const html = `<!doctype html><html><body style="margin:0;background:#f3f0e8;font-family:Helvetica,Arial,sans-serif;color:#2b2a26">
 <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px">
@@ -45,13 +45,20 @@ ${opts.cta ? `<tr><td style="padding-top:24px"><a href="${escape(opts.cta.url)}"
   const t = getTransport();
   if (!t) {
     console.info(`[pdftek mail] (SMTP not configured) to=${opts.to} subject="${opts.subject}"\n${text}`);
-    return { delivered: false };
+    return { delivered: false, error: "Email isn't set up on this server (SMTP_URL)." };
   }
   try {
     await t.sendMail({ from: process.env.MAIL_FROM || "pdftek <no-reply@pdftek.app>", to: opts.to, replyTo: opts.replyTo, subject: opts.subject, text, html });
     return { delivered: true };
   } catch (err) {
-    console.error("[pdftek mail] send failed", err);
-    return { delivered: false };
+    console.error("[pdftek mail] send failed", { to: opts.to, subject: opts.subject }, err);
+    return { delivered: false, error: mailErrorText(err) };
   }
+}
+
+/** The email provider's reason for refusing a message, short enough to show the sender. */
+function mailErrorText(err: unknown): string {
+  const e = err as { response?: string; code?: string; message?: string };
+  const raw = (e.response || e.message || e.code || "unknown error").replace(/\s+/g, " ").trim();
+  return `The email provider refused the message: ${raw.slice(0, 240)}`;
 }

@@ -190,10 +190,10 @@ export async function createRequest(ctx: Ctx, input: NewRequest) {
     logEvent(rid, "created", `${list.length} item${list.length === 1 ? "" : "s"} · ${input.verify === "none" ? "link only" : input.verify === "email" ? "email code required" : "access code required"}`);
   });
   const r = get<RequestRow>("SELECT * FROM doc_requests WHERE id = ?", rid)!;
-  const { delivered } = await emailRecipient(r, "new");
-  if (delivered) logEvent(rid, "emailed", input.recipientEmail);
+  const { delivered, error } = await emailRecipient(r, "new");
+  logEvent(rid, delivered ? "emailed" : "email_failed", delivered ? input.recipientEmail : (error ?? ""));
   logActivity({ workspaceId: ctx.workspace.id, userId: ctx.user.id, action: "requested_document", meta: { title: input.title, from: input.recipientName } });
-  return { id: rid, link: requestLink(t), delivered, accessCode };
+  return { id: rid, link: requestLink(t), delivered, mailError: delivered ? null : (error ?? null), accessCode };
 }
 
 async function emailRecipient(r: RequestRow, kind: "new" | "remind" | "returned", extra?: string) {
@@ -285,7 +285,7 @@ export async function sendOtp(r: RequestRow, ip: string) {
   const code = String(crypto.randomInt(0, 1_000_000)).padStart(6, "0");
   update("doc_requests", r.id, { otp_hash: codeHash(r.id, code), otp_expires_at: now() + OTP_TTL, otp_sent_at: now() });
   const who = requester(r);
-  const { delivered } = await sendMail({
+  const { delivered, error } = await sendMail({
     to: r.recipient_email,
     subject: `${code} is your pdftek verification code`,
     heading: `Your code: ${code}`,
@@ -294,7 +294,10 @@ export async function sendOtp(r: RequestRow, ip: string) {
       "If you didn't try to open this request, you can ignore this email.",
     ],
   });
-  if (!delivered) throw new HttpError(503, "We couldn't send the code right now. Please try again in a few minutes.");
+  if (!delivered) {
+    logEvent(r.id, "email_failed", `verification code: ${error ?? ""}`, ip);
+    throw new HttpError(503, "We couldn't send the code right now. Please try again in a few minutes.");
+  }
   logEvent(r.id, "code_sent", maskEmail(r.recipient_email), ip);
 }
 
@@ -446,10 +449,10 @@ export function requestDetail(r: RequestRow) {
 
 export async function remind(r: RequestRow, auto = false) {
   if (!isOpen(r)) throw badRequest("This request is already closed.");
-  const { delivered } = await emailRecipient(r, "remind");
+  const { delivered, error } = await emailRecipient(r, "remind");
   run("UPDATE doc_requests SET last_reminded_at = ?, reminders_sent = reminders_sent + ? WHERE id = ?", now(), auto ? 1 : 0, r.id);
-  logEvent(r.id, "reminded", auto ? "automatic reminder" : delivered ? "reminder emailed" : "reminder (email not configured)");
-  return delivered;
+  logEvent(r.id, delivered ? "reminded" : "email_failed", delivered ? (auto ? "automatic reminder" : "reminder emailed") : `reminder: ${error ?? ""}`);
+  return { delivered, mailError: delivered ? null : (error ?? null) };
 }
 
 /** Sends one item back with a note ("this statement is from last year"). */
@@ -460,8 +463,9 @@ export async function returnItem(r: RequestRow, itemId: string, feedback: string
   update("doc_request_items", item.id, { status: "returned", feedback });
   update("doc_requests", r.id, { status: "in_progress", completed_at: null });
   logEvent(r.id, "returned", `${item.label}: ${feedback}`);
-  const { delivered } = await emailRecipient(r, "returned", `${item.label} (${feedback})`);
-  return delivered;
+  const { delivered, error } = await emailRecipient(r, "returned", `${item.label} (${feedback})`);
+  if (!delivered) logEvent(r.id, "email_failed", `re-upload request: ${error ?? ""}`);
+  return { delivered, mailError: delivered ? null : (error ?? null) };
 }
 
 export function extend(r: RequestRow, days: number) {

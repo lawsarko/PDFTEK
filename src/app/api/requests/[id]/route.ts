@@ -40,9 +40,9 @@ export const POST = route<P>(async (req, { params }) => {
       logEvent(r.id, "cancelled");
       return json({ ok: true });
     case "remind":
-      return json({ ok: true, delivered: await remind(r) });
+      return json({ ok: true, ...(await remind(r)) });
     case "return":
-      return json({ ok: true, delivered: await returnItem(r, input.itemId, input.feedback) });
+      return json({ ok: true, ...(await returnItem(r, input.itemId, input.feedback)) });
     case "extend":
       extend(r, input.days);
       return json({ ok: true });

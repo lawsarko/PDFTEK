@@ -47,6 +47,7 @@ const STATUS: Record<Summary["status"], [string, string]> = {
 const EVENT: Record<string, string> = {
   created: "Request created",
   emailed: "Emailed to recipient",
+  email_failed: "Email not sent",
   code_sent: "Verification code emailed",
   verified: "Recipient verified",
   verify_failed: "Wrong code entered",
@@ -112,14 +113,14 @@ export function Requests({ wid }: { wid: string }) {
   const act = async (action: Record<string, unknown>, done?: string) => {
     if (!detail) return;
     try {
-      const r = await api<{ delivered?: boolean; accessCode?: string }>(`/api/requests/${detail.id}`, { method: "POST", json: action });
+      const r = await api<{ delivered?: boolean; mailError?: string | null; accessCode?: string }>(`/api/requests/${detail.id}`, { method: "POST", json: action });
       if (action.action === "delete") {
         select(null);
       } else {
         await loadDetail(detail.id);
       }
       if (r.accessCode) setNewCode(r.accessCode);
-      if (done) toast(r.delivered === false ? `${done} (email isn't set up, so share the link yourself)` : done, r.delivered === false ? "info" : "success");
+      if (done) toast(r.delivered === false ? `Email not sent. ${r.mailError ?? ""} Copy the link and share it yourself.` : done, r.delivered === false ? "error" : "success");
       void load();
     } catch (e) {
       toast(errMsg(e), "error");

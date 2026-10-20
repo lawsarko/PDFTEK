@@ -89,8 +89,8 @@ export function WorkflowPanel() {
 
   const reqAction = async (r: DocRequest, action: "remind" | "cancel" | "delete") => {
     try {
-      const res = await api<{ delivered?: boolean }>(`/api/requests/${r.id}`, { method: "POST", json: { action } });
-      if (action === "remind") toast(res.delivered ? `Reminder emailed to ${r.recipientName}` : "Reminder logged (email not configured) — share the link directly", res.delivered ? "success" : "info");
+      const res = await api<{ delivered?: boolean; mailError?: string | null }>(`/api/requests/${r.id}`, { method: "POST", json: { action } });
+      if (action === "remind") toast(res.delivered ? `Reminder emailed to ${r.recipientName}` : `Reminder not sent. ${res.mailError ?? ""} Copy the link and share it yourself.`, res.delivered ? "success" : "error");
       void load();
     } catch (e) {
       toast(errMsg(e), "error");

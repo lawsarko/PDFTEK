@@ -8,7 +8,7 @@ import { useToast } from "../toast";
 
 type Row = { label: string; note: string; required: boolean; accept: Accept };
 type Verify = "email" | "code" | "none";
-type Created = { id: string; link: string; delivered: boolean; accessCode: string | null };
+type Created = { id: string; link: string; delivered: boolean; mailError: string | null; accessCode: string | null };
 
 const blank = (): Row => ({ label: "", note: "", required: true, accept: "any" });
 
@@ -67,8 +67,9 @@ export function NewRequestModal({ wid, emailEnabled, onClose, onCreated }: { wid
     return (
       <Modal title="Request sent" onClose={() => onCreated(result.id)} footer={<button className="btn btn-primary" onClick={() => onCreated(result.id)}>Done</button>}>
         <p className="small muted" style={{ marginTop: 0 }}>
-          {result.delivered ? `We emailed ${form.recipientName} a secure upload link.` : "Email isn't set up on this server, so share this secure upload link yourself:"}
+          {result.delivered ? `We emailed ${form.recipientName} a secure upload link.` : "The request is ready, but the email to the recipient couldn't be sent. Share this secure upload link yourself:"}
         </p>
+        {!result.delivered && result.mailError && <div className="tiny rq-feedback" style={{ marginBottom: 8 }}>{result.mailError}</div>}
         <div className="row">
           <input className="input input-sm grow mono" readOnly value={result.link} onFocus={(e) => e.target.select()} />
           <button className="btn btn-sm" onClick={() => copy(result.link)}>
