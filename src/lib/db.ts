@@ -368,6 +368,41 @@ CREATE TABLE IF NOT EXISTS i18n_state (
   at INTEGER NOT NULL
 );
 
+-- Document requests: the checklist of files asked for, and an audit trail of everything that
+-- happened on the request (opened, verified, uploaded, returned…).
+CREATE TABLE IF NOT EXISTS doc_request_items (
+  id TEXT PRIMARY KEY,
+  request_id TEXT NOT NULL REFERENCES doc_requests(id) ON DELETE CASCADE,
+  position INTEGER NOT NULL DEFAULT 0,
+  label TEXT NOT NULL,
+  note TEXT NOT NULL DEFAULT '',
+  required INTEGER NOT NULL DEFAULT 1,
+  accept TEXT NOT NULL DEFAULT 'any',
+  status TEXT NOT NULL DEFAULT 'needed',
+  document_id TEXT,
+  file_names TEXT NOT NULL DEFAULT '',
+  feedback TEXT,
+  uploaded_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS doc_request_items_request ON doc_request_items(request_id, position);
+
+CREATE TABLE IF NOT EXISTS doc_request_events (
+  id TEXT PRIMARY KEY,
+  request_id TEXT NOT NULL REFERENCES doc_requests(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL,
+  detail TEXT NOT NULL DEFAULT '',
+  ip TEXT,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS doc_request_events_request ON doc_request_events(request_id, created_at);
+
+-- A recipient who passed the request's verification (only a hash of the cookie is kept).
+CREATE TABLE IF NOT EXISTS doc_request_sessions (
+  id TEXT PRIMARY KEY,
+  request_id TEXT NOT NULL REFERENCES doc_requests(id) ON DELETE CASCADE,
+  expires_at INTEGER NOT NULL
+);
+
 -- Messages from the contact form, kept even when email delivery fails.
 CREATE TABLE IF NOT EXISTS contact_messages (
   id TEXT PRIMARY KEY,
@@ -395,6 +430,19 @@ const ADDED_COLUMNS: [table: string, column: string, ddl: string, backfill?: str
   // Supabase Auth user id (see src/lib/supabase.ts).
   ["users", "supabase_id", "TEXT"],
   ["login_tokens", "purpose", "TEXT NOT NULL DEFAULT 'restore'"],
+  // Secure document requests.
+  ["doc_requests", "verify", "TEXT NOT NULL DEFAULT 'none'"],
+  ["doc_requests", "access_code_hash", "TEXT"],
+  ["doc_requests", "otp_hash", "TEXT"],
+  ["doc_requests", "otp_expires_at", "INTEGER"],
+  ["doc_requests", "otp_sent_at", "INTEGER"],
+  ["doc_requests", "failed_attempts", "INTEGER NOT NULL DEFAULT 0"],
+  ["doc_requests", "locked_until", "INTEGER"],
+  ["doc_requests", "expires_at", "INTEGER"],
+  ["doc_requests", "auto_remind", "INTEGER NOT NULL DEFAULT 0"],
+  ["doc_requests", "reminders_sent", "INTEGER NOT NULL DEFAULT 0"],
+  ["doc_requests", "packet", "INTEGER NOT NULL DEFAULT 0"],
+  ["doc_requests", "packet_document_id", "TEXT"],
 ];
 
 type GlobalWithDb = typeof globalThis & { __pdftekDb?: DatabaseSync };
@@ -411,6 +459,10 @@ function open(): DatabaseSync {
       if (backfill) db.exec(backfill);
     }
   }
+  // Requests made before checklists existed become a one-item checklist.
+  db.exec(`INSERT INTO doc_request_items (id, request_id, position, label, status, document_id, uploaded_at)
+    SELECT 'itm_' || r.id, r.id, 0, r.title, CASE WHEN r.status = 'complete' THEN 'uploaded' ELSE 'needed' END, r.document_id, r.completed_at
+      FROM doc_requests r WHERE NOT EXISTS (SELECT 1 FROM doc_request_items i WHERE i.request_id = r.id)`);
   db.exec("CREATE UNIQUE INDEX IF NOT EXISTS users_supabase_id ON users(supabase_id) WHERE supabase_id IS NOT NULL");
   return db;
 }

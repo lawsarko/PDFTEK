@@ -148,6 +148,7 @@ const ORGANIZE: Group[] = [
     items: [
       { href: "/go/protect", label: "Protect PDF", sub: "Add a password", icon: <I.lock size={15} /> },
       { href: "/go/unlock", label: "Unlock PDF", sub: "Remove a password", icon: <I.unlock size={15} /> },
+      { href: "/request-documents", label: "Request documents", sub: "Collect files with a protected link", icon: <I.inbox size={15} /> },
     ],
   },
 ];
@@ -177,13 +178,14 @@ const ENTRIES: Entry[] = [
 
 function Panel({ groups, onPick }: { groups: Group[]; onPick: () => void }) {
   const t = useT();
+  const lp = useLocalePath();
   return (
     <div className="mega-cols">
       {groups.map((g) => (
         <div key={g.title} className="mega-col">
           <div className="mega-title">{t(g.title)}</div>
           {g.items.map((it) => (
-            <Link prefetch={false} key={it.href} href={it.href} className="mega-item" onClick={onPick}>
+            <Link prefetch={false} key={it.href} href={it.href.startsWith("/go/") ? it.href : lp(it.href)} className="mega-item" onClick={onPick}>
               <span className="mega-ico">{it.icon}</span>
               <span className="col" style={{ gap: 0 }}>
                 <span>{t(it.label)}</span>

@@ -14,10 +14,11 @@ import { ConvertToPdfModal } from "@/components/convert-to-pdf";
 
 type ToolKey = "merge" | "split" | "extract" | "organize" | "delete_pages" | "rotate" | "watermark" | "page_numbers" | "optimize" | "metadata" | "protect";
 
-const TOOLS: { key: ToolKey | "unlock" | "topdf" | "images" | "scan" | "convert" | "ocr" | "compare" | "fill" | "statement" | "invoice" | "bulk"; title: string; desc: string; icon: React.ReactNode }[] = [
+const TOOLS: { key: ToolKey | "unlock" | "topdf" | "images" | "scan" | "convert" | "ocr" | "compare" | "fill" | "statement" | "invoice" | "bulk" | "request"; title: string; desc: string; icon: React.ReactNode }[] = [
   { key: "fill", title: "Fill a form", desc: "AI finds every field, fills it from your profile, and you sign. Works on scans.", icon: <I.form size={18} /> },
   { key: "statement", title: "Bank statement → Excel", desc: "Clean transaction rows from any bank's PDF statement, checked against the balances.", icon: <I.table size={18} /> },
   { key: "invoice", title: "Invoices → Excel", desc: "Vendor, dates, line items, tax and totals from invoices and receipts.", icon: <I.file size={18} /> },
+  { key: "request", title: "Request documents", desc: "Send a checklist and collect files through a secure, code-protected link. Day Pass / Pro.", icon: <I.inbox size={18} /> },
   { key: "bulk", title: "Bulk convert", desc: "Many PDFs to Word or Excel at once, downloaded as one ZIP. Day Pass / Pro.", icon: <I.layers size={18} /> },
   { key: "topdf", title: "Convert to PDF", desc: "Word, Excel, PowerPoint, text and images to PDF.", icon: <I.file size={18} /> },
   { key: "convert", title: "Convert PDF", desc: "To Word, Excel, PowerPoint, JPG, PNG, WEBP, TIFF.", icon: <I.convert size={18} /> },
@@ -230,6 +231,7 @@ export function Tools({ wid }: { wid: string }) {
     else if (k === "convert" || k === "ocr") router.push(`/app/${wid}${preselect ? `?doc=${preselect}` : ""}`);
     else if (k === "fill") setPick("fill");
     else if (k === "statement" || k === "invoice" || k === "bulk") router.push(`/app/${wid}/to-excel?kind=${k}${preselect ? `&doc=${preselect}` : ""}`);
+    else if (k === "request") router.push(`/app/${wid}/requests?new=1`);
     else if (k === "compare") router.push(`/app/${wid}/compare${preselect ? `?a=${preselect}` : ""}`);
     else setOpen(k);
   };

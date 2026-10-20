@@ -4,9 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import { api, errMsg, initials, timeAgo } from "@/lib/client/api";
 import type { Activity, Doc, Member } from "@/lib/client/types";
 import { I } from "../icons";
-import { Modal } from "../modal";
 import { useToast } from "../toast";
 import { useWB } from "./context";
+import { NewRequestModal } from "../requests/new-request";
 
 type DocRequest = {
   id: string;
@@ -14,10 +14,12 @@ type DocRequest = {
   recipientName: string;
   recipientEmail: string;
   dueDate: string | null;
-  status: "pending" | "viewed" | "complete" | "cancelled";
+  status: "pending" | "viewed" | "in_progress" | "complete" | "cancelled" | "expired";
   documentId: string | null;
   createdAt: number;
   completedAt: number | null;
+  received: number;
+  total: number;
   link: string;
 };
 type Envelope = {
@@ -30,7 +32,7 @@ type Envelope = {
   signers: { id: string; name: string; email: string; status: string; signedAt: number | null; link: string; declineReason: string | null }[];
 };
 
-const STATUS_BADGE: Record<string, string> = { pending: "badge-muted", viewed: "badge-info", complete: "badge-good", completed: "badge-good", signed: "badge-good", sent: "badge-warn", declined: "badge-bad", cancelled: "badge-muted" };
+const STATUS_BADGE: Record<string, string> = { in_progress: "badge-warn", expired: "badge-bad", pending: "badge-muted", viewed: "badge-info", complete: "badge-good", completed: "badge-good", signed: "badge-good", sent: "badge-warn", declined: "badge-bad", cancelled: "badge-muted" };
 
 const ACTION_TEXT: Record<string, string> = {
   uploaded: "uploaded",
@@ -124,12 +126,19 @@ export function WorkflowPanel() {
       <section>
         <div className="row between">
           <span className="eyebrow">Document requests</span>
-          <button className="btn btn-sm" onClick={() => requirePro("Document requests") && setNewReq(true)}>
-            <I.plus size={12} /> New request
-          </button>
+          <span className="row" style={{ gap: 4 }}>
+            <Link className="btn btn-sm btn-ghost" href={`/app/${wid}/requests`}>
+              All
+            </Link>
+            <button className="btn btn-sm" onClick={() => requirePro("Document requests") && setNewReq(true)}>
+              <I.plus size={12} /> New request
+            </button>
+          </span>
         </div>
         {requests === null && <span className="spinner mt-8" />}
-        {requests?.length === 0 && <div className="small muted mt-8">Ask clients or counterparties for documents with a secure upload link — no account needed.</div>}
+        {requests?.length === 0 && (
+          <div className="small muted mt-8">Ask clients or counterparties for a checklist of documents through a secure, code-protected upload link. No account needed.</div>
+        )}
         {requests?.slice(0, 8).map((r) => (
           <div key={r.id} className="list-item">
             <I.inbox size={15} />
@@ -138,9 +147,11 @@ export function WorkflowPanel() {
                 {r.title} — from {r.recipientName}
               </div>
               <div className="tiny faint mono">
-                {r.status === "complete" ? `Completed ${timeAgo(r.completedAt!)}` : `${r.dueDate ? `Due ${r.dueDate} · ` : ""}sent ${timeAgo(r.createdAt)}`}
+                {r.status === "complete"
+                  ? `Completed ${timeAgo(r.completedAt!)}`
+                  : `${r.received}/${r.total} received · ${r.dueDate ? `due ${r.dueDate}` : `sent ${timeAgo(r.createdAt)}`}`}
               </div>
-              {r.status !== "complete" && r.status !== "cancelled" && (
+              {(r.status === "pending" || r.status === "viewed" || r.status === "in_progress") && (
                 <div className="row gap-4 mt-8">
                   <button className="btn btn-sm btn-ghost" onClick={() => copy(r.link)}>
                     <I.link size={11} /> Copy link
@@ -153,13 +164,13 @@ export function WorkflowPanel() {
                   </button>
                 </div>
               )}
-              {r.status === "complete" && r.documentId && (
-                <button className="btn btn-sm btn-ghost mt-8" onClick={() => openDoc(r.documentId)}>
-                  Open document
-                </button>
+              {r.status === "complete" && (
+                <Link className="btn btn-sm btn-ghost mt-8" href={`/app/${wid}/requests?id=${r.id}`}>
+                  Review
+                </Link>
               )}
             </div>
-            <span className={`badge ${STATUS_BADGE[r.status]}`}>{r.status}</span>
+            <span className={`badge ${STATUS_BADGE[r.status]}`}>{r.status.replace("_", " ")}</span>
           </div>
         ))}
       </section>
@@ -276,6 +287,8 @@ export function WorkflowPanel() {
 
       {newReq && (
         <NewRequestModal
+          wid={wid}
+          emailEnabled={info.capabilities.email}
           onClose={() => setNewReq(false)}
           onCreated={() => {
             setNewReq(false);
@@ -284,82 +297,5 @@ export function WorkflowPanel() {
         />
       )}
     </div>
-  );
-}
-
-function NewRequestModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
-  const { wid } = useWB();
-  const toast = useToast();
-  const [form, setForm] = useState({ title: "", recipientName: "", recipientEmail: "", dueDate: "", message: "" });
-  const [result, setResult] = useState<{ link: string; delivered: boolean } | null>(null);
-  const [busy, setBusy] = useState(false);
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm({ ...form, [k]: e.target.value });
-
-  const submit = async () => {
-    setBusy(true);
-    try {
-      const r = await api<{ link: string; delivered: boolean }>(`/api/workspaces/${wid}/requests`, { method: "POST", json: { ...form, dueDate: form.dueDate || null } });
-      setResult(r);
-    } catch (e) {
-      toast(errMsg(e), "error");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  if (result) {
-    return (
-      <Modal title="Request sent" onClose={onCreated} footer={<button className="btn btn-primary" onClick={onCreated}>Done</button>}>
-        <p className="small muted" style={{ marginTop: 0 }}>
-          {result.delivered ? `We emailed ${form.recipientName} a secure upload link.` : "Email isn't configured on this server, so share this secure upload link directly:"}
-        </p>
-        <div className="row">
-          <input className="input input-sm grow mono" readOnly value={result.link} onFocus={(e) => e.target.select()} />
-          <button className="btn btn-sm" onClick={() => navigator.clipboard.writeText(result.link).then(() => toast("Copied"))}>
-            <I.copy size={12} /> Copy
-          </button>
-        </div>
-      </Modal>
-    );
-  }
-
-  return (
-    <Modal
-      title="Request a document"
-      onClose={onClose}
-      footer={
-        <>
-          <button className="btn" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" disabled={busy || !form.title || !form.recipientName || !form.recipientEmail} onClick={submit}>
-            Send request
-          </button>
-        </>
-      }
-    >
-      <div className="col gap-12">
-        <div className="field">
-          <label>What do you need?</label>
-          <input className="input" value={form.title} onChange={set("title")} placeholder="e.g. Signed NDA, W-9, Insurance certificate" />
-        </div>
-        <div className="row gap-12 wrap">
-          <div className="field grow">
-            <label>From (name)</label>
-            <input className="input" value={form.recipientName} onChange={set("recipientName")} />
-          </div>
-          <div className="field grow">
-            <label>Email</label>
-            <input className="input" type="email" value={form.recipientEmail} onChange={set("recipientEmail")} />
-          </div>
-        </div>
-        <div className="field">
-          <label>Due date (optional)</label>
-          <input className="input" type="date" value={form.dueDate} onChange={set("dueDate")} />
-        </div>
-        <div className="field">
-          <label>Message (optional)</label>
-          <textarea className="textarea" value={form.message} onChange={set("message")} placeholder="Any instructions for the recipient" />
-        </div>
-      </div>
-    </Modal>
   );
 }

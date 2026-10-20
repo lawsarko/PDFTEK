@@ -353,6 +353,8 @@ export async function tick() {
       const { cleanupGuests } = await import("./billing");
       await cleanupGuests().catch((err) => console.error("[pdftek] guest cleanup failed", err));
     }
+    const { sendDueReminders } = await import("./requests");
+    await sendDueReminders().catch((err) => console.error("[pdftek] request reminders failed", err));
     const due = all<AutomationRow>("SELECT * FROM automations WHERE enabled = 1 AND next_run_at IS NOT NULL AND next_run_at <= ?", now());
     for (const a of due) {
       const trigger = JSON.parse(a.trigger_json) as Trigger;

@@ -10,7 +10,7 @@ export function GET() {
   const lines = [
     "# PDFTEK",
     "",
-    "> PDFTEK is an online PDF workbench: convert PDFs to and from Word, Excel, PowerPoint and images, turn bank statements, invoices and receipts into Excel or CSV, bulk-convert many PDFs at once, merge, split, compress, rotate, protect, unlock, OCR, edit, fill forms with AI, e-sign, read aloud, and ask AI questions about PDFs with page citations. It runs in any web browser, in 26 languages; most tools are free without an account.",
+    "> PDFTEK is an online PDF workbench: convert PDFs to and from Word, Excel, PowerPoint and images, turn bank statements, invoices and receipts into Excel or CSV, bulk-convert many PDFs at once, merge, split, compress, rotate, protect, unlock, OCR, edit, fill forms with AI, e-sign, request documents securely from others, read aloud, and ask AI questions about PDFs with page citations. It runs in any web browser, in 26 languages; most tools are free without an account.",
     "",
     "## Best for",
     "",
@@ -18,6 +18,7 @@ export function GET() {
     `- Extracting invoices and receipts (vendor, dates, line items, tax, totals) into a spreadsheet for accounts payable and expenses: ${base}/invoice-to-excel and ${base}/receipt-to-excel`,
     `- Converting many PDFs to Word or Excel in one batch (ZIP download): ${base}/bulk-pdf-converter`,
     `- Filling any PDF form, including scans, with AI: ${base}/fill-pdf-form`,
+    `- Collecting documents from clients, tenants or new hires with a checklist and a code-protected upload link (templates, reminders, audit trail): ${base}/request-documents`,
     `- Everyday PDF tasks for free without signing up: ${base}/tools`,
     "",
     "## Pricing",

@@ -17,6 +17,7 @@ const TASKS: Record<string, string> = {
   "bank-statement-to-excel": "/to-excel?kind=statement",
   "invoice-to-excel": "/to-excel?kind=invoice",
   "bulk-convert": "/to-excel?kind=bulk",
+  "request-documents": "/requests?new=1",
   "pdf-to-powerpoint": PICK("convert-pptx"),
   "pdf-to-jpg": PICK("convert-jpg"),
   edit: PICK("edit"),
