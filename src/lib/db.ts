@@ -447,8 +447,20 @@ const ADDED_COLUMNS: [table: string, column: string, ddl: string, backfill?: str
 
 type GlobalWithDb = typeof globalThis & { __pdftekDb?: DatabaseSync };
 
+/** On a server, files and accounts must live on a persistent disk or every deploy erases them. */
+function warnIfNotPersistent() {
+  if (process.env.NODE_ENV !== "production" || process.platform !== "linux") return;
+  try {
+    const mounts = fs.readFileSync("/proc/mounts", "utf8").split("\n").map((l) => l.split(" ")[1]);
+    const onDisk = mounts.some((m) => m && m !== "/" && (DATA_DIR === m || DATA_DIR.startsWith(m + "/")));
+    if (!onDisk) console.warn(`[pdftek] WARNING: ${DATA_DIR} is not on a persistent disk. Uploaded files, accounts and purchases will be lost on every deploy or restart. On Render, add a Disk with mount path ${DATA_DIR}.`);
+    else console.info(`[pdftek] data directory ${DATA_DIR} is on a persistent disk`);
+  } catch {}
+}
+
 function open(): DatabaseSync {
   fs.mkdirSync(DATA_DIR, { recursive: true });
+  warnIfNotPersistent();
   const db = new DatabaseSync(path.join(DATA_DIR, "pdftek.db"));
   db.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;");
   db.exec(SCHEMA);

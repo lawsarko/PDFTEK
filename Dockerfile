@@ -33,8 +33,10 @@ COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
 # pdf.js standard fonts are read from node_modules at runtime for server-side text extraction.
 COPY --from=build /app/node_modules/pdfjs-dist ./node_modules/pdfjs-dist
+COPY --chmod=755 scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN mkdir -p /data && chown -R node:node /data /app
-USER node
+# Starts as root only to make the data disk writable, then runs the app as "node".
 VOLUME ["/data"]
 EXPOSE 3000
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["node", "server.js"]
