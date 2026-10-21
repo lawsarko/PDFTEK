@@ -906,3 +906,21 @@ select.ff-field { padding: 0 2px; appearance: auto; }
 .rq-events li.ev-submitted::before, .rq-events li.ev-verified::before, .rq-events li.ev-uploaded::before { background: var(--good); }
 .rq-events li.ev-verify_failed::before, .rq-events li.ev-locked::before, .rq-events li.ev-email_failed::before { background: var(--warn); }
 @media (max-width: 860px) { .rq-page { grid-template-columns: 1fr; } .rq-list { position: static; max-height: none; } }
+
+/* How it works (user guide) */
+.hiw-basics { list-style: none; padding: 0; margin: 28px auto 0; max-width: 900px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.hiw-basics li { display: flex; flex-direction: column; gap: 4px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--ink-2); }
+.hiw-num { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--amber-soft); color: var(--amber); border: 1px solid var(--amber-line); font-family: var(--font-mono); font-size: 13px; margin-bottom: 6px; }
+.hiw-jump { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 36px auto 8px; max-width: 980px; }
+.hiw-jump a { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-lo); font-size: 13.5px; text-decoration: none; background: var(--ink-2); }
+.hiw-jump a:hover { border-color: var(--amber); color: var(--amber); }
+.hiw-guides { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 28px; }
+.hiw-guide article { height: 100%; display: flex; flex-direction: column; gap: 12px; padding: 24px; border: 1px solid var(--line); border-radius: 16px; background: var(--ink-2); scroll-margin-top: 90px; }
+.hiw-guide article > .row:last-child { margin-top: auto; }
+.hiw-ico { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--amber-soft); color: var(--amber); flex: none; }
+.hiw-steps { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; color: var(--text-hi); font-size: 14.5px; line-height: 1.55; }
+.hiw-steps li::marker { color: var(--amber); font-family: var(--font-mono); }
+.hiw-tip { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--panel); color: var(--text-lo); display: flex; gap: 8px; align-items: flex-start; }
+.hiw-plans { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.hiw-plans > div { display: flex; flex-direction: column; gap: 4px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--ink-2); }
+@media (max-width: 820px) { .hiw-guides, .hiw-plans { grid-template-columns: 1fr; } .hiw-basics { grid-template-columns: 1fr; } }

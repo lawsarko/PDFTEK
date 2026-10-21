@@ -18,6 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ["/tools", "weekly", 0.9],
     ...SEO_TOOLS.map((t): [string, Freq, number] => [`/${t.slug}`, "monthly", 0.8]),
     ["/pricing", "monthly", 0.7],
+    ["/how-it-works", "monthly", 0.6],
     ["/contact", "yearly", 0.4],
     ["/signup", "yearly", 0.3],
     ["/terms", "yearly", 0.1],
