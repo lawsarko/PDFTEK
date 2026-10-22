@@ -40,6 +40,7 @@ type MarkKind = "highlight" | "underline" | "strike" | "squiggle";
 type InkKind = "pencil" | "highlighter" | "eraser";
 type ShapeKind = "rect" | "ellipse" | "check" | "cross" | "line" | "arrow";
 type Tool = "select" | "text" | "image" | "mark" | "ink" | "shape" | "whiteout" | "redact";
+export type EditorTool = Tool;
 
 /** "highlight" rects come from drafts saved before text markup existed. */
 const isRect = (o: Op): o is RectOp => o.type === "highlight" || o.type === "whiteout" || o.type === "redact";
@@ -240,13 +241,13 @@ function loadFontBytes(family: string, bold: boolean, italic: boolean): Promise<
   return p;
 }
 
-export function Editor({ doc, onExit }: { doc: Doc; onExit: (saved: Doc | null) => void }) {
+export function Editor({ doc, onExit, initialTool = "select" }: { doc: Doc; onExit: (saved: Doc | null) => void; initialTool?: Tool }) {
   const toast = useToast();
   const src = `/api/documents/${doc.id}/file?version=${doc.versionId}`;
   const [ops, setOps] = useState<Op[]>([]);
   const [undo, setUndo] = useState<Op[][]>([]);
   const [redo, setRedo] = useState<Op[][]>([]);
-  const [tool, setTool] = useState<Tool>("select");
+  const [tool, setTool] = useState<Tool>(initialTool);
   const [markKind, setMarkKind] = useState<MarkKind>("highlight");
   const [inkKind, setInkKind] = useState<InkKind>("pencil");
   const [shapeKind, setShapeKind] = useState<ShapeKind>("rect");

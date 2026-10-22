@@ -105,6 +105,21 @@ export function ChatPanel() {
     [busy, endpoint],
   );
 
+  // The toolbar's AI buttons ("Summarize", "Ask a question") hand the chat a question.
+  useEffect(() => {
+    const onAsk = (e: Event) => {
+      const { question, submit } = (e as CustomEvent<{ question: string; submit?: boolean }>).detail;
+      if (active) setScope("doc");
+      if (submit && messages !== null) void send(question);
+      else {
+        setInput(question);
+        setTimeout(() => document.querySelector<HTMLTextAreaElement>(".assistant textarea")?.focus(), 50);
+      }
+    };
+    window.addEventListener("pdftek:ask", onAsk);
+    return () => window.removeEventListener("pdftek:ask", onAsk);
+  }, [active, messages, send]);
+
   const clear = async () => {
     await api(endpoint, { method: "DELETE" }).catch((e) => toast(errMsg(e), "error"));
     setMessages([]);

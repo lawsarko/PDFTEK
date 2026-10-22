@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api, errMsg } from "@/lib/client/api";
 import type { Doc, WorkspaceInfo } from "@/lib/client/types";
@@ -30,6 +30,14 @@ export function Workbench({ wid }: { wid: string }) {
   const [mobileView, setMobileView] = useState<"library" | "document" | "assistant">(() => (params.get("do") === "ask" ? "assistant" : "library"));
   const [assistantTab, setAssistantTab] = useState("chat");
   const activeId = params.get("doc");
+  const [pending, setPending] = useState<{ action: string; from: string | null } | null>(null);
+
+  // A tool picked before any document was open runs as soon as the uploaded document opens.
+  useEffect(() => {
+    if (!pending || !activeId || activeId === pending.from) return;
+    router.replace(`/app/${wid}?doc=${activeId}&do=${pending.action}`, { scroll: false });
+    setPending(null);
+  }, [pending, activeId, router, wid]);
 
   const reloadInfo = useCallback(async () => {
     try {
@@ -69,6 +77,14 @@ export function Workbench({ wid }: { wid: string }) {
   }, [activeId, docs, router, wid]);
 
   const active = useMemo(() => docs?.find((d) => d.id === activeId) ?? null, [docs, activeId]);
+
+  // A document opened by link that the list doesn't have yet (just created by a tool): fetch the list once.
+  const refetched = useRef<string | null>(null);
+  useEffect(() => {
+    if (!activeId || !docs || docs.some((d) => d.id === activeId) || refetched.current === activeId) return;
+    refetched.current = activeId;
+    void reloadDocs();
+  }, [activeId, docs, reloadDocs]);
 
   const openDoc = useCallback(
     (id: string | null, f?: Omit<Flash, "nonce">) => {
@@ -128,7 +144,11 @@ export function Workbench({ wid }: { wid: string }) {
     flash,
     jump,
     requirePro,
-    showUpload: () => setUploadOpen("upload"),
+    showUpload: (tab = "upload") => setUploadOpen(tab),
+    queueAction: (action) => {
+      setPending({ action, from: activeId });
+      setUploadOpen("upload");
+    },
     setMobileView,
     assistantTab,
     setAssistantTab,
@@ -159,7 +179,16 @@ export function Workbench({ wid }: { wid: string }) {
             </button>
           ))}
         </nav>
-        {uploadOpen && <UploadModal initialTab={uploadOpen} onClose={() => setUploadOpen(false)} />}
+        {uploadOpen && (
+          <UploadModal
+            initialTab={uploadOpen}
+            onClose={() => {
+              setUploadOpen(false);
+              // Closed without uploading: forget the tool that was waiting for a file.
+              setTimeout(() => setPending((p) => (p && p.from === new URLSearchParams(window.location.search).get("doc") ? null : p)), 1500);
+            }}
+          />
+        )}
       </div>
     </WorkbenchContext.Provider>
   );

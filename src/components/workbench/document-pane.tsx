@@ -13,28 +13,34 @@ import { Menu, Modal } from "../modal";
 import { useToast } from "../toast";
 import { useWB } from "./context";
 import { ReadAloud } from "./read-aloud";
-import { Editor } from "./editor";
+import { Editor, type EditorTool } from "./editor";
+import { Ribbon, needsDoc } from "./ribbon";
+import { ToolModal, UnlockModal, type ToolKey } from "../tools/tool-modals";
+import { ConvertToPdfModal } from "../convert-to-pdf";
 
 export function DocumentPane() {
-  const { active, info, showUpload, flash, upsertDoc, requirePro, wid } = useWB();
+  const { active, info, docs, showUpload, queueAction, flash, upsertDoc, requirePro, wid, openDoc, setAssistantTab, setMobileView } = useWB();
   const toast = useToast();
   const [scale, setScale] = useState(1.25);
   const [page, setPage] = useState(1);
   const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null);
-  const [convertOpen, setConvertOpen] = useState(false);
+  const [formatsOpen, setFormatsOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [progress, setProgress] = useState<{ label: string; done: number; total: number } | null>(null);
   const [tts, setTts] = useState(false);
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState<EditorTool | null>(null);
   const [versionsOpen, setVersionsOpen] = useState(false);
   const [handoffOpen, setHandoffOpen] = useState(false);
   const [ocrOpen, setOcrOpen] = useState(false);
+  const [toolModal, setToolModal] = useState<ToolKey | null>(null);
+  const [toPdf, setToPdf] = useState(false);
+  const [unlock, setUnlock] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [fitDone, setFitDone] = useState(false);
 
   const src = active ? `/api/documents/${active.id}/file?version=${active.versionId}` : "";
 
-  // Deep links (?do=edit|ocr|convert-docx|…) from the menu run their action once the PDF has loaded.
+  // Deep links (?do=edit|ocr|convert-docx|…) and tools picked before an upload run once the PDF has loaded.
   const router = useRouter();
   const params = useSearchParams();
   const doAction = params.get("do");
@@ -59,25 +65,13 @@ export function DocumentPane() {
     [fitDone],
   );
 
-  if (!active) {
-    return (
-      <section className="viewer">
-        <div className="empty" style={{ margin: "auto", maxWidth: 420 }}>
-          <h3>Open a document</h3>
-          <p>Pick a document from your library, or add new ones. pdftek reads PDFs, Office files, images and scans in any language.</p>
-          <button className="btn btn-primary mt-12" onClick={showUpload}>
-            <I.upload size={14} /> Upload documents
-          </button>
-        </div>
-      </section>
-    );
-  }
-
   const me = info.me.id;
-  const lockedByOther = active.checkedOutBy && active.checkedOutBy.id !== me;
-  const lockedByMe = active.checkedOutBy?.id === me;
+  const member = info.billing.membership;
+  const lockedByOther = Boolean(active?.checkedOutBy && active.checkedOutBy.id !== me);
+  const lockedByMe = active?.checkedOutBy?.id === me;
 
   const toggleLock = async () => {
+    if (!active) return;
     try {
       const r = await api<{ document: Doc }>(`/api/documents/${active.id}/checkout`, { method: "POST", json: { action: lockedByMe ? "checkin" : "checkout" } });
       upsertDoc(r.document);
@@ -88,8 +82,8 @@ export function DocumentPane() {
   };
 
   const convert = async (kind: string, pages?: number[]) => {
-    setConvertOpen(false);
-    if (!pdf) return;
+    setFormatsOpen(false);
+    if (!pdf || !active) return;
     // Word/Excel are converted (and counted) on the server; the rest run in the browser and report a task first.
     if (kind !== "docx" && kind !== "xlsx") {
       try {
@@ -130,29 +124,207 @@ export function DocumentPane() {
     }
   };
 
-  actionRef.current = (a: string) => {
-    if (a === "edit") {
-      if (requirePro("Text editing")) setEditing(true);
-    } else if (a === "ocr") setOcrOpen(true);
-    else if (a === "read") {
-      if (requirePro("Read aloud")) setTts(true);
-    }
-    else if (a === "ask") document.querySelector<HTMLTextAreaElement>(".assistant textarea")?.focus();
-    else if (a.startsWith("convert-")) void convert(a.slice(8));
+  const startEdit = (tool: EditorTool) => {
+    if (lockedByOther) return toast(`${active?.checkedOutBy?.name} has the edit lock. You can edit once it's checked in or handed to you.`, "info");
+    if (requirePro("Text editing")) setEditing(tool);
+  };
+  const toAssistant = (tab: string) => {
+    setAssistantTab(tab);
+    setMobileView("assistant");
+  };
+  const ask = (question: string, submit: boolean) => {
+    toAssistant("chat");
+    setTimeout(() => window.dispatchEvent(new CustomEvent("pdftek:ask", { detail: { question, submit } })), 250);
   };
 
-  const print = async () => {
+  /** Runs a tool from the ribbon (or a deep link) on the open document. */
+  const run = (key: string) => {
+    if (!active && needsDoc(key)) {
+      queueAction(key);
+      return;
+    }
+    if (key.startsWith("convert-")) {
+      if (key === "convert-more") setFormatsOpen((v) => !v);
+      else void convert(key.slice(8));
+      return;
+    }
+    switch (key) {
+      case "statement":
+      case "invoice":
+        router.push(`/app/${wid}/to-excel?kind=${key}${active ? `&doc=${active.id}` : ""}`);
+        break;
+      case "topdf":
+        setToPdf(true);
+        break;
+      case "images":
+      case "scan":
+        showUpload(key);
+        break;
+      case "ocr":
+        setOcrOpen(true);
+        break;
+      case "edit":
+        startEdit("select");
+        break;
+      case "edit-text":
+        startEdit("text");
+        break;
+      case "edit-mark":
+        startEdit("mark");
+        break;
+      case "edit-ink":
+        startEdit("ink");
+        break;
+      case "redact":
+        startEdit("redact");
+        break;
+      case "watermark":
+      case "page_numbers":
+      case "metadata":
+      case "organize":
+      case "merge":
+      case "split":
+      case "extract":
+      case "delete_pages":
+      case "rotate":
+      case "optimize":
+      case "protect":
+        setToolModal(key);
+        break;
+      case "compare":
+        router.push(`/app/${wid}/compare${active ? `?a=${active.id}` : ""}`);
+        break;
+      case "fill":
+        router.push(`/app/${wid}/fill/${active!.id}`);
+        break;
+      case "sign":
+        if (requirePro("E-signatures")) router.push(`/app/${wid}/send/${active!.id}`);
+        break;
+      case "request":
+        if (requirePro("Document requests")) router.push(`/app/${wid}/requests?new=1`);
+        break;
+      case "handoff":
+        setHandoffOpen(true);
+        break;
+      case "unlock":
+        setUnlock(true);
+        break;
+      case "versions":
+        setVersionsOpen(true);
+        break;
+      case "checkout":
+        void toggleLock();
+        break;
+      case "ask":
+        ask("", false);
+        break;
+      case "summarize":
+        ask("Summarize this document: the main points, the people or companies involved, key dates and amounts, and anything that needs action.", true);
+        break;
+      case "extract-data":
+        toAssistant("extract");
+        break;
+      case "read":
+        if (tts) setTts(false);
+        else if (requirePro("Read aloud")) setTts(true);
+        break;
+    }
+  };
+  actionRef.current = run;
+
+  const print = () => {
     const w = window.open(src, "_blank");
     w?.addEventListener("load", () => w.print());
   };
+
+  const ribbon = (
+    <Ribbon
+      run={run}
+      member={member}
+      hasDoc={!!active}
+      ready={!!pdf}
+      labels={{ checkout: lockedByMe ? "Check in" : "Check out", read: tts ? "Stop reading" : "Read aloud" }}
+      menu={
+        formatsOpen && active
+          ? {
+              key: "convert-more",
+              node: (
+                <Menu open onClose={() => setFormatsOpen(false)}>
+                  <div className="menu-label">All {active.pageCount} pages</div>
+                  <button className="menu-item" onClick={() => convert("webp")}>WEBP <span className="sub">smaller images</span></button>
+                  <button className="menu-item" onClick={() => convert("tiff")}>TIFF <span className="sub">print / archival</span></button>
+                  <button className="menu-item" onClick={() => convert("txt")}>Plain text (.txt)</button>
+                  <div className="menu-label">This page only (p.{page})</div>
+                  <div className="row gap-4" style={{ padding: "2px 8px 8px" }}>
+                    {(["jpg", "png", "webp", "tiff"] as const).map((f) => (
+                      <button key={f} className="chip" onClick={() => convert(f, [page])}>
+                        {f.toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+                </Menu>
+              ),
+            }
+          : null
+      }
+    />
+  );
+
+  const modals = (
+    <>
+      {toolModal && (
+        <ToolModal
+          wid={wid}
+          tool={toolModal}
+          docs={docs}
+          preselect={active?.id ?? null}
+          fixedDoc={!!active && toolModal !== "merge"}
+          onUploaded={(list) => list.forEach(upsertDoc)}
+          onOpen={(id) => openDoc(id)}
+          onClose={() => setToolModal(null)}
+        />
+      )}
+      {toPdf && <ConvertToPdfModal wid={wid} onClose={() => setToPdf(false)} />}
+      {unlock && (
+        <UnlockModal
+          wid={wid}
+          onUploaded={(list) => {
+            list.forEach(upsertDoc);
+            if (list[0]) openDoc(list[0].id);
+          }}
+          onClose={() => setUnlock(false)}
+        />
+      )}
+    </>
+  );
+
+  if (!active) {
+    return (
+      <section className="viewer">
+        {ribbon}
+        <div className="empty" style={{ margin: "auto", maxWidth: 460 }}>
+          <div className="rb-empty-ico">
+            <I.upload size={22} />
+          </div>
+          <h3>Open or upload a document</h3>
+          <p>Pick a document from your library, or upload a PDF, Word, Excel, PowerPoint, image or scan. Every tool above works on it; choose one first and we&apos;ll ask for the file.</p>
+          <button className="btn btn-primary mt-12" onClick={() => showUpload()}>
+            <I.upload size={14} /> Upload documents
+          </button>
+        </div>
+        {modals}
+      </section>
+    );
+  }
 
   if (editing) {
     return (
       <section className="viewer">
         <Editor
           doc={active}
+          initialTool={editing}
           onExit={(saved) => {
-            setEditing(false);
+            setEditing(null);
             if (saved) {
               forgetPdf(src);
               upsertDoc(saved);
@@ -173,75 +345,22 @@ export function DocumentPane() {
           <div className="tiny mono faint row gap-4" style={{ marginTop: 2 }}>
             {active.pageCount} pages · {bytes(active.size)} · updated {timeAgo(active.updatedAt)}
             {active.assignedTo && <> · assigned to {active.assignedTo.id === me ? "you" : active.assignedTo.name}</>}
+            {lockedByMe && (
+              <span className="badge badge-warn" style={{ marginLeft: 4 }}>
+                <I.lock size={10} /> checked out by you
+              </span>
+            )}
           </div>
         </div>
         <div className="viewer-tools">
           <a className="tool-btn tool-btn-primary" href={`/api/documents/${active.id}/file?download=1`} title="Download the latest version as PDF">
             <I.download size={13} /> Download
           </a>
-          <div className="menu-wrap">
-            <button className="tool-btn" onClick={() => setConvertOpen((v) => !v)} disabled={!pdf}>
-              <I.convert size={13} /> Convert <I.chevron size={12} />
-            </button>
-            <Menu open={convertOpen} onClose={() => setConvertOpen(false)}>
-              <div className="menu-label">To PDF</div>
-              <Link className="menu-item" href={`/app/${wid}/tools?tool=topdf`}>📥 Word / Excel / PowerPoint → PDF…</Link>
-              <div className="menu-label">PDF to documents</div>
-              <button className="menu-item" onClick={() => convert("docx")}>📝 Word (.docx)</button>
-              <button className="menu-item" onClick={() => convert("xlsx")}>📊 Excel (.xlsx) <span className="sub">tables → cells</span></button>
-              <Link className="menu-item" href={`/app/${wid}/to-excel?kind=statement&doc=${active.id}`}>🏦 Bank statement → Excel <span className="sub">transactions</span></Link>
-              <Link className="menu-item" href={`/app/${wid}/to-excel?kind=invoice&doc=${active.id}`}>🧾 Invoice → Excel <span className="sub">line items</span></Link>
-              <button className="menu-item" onClick={() => convert("pptx")}>📽️ PowerPoint (.pptx)</button>
-              <button className="menu-item" onClick={() => convert("txt")}>📄 Plain text (.txt)</button>
-              <div className="menu-label">Images — all {active.pageCount} pages</div>
-              <button className="menu-item" onClick={() => convert("jpg")}>🖼️ JPG</button>
-              <button className="menu-item" onClick={() => convert("png")}>🖼️ PNG <span className="sub">transparent bg</span></button>
-              <button className="menu-item" onClick={() => convert("webp")}>🖼️ WEBP <span className="sub">smaller files</span></button>
-              <button className="menu-item" onClick={() => convert("tiff")}>🖼️ TIFF <span className="sub">print / archival</span></button>
-              <div className="menu-label">This page only (p.{page})</div>
-              <div className="row gap-4" style={{ padding: "2px 8px 8px" }}>
-                {(["jpg", "png", "webp", "tiff"] as const).map((f) => (
-                  <button key={f} className="chip" onClick={() => convert(f, [page])}>
-                    {f.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-            </Menu>
-          </div>
-          <Link href={`/app/${wid}/compare?a=${active.id}`} className="tool-btn">
-            <I.compare size={13} /> Compare
-          </Link>
-          <button
-            className="tool-btn"
-            disabled={!!lockedByOther}
-            onClick={() => {
-              if (!requirePro("Text editing")) return;
-              setEditing(true);
-            }}
-            title={lockedByOther ? `${active.checkedOutBy?.name} has the edit lock` : "Edit text, add images, highlight and redact"}
-          >
-            <I.edit size={13} /> Edit {info.workspace.plan === "free" && <span className="pro-tag">PRO</span>}
+          <button className="tool-btn hide-mobile" onClick={print} title="Print">
+            <I.file size={13} /> Print
           </button>
-          <button className={`tool-btn ${tts ? "active" : ""}`} onClick={() => (tts ? setTts(false) : requirePro("Read aloud") && setTts(true))}>
-            <I.speaker size={13} /> Read aloud
-          </button>
-          <Link href={`/app/${wid}/fill/${active.id}`} className="tool-btn" title="Fill in this form: AI finds the fields and fills them from your profile">
-            <I.form size={13} /> Fill form
-          </Link>
-          <Link
-            href={`/app/${wid}/send/${active.id}`}
-            className="tool-btn"
-            onClick={(e) => {
-              if (!requirePro("E-signatures")) e.preventDefault();
-            }}
-          >
+          <button className="tool-btn hide-mobile" onClick={() => run("sign")} title="Send for e-signature">
             <I.sign size={13} /> Request signature
-          </Link>
-          <button className="tool-btn" onClick={() => setHandoffOpen(true)} disabled={!!lockedByOther}>
-            <I.swap size={13} /> Hand off
-          </button>
-          <button className={`tool-btn ${lockedByMe ? "active" : ""}`} onClick={toggleLock} disabled={!!lockedByOther && info.role === "member"}>
-            {lockedByMe ? <I.unlock size={13} /> : <I.lock size={13} />} {lockedByMe ? "Check in" : "Check out"}
           </button>
           <div className="menu-wrap">
             <button className="tool-btn" onClick={() => setMoreOpen((v) => !v)} aria-label="More actions">
@@ -251,23 +370,17 @@ export function DocumentPane() {
               <button className="menu-item" onClick={() => { setMoreOpen(false); setVersionsOpen(true); }}>
                 <I.history size={14} /> Version history
               </button>
-              <a className="menu-item" href={`/api/documents/${active.id}/file?download=1`}>
-                <I.download size={14} /> Download PDF
-              </a>
-              <button className="menu-item" onClick={() => { setMoreOpen(false); void print(); }}>
+              <button className="menu-item" onClick={() => { setMoreOpen(false); setHandoffOpen(true); }} disabled={lockedByOther}>
+                <I.swap size={14} /> Hand off to a teammate
+              </button>
+              <button className="menu-item" onClick={() => { setMoreOpen(false); void toggleLock(); }} disabled={lockedByOther && info.role === "member"}>
+                {lockedByMe ? <I.unlock size={14} /> : <I.lock size={14} />} {lockedByMe ? "Check in" : "Check out (lock editing)"}
+              </button>
+              <button className="menu-item" onClick={() => { setMoreOpen(false); print(); }}>
                 <I.file size={14} /> Print
               </button>
-              <button className="menu-item" onClick={() => { setMoreOpen(false); setOcrOpen(true); }}>
-                <I.scan size={14} /> Run OCR (make searchable)
-              </button>
-              <Link className="menu-item" href={`/app/${wid}/tools?tool=optimize&doc=${active.id}`}>
-                <I.zoomOut size={14} /> Compress
-              </Link>
-              <Link className="menu-item" href={`/app/${wid}/tools?tool=protect&doc=${active.id}`}>
-                <I.lock size={14} /> Protect with password
-              </Link>
               <Link className="menu-item" href={`/app/${wid}/tools?doc=${active.id}`}>
-                <I.tools size={14} /> Organize, split, watermark…
+                <I.tools size={14} /> All tools
               </Link>
               {lockedByOther && info.role !== "member" && (
                 <button
@@ -286,6 +399,7 @@ export function DocumentPane() {
           </div>
         </div>
       </div>
+      {ribbon}
 
       {lockedByOther && (
         <div className="notice" style={{ margin: "10px 16px 0", display: "flex", gap: 8, alignItems: "center" }}>
@@ -337,6 +451,7 @@ export function DocumentPane() {
       {versionsOpen && <VersionsModal doc={active} onClose={() => setVersionsOpen(false)} />}
       {handoffOpen && <HandOffModal doc={active} onClose={() => setHandoffOpen(false)} />}
       {ocrOpen && pdf && <OcrModal doc={active} pdf={pdf} onClose={() => setOcrOpen(false)} />}
+      {modals}
     </section>
   );
 }

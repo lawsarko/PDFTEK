@@ -73,7 +73,7 @@ export function Library() {
     >
       <div className="rail-head">
         <span className="eyebrow">Library</span>
-        <button className="btn btn-primary btn-sm" onClick={showUpload}>
+        <button className="btn btn-primary btn-sm" onClick={() => showUpload()}>
           <I.plus size={14} /> Upload
         </button>
       </div>
@@ -95,7 +95,7 @@ export function Library() {
             <h3>No documents yet</h3>
             Upload PDFs, Office files or images — or drag them here.
             <div className="mt-12">
-              <button className="btn btn-primary btn-sm" onClick={showUpload}>
+              <button className="btn btn-primary btn-sm" onClick={() => showUpload()}>
                 <I.upload size={14} /> Upload documents
               </button>
             </div>

@@ -15,7 +15,9 @@ export type WB = {
   flash: Flash | null;
   jump: (page: number, text?: string) => void;
   requirePro: (feature: string) => boolean;
-  showUpload: () => void;
+  showUpload: (tab?: "upload" | "images" | "scan") => void;
+  /** Picked a tool with no document open: upload first, then run it on the new document. */
+  queueAction: (action: string) => void;
   setMobileView: (v: "library" | "document" | "assistant") => void;
   assistantTab: string;
   setAssistantTab: (t: string) => void;
