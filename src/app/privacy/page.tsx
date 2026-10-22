@@ -1,9 +1,11 @@
 import { LegalPage } from "@/components/legal";
-import { alternatesFor, getI18n } from "@/lib/i18n/server";
+import { pageMeta } from "@/lib/seo-meta";
 
 export async function generateMetadata() {
-  const { t, locale } = await getI18n();
-  return { title: t("Privacy Policy"), alternates: alternatesFor("/privacy", locale) };
+  return pageMeta("/privacy", {
+    title: "Privacy Policy",
+    description: "How PDFTEK handles your files and data: HTTPS transfer, private workspaces, no AI training on your documents, and automatic deletion of files from visitors without an account.",
+  });
 }
 
 export default function Privacy() {

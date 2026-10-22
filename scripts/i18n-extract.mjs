@@ -120,7 +120,23 @@ function visit(node, sf, file) {
   } else if (ts.isPropertyAssignment(node) && ts.isIdentifier(node.name) && ARRAY_KEYS.has(node.name.text)) {
     deepArray(node.initializer, sf, file);
   } else if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && /^[A-Z][A-Z0-9_]+$/.test(node.name.text) && node.initializer) {
-    deepArray(node.initializer, sf, file);
+    if (!/MONTH/.test(node.name.text)) deepArray(node.initializer, sf, file);
+    // Lookup tables of labels: const STATUS = { pending: ["Sent", "badge-muted"], … }, const LABEL = { any: "Any file" }.
+    let init = node.initializer;
+    while (ts.isParenthesizedExpression(init) || ts.isAsExpression(init) || ts.isSatisfiesExpression(init)) init = init.expression;
+    // Tables of fonts, formats, months or routes are data, not text people read.
+    if (ts.isObjectLiteralExpression(init) && !/FONT|FAMIL|MONTH|MIME|EXT|COLOR|OFFICE|TASKS|ROUTE|PATH|OPS|EQUIV|CANON|SCHEMA/.test(node.name.text))
+      for (const prop of init.properties) {
+        if (!ts.isPropertyAssignment(prop)) continue;
+        const label = (t) => t !== null && !/^[?/#]/.test(t) && !/^[a-z]+$/.test(t);
+        const one = textOf(prop.initializer, sf);
+        if (one !== null) {
+          if (label(one)) add(one, file);
+        } else {
+          shownStrings(prop.initializer, sf, file);
+          deepArray(prop.initializer, sf, file);
+        }
+      }
   } else if (ts.isCallExpression(node) && CALLS.has(calleeName(node))) {
     const name = calleeName(node);
     const arg = node.arguments[0];

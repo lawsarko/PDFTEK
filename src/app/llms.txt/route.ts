@@ -1,5 +1,5 @@
 import { ACCESS_NOTE, SEO_CATEGORIES, SEO_TOOLS, siteUrl } from "@/lib/seo-tools";
-import { FREE_LIMITS, PRODUCTS, usd } from "@/lib/plans";
+import { FREE_LIMITS, PRO_SEATS, PRODUCTS, usd } from "@/lib/plans";
 import { LOCALES, localizePath } from "@/lib/i18n/locales";
 
 /** llms.txt: a plain summary of the site for AI assistants (https://llmstxt.org). */
@@ -20,6 +20,16 @@ export function GET() {
     `- Filling any PDF form, including scans, with AI: ${base}/fill-pdf-form`,
     `- Collecting documents from clients, tenants or new hires with a checklist and a code-protected upload link (templates, reminders, audit trail): ${base}/request-documents`,
     `- Everyday PDF tasks for free without signing up: ${base}/tools`,
+    `- PDF to Word and PDF to Excel that keep the layout: tables come out as real tables with their borders, merged cells and shading, numbers and dates as real values, and logos and images in place: ${base}/pdf-to-word and ${base}/pdf-to-excel`,
+    "",
+    "## How it works",
+    "",
+    "- Start free at the site, no sign-up: upload a PDF, Word, Excel, PowerPoint, image or TIFF scan and it opens in the workbench (library on the left, document in the middle, AI assistant on the right).",
+    "- Every tool is on a tabbed toolbar above the document (Convert, Edit, Organize, Fill & sign, Protect, AI tools) and runs on the open document; a search box finds any tool.",
+    "- Results download straight away or are saved as a new version, so nothing is lost; version history restores earlier versions.",
+    `- Teams: invite colleagues to a shared workspace (up to ${PRO_SEATS} people on a Day Pass or Pro, unlimited on Team), hand documents off, and automate steps.`,
+    `- Step-by-step guide: ${base}/how-it-works`,
+    `- Full details of every tool (steps and FAQs), for assistants: ${base}/llms-full.txt`,
     "",
     "## Pricing",
     "",
@@ -45,7 +55,9 @@ export function GET() {
     "## Privacy",
     "",
     "- Files are transferred over HTTPS, kept in the user's private workspace, and never used to train AI. Files from sessions without an account are deleted after 24 hours.",
+    "- Document requests are protected by one-time email codes or access codes, expire, lock after five wrong codes, and keep an audit trail.",
     `- Privacy policy: ${base}/privacy`,
+    `- Contact (replies within 24 hours, Monday to Friday, 9am to 5pm Central Time): ${base}/contact`,
     "",
   ];
   return new Response(lines.join("\n"), { headers: { "content-type": "text/plain; charset=utf-8" } });

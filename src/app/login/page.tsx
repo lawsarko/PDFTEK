@@ -1,13 +1,12 @@
 import { Suspense } from "react";
-import { getI18n } from "@/lib/i18n/server";
+import { pageMeta } from "@/lib/seo-meta";
 import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/auth-form";
 import { currentUser } from "@/lib/auth";
 import { sbGoogleEnabled } from "@/lib/supabase";
 
 export async function generateMetadata() {
-  const { t } = await getI18n();
-  return { title: t("Sign in") };
+  return pageMeta("/login", { title: "Sign in", description: "Sign in to your PDFTEK workspace.", index: false });
 }
 export const dynamic = "force-dynamic";
 

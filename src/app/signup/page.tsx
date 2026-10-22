@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getI18n } from "@/lib/i18n/server";
+import { pageMeta } from "@/lib/seo-meta";
 import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/auth-form";
 import { currentUser } from "@/lib/auth";
@@ -7,8 +7,10 @@ import { sbGoogleEnabled } from "@/lib/supabase";
 import { get } from "@/lib/db";
 
 export async function generateMetadata() {
-  const { t } = await getI18n();
-  return { title: t("Create account") };
+  return pageMeta("/signup", {
+    title: "Create account",
+    description: "Create a free PDFTEK account to keep your documents, get more free tasks every day, and use Pro or Team features on any device.",
+  });
 }
 export const dynamic = "force-dynamic";
 

@@ -1,17 +1,17 @@
 import Link from "next/link";
+import { pageMeta } from "@/lib/seo-meta";
 import type { Metadata } from "next";
 import { MarketingNav, MarketingFooter } from "@/components/marketing";
 import { JsonLd } from "@/components/json-ld";
 import { SEO_CATEGORIES, SEO_TOOLS, siteUrl } from "@/lib/seo-tools";
-import { alternatesFor, getI18n } from "@/lib/i18n/server";
+import { getI18n } from "@/lib/i18n/server";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t, locale } = await getI18n();
-  return {
-    title: { absolute: `${t("All PDF Tools – Convert, Merge, Compress, Edit & Sign")} | PDFTEK` },
-    description: t("Every PDF tool in one place: PDF to Word, Excel, JPG and back, merge, split, compress, rotate, protect, unlock, OCR, edit, sign and chat with PDFs. Free online."),
-    alternates: alternatesFor("/tools", locale),
-  };
+  return pageMeta("/tools", {
+    title: "All PDF Tools – Convert, Merge, Compress, Edit & Sign",
+    description: "Every PDF tool in one place: PDF to Word, Excel, JPG and back, merge, split, compress, rotate, protect, unlock, OCR, edit, sign and chat with PDFs. Free online.",
+    absolute: true,
+  });
 }
 
 export default async function ToolsHub() {

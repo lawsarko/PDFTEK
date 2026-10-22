@@ -1,20 +1,20 @@
 import { Fragment } from "react";
+import { pageMeta } from "@/lib/seo-meta";
 import { currentUser } from "@/lib/auth";
 import { MarketingNav, MarketingFooter } from "@/components/marketing";
 import { CreditPacks, PlanCards } from "@/components/pricing";
-import { FREE_LIMITS, PRICING_FAQ, PRO_SEATS } from "@/lib/plans";
+import { FREE_LIMITS, PRICING_FAQ, PRODUCTS, PRO_SEATS } from "@/lib/plans";
 import { Reveal } from "@/components/motion";
 import { I } from "@/components/icons";
 import { JsonLd } from "@/components/json-ld";
-import { alternatesFor, getI18n } from "@/lib/i18n/server";
+import { siteUrl } from "@/lib/seo-tools";
+import { getI18n } from "@/lib/i18n/server";
 
 export async function generateMetadata() {
-  const { t, locale } = await getI18n();
-  return {
-    title: t("Pricing – Free PDF Tools, $1.99 Day Pass, Pro $5.99/mo"),
-    description: t("Free PDF tools for everyone, no sign-up. Day Pass $1.99 for 24 hours, Pro $5.99/month, and pay-as-you-go AI credits that never expire."),
-    alternates: alternatesFor("/pricing", locale),
-  };
+  return pageMeta("/pricing", {
+    title: "Pricing – Free PDF Tools, $1.99 Day Pass, Pro $5.99/mo",
+    description: "Free PDF tools for everyone, no sign-up. Day Pass $1.99 for 24 hours, Pro $5.99/month, Team $14.99/month for unlimited people, and pay-as-you-go AI credits that never expire.",
+  });
 }
 export const dynamic = "force-dynamic";
 
@@ -114,9 +114,26 @@ function CellView({ c, yes, no }: { c: Cell; yes: string; no: string }) {
 
 export default async function Pricing() {
   const user = await currentUser();
-  const { t, info } = await getI18n();
+  const { t, info, lp } = await getI18n();
   return (
     <div className="mk">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: "PDFTEK",
+          applicationCategory: "BusinessApplication",
+          operatingSystem: "Any (web browser)",
+          inLanguage: info.tag,
+          url: `${siteUrl()}${lp("/pricing")}`,
+          offers: [
+            { "@type": "Offer", name: t("Free"), price: "0", priceCurrency: "USD", description: t("No account needed") },
+            { "@type": "Offer", name: t("Day Pass"), price: (PRODUCTS.pass.cents / 100).toFixed(2), priceCurrency: "USD", description: t("24 hours · no subscription") },
+            { "@type": "Offer", name: t("Pro"), price: (PRODUCTS.pro_month.cents / 100).toFixed(2), priceCurrency: "USD", description: t("Billed monthly · cancel anytime") },
+            { "@type": "Offer", name: t("Team"), price: (PRODUCTS.team_month.cents / 100).toFixed(2), priceCurrency: "USD", description: t("Unlimited people") },
+          ],
+        }}
+      />
       <JsonLd
         data={{
           "@context": "https://schema.org",

@@ -1,10 +1,9 @@
 import { Suspense } from "react";
-import { getI18n } from "@/lib/i18n/server";
+import { pageMeta } from "@/lib/seo-meta";
 import { ForgotForm } from "./forgot-form";
 
 export async function generateMetadata() {
-  const { t } = await getI18n();
-  return { title: t("Reset your password") };
+  return pageMeta("/forgot", { title: "Reset your password", description: "Get a link to reset your PDFTEK password.", index: false });
 }
 
 export default function Forgot() {

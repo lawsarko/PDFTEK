@@ -82,5 +82,5 @@ function canonicalRedirect(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api/|_next/|favicon|icon|apple-touch-icon|manifest|robots.txt|sitemap.xml|llms.txt|pdf.worker).*)"],
+  matcher: ["/((?!api/|_next/|favicon|icon|apple-touch-icon|manifest|robots.txt|sitemap.xml|llms.txt|llms-full.txt|pdf.worker).*)"],
 };

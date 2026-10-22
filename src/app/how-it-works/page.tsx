@@ -1,21 +1,20 @@
 import Link from "next/link";
+import { pageMeta } from "@/lib/seo-meta";
 import { currentUser } from "@/lib/auth";
 import { MarketingFooter, MarketingNav } from "@/components/marketing";
 import { I } from "@/components/icons";
 import { JsonLd } from "@/components/json-ld";
+import { siteUrl } from "@/lib/seo-tools";
 import { Reveal } from "@/components/motion";
 import { FREE_LIMITS, PAID_LIMITS, PRO_SEATS, PRODUCTS, usd } from "@/lib/plans";
-import { alternatesFor, getI18n } from "@/lib/i18n/server";
+import { getI18n } from "@/lib/i18n/server";
 
 export async function generateMetadata() {
-  const { t, locale } = await getI18n();
-  return {
-    title: t("How it works – A step-by-step guide to PDFTEK"),
-    description: t(
+  return pageMeta("/how-it-works", {
+    title: "How it works – A step-by-step guide to PDFTEK",
+    description:
       "Learn how to use PDFTEK: convert PDFs to Word, Excel and images, merge and compress, edit, fill forms with AI, e-sign, turn bank statements into Excel and request documents securely.",
-    ),
-    alternates: alternatesFor("/how-it-works", locale),
-  };
+  });
 }
 export const dynamic = "force-dynamic";
 
@@ -212,6 +211,16 @@ export default async function HowItWorks() {
           inLanguage: info.tag,
           name: t("How to use PDFTEK"),
           step: list.map((g) => ({ "@type": "HowToSection", name: g.title, itemListElement: g.steps.map((s) => ({ "@type": "HowToStep", text: s })) })),
+        }}
+      />
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "PDFTEK", item: `${siteUrl()}${lp("/")}` },
+            { "@type": "ListItem", position: 2, name: t("How it works"), item: `${siteUrl()}${lp("/how-it-works")}` },
+          ],
         }}
       />
       <MarketingNav signedIn={!!user && !user.is_guest} />

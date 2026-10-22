@@ -1,9 +1,8 @@
 import { LegalPage } from "@/components/legal";
-import { alternatesFor, getI18n } from "@/lib/i18n/server";
+import { pageMeta } from "@/lib/seo-meta";
 
 export async function generateMetadata() {
-  const { t, locale } = await getI18n();
-  return { title: t("Terms of Service"), alternates: alternatesFor("/terms", locale) };
+  return pageMeta("/terms", { title: "Terms of Service", description: "The terms for using PDFTEK's online PDF tools, accounts, Day Passes, subscriptions and AI credits." });
 }
 
 export default function Terms() {

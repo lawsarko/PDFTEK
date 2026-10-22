@@ -49,7 +49,7 @@ export const SEO_TOOLS: SeoTool[] = [
     name: "PDF to Word",
     category: "Convert from PDF",
     title: "PDF to Word Converter – Free, Editable DOCX Online",
-    description: "Convert PDF to an editable Word document (DOCX) online for free. Keeps headings, paragraphs and tables. Scanned PDFs work too. No sign-up needed.",
+    description: "Convert PDF to an editable Word document (DOCX) online for free. Keeps headings, paragraphs, tables with their borders, and images. Scanned PDFs work too. No sign-up needed.",
     h1: "Convert PDF to Word",
     lead: "Turn any PDF into an editable Word document (.docx) in seconds. Text, headings and tables come out ready to edit in Microsoft Word, Google Docs or Pages.",
     steps: [
@@ -59,12 +59,13 @@ export const SEO_TOOLS: SeoTool[] = [
     ],
     benefits: [
       "Editable paragraphs, not a picture of your page",
-      "Tables become real Word tables",
+      "Tables become real Word tables, with their borders, merged cells and shading",
+      "Logos, seals and photos stay in place",
       "Scanned PDFs: run OCR first to convert them too",
       "Works on Windows, Mac, iPhone and Android",
     ],
     faq: [
-      ["Will the formatting be kept?", "PDFTEK keeps paragraphs, headings, lists and tables so the document stays easy to edit. Very complex designs (magazine layouts, overlapping graphics) may need small touch-ups."],
+      ["Will the formatting be kept?", "PDFTEK keeps paragraphs, headings, lists, links, images and tables (with their borders, column widths and merged cells) so the document stays easy to edit. Very complex designs (magazine layouts, overlapping graphics) may need small touch-ups. Digital signatures can't carry over into an editable file; keep the original PDF for signed records."],
       ["Can I convert a scanned PDF to Word?", "Yes. Run OCR on the scan first (it's built in) so the text can be recognized, then convert to Word."],
       freeFaq,
       privacyFaq,
@@ -86,7 +87,13 @@ export const SEO_TOOLS: SeoTool[] = [
       ["Convert to Excel", "PDFTEK detects the tables and lays them out as spreadsheet cells."],
       ["Download the XLSX", "Open it in Excel, Google Sheets or Numbers."],
     ],
-    benefits: ["Tables become real cells you can calculate with", "Each page's tables are kept in order", "Great for bank statements, invoices and financial reports", "Opens in Excel, Google Sheets and Numbers"],
+    benefits: [
+      "Tables become real cells you can calculate with, with their borders and shading",
+      "Numbers and dates become real values, not text",
+      "Paragraphs, headings and logos keep the look of the page",
+      "Great for bank statements, invoices and financial reports",
+      "Opens in Excel, Google Sheets and Numbers",
+    ],
     faq: [
       ["Does it work with bank statements?", "For a statement laid out as it looks, PDF to Excel works. For clean transaction rows (date, description, money in, money out, balance) checked against the balances, use PDFTEK's Bank statement to Excel converter."],
       ["Can AI pull specific figures instead?", `Yes. Ask PDFTEK's AI to extract exactly the fields you need (totals, dates, parties) into a spreadsheet. ${AI_NOTE}`],
