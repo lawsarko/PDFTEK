@@ -1,4 +1,5 @@
 import "server-only";
+import { detectTables, type Fill, type Seg as TSeg, type Table } from "./pdf-tables";
 import path from "node:path";
 
 /**
@@ -16,9 +17,13 @@ export type Line = { y: number; size: number; segs: Seg[]; left: number; right: 
 export type Rule = { x0: number; x1: number; y: number; thickness: number; color: string };
 export type Link = { x0: number; y0: number; x1: number; y1: number; url: string };
 
+export type PageImage = { x0: number; y0: number; x1: number; y1: number; data: Buffer };
+
 export type Block = {
   lines: Line[];
-  kind: "text" | "bullet";
+  kind: "text" | "bullet" | "table";
+  /** For kind "table": the ruled table (its text is in the cells, not in `lines`). */
+  table?: Table;
   centered: boolean;
   /** Indent of the first line and of continuation lines, from the page's left text margin. */
   firstIndent: number;
@@ -51,6 +56,8 @@ export type PageLayout = {
   lineRatio: number;
   /** Most lines have three or more aligned columns (statements, schedules, tables). */
   tabular: boolean;
+  /** Pictures on the page (logos, photos, signatures), when asked for. */
+  images?: PageImage[];
   /** For OCR'd pages: the page image with recognized text erased (graphics, boxes, logos). */
   background?: { data: Buffer; type: "jpg" };
   ocr?: boolean;
@@ -64,7 +71,7 @@ const SYMBOL_FONT = /symbol|wingding|dingbat|webding/i;
 
 const MAX_OCR_PAGES = 40;
 
-export async function analyzePdf(bytes: Uint8Array, opts: { ocr?: boolean } = {}): Promise<PageLayout[]> {
+export async function analyzePdf(bytes: Uint8Array, opts: { ocr?: boolean; tables?: boolean; images?: boolean } = {}): Promise<PageLayout[]> {
   let ocrBudget = opts.ocr === false ? 0 : MAX_OCR_PAGES;
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   const OPS = pdfjs.OPS;
@@ -75,6 +82,7 @@ export async function analyzePdf(bytes: Uint8Array, opts: { ocr?: boolean } = {}
     useSystemFonts: false,
     standardFontDataUrl: path.join(process.cwd(), "node_modules/pdfjs-dist/standard_fonts/"),
     verbosity: 0,
+    isOffscreenCanvasSupported: false,
   }).promise;
 
   const pages: PageLayout[] = [];
@@ -92,7 +100,91 @@ export async function analyzePdf(bytes: Uint8Array, opts: { ocr?: boolean } = {}
       let ctm = [1, 0, 0, 1, 0, 0];
       const stack: { fill: string; stroke: string; ctm: number[] }[] = [];
       let pending: number[] | null = null; // bbox of the last constructed path (x0,y0,x1,y1)
+      let curPath: { ops: ArrayLike<number>; coords: ArrayLike<number> } | null = null;
       let lineWidth = 1;
+      // Table borders, cell shading and pictures (only collected when asked for).
+      const hSegs: TSeg[] = [];
+      const vSegs: TSeg[] = [];
+      const fills: Fill[] = [];
+      const pics: { id?: string; inline?: unknown; x0: number; y0: number; x1: number; y1: number }[] = [];
+      const toView = (x: number, y: number) => {
+        const [a, b] = apply(ctm, x, y);
+        return vp.convertToViewportPoint(a, b) as [number, number];
+      };
+      const addSeg = (xa: number, ya: number, xb: number, yb: number, t: number, color: string) => {
+        if (color === "ffffff") return;
+        const [x0, x1] = [Math.min(xa, xb), Math.max(xa, xb)];
+        const [y0, y1] = [Math.min(ya, yb), Math.max(ya, yb)];
+        const w = x1 - x0;
+        const h = y1 - y0;
+        if (h <= 3 && w > 2 && w > h * 3) hSegs.push({ x0, y0: (y0 + y1) / 2 - t / 2, x1, y1: (y0 + y1) / 2 + t / 2, t, color });
+        else if (w <= 3 && h > 2 && h > w * 3) vSegs.push({ x0: (x0 + x1) / 2 - t / 2, y0, x1: (x0 + x1) / 2 + t / 2, y1, t, color });
+      };
+      const collectPath = (stroked: boolean, filled: boolean, color: string, strokeColor: string) => {
+        if (!opts.tables || !curPath) return;
+        const { ops: pops, coords } = curPath;
+        const scale = Math.sqrt(Math.abs(ctm[0] * ctm[3] - ctm[1] * ctm[2])) || 1;
+        let k = 0;
+        let cx = 0;
+        let cy = 0;
+        for (let i = 0; i < pops.length; i++) {
+          const op = pops[i];
+          if (op === OPS.rectangle) {
+            const [x, y, w, h] = [coords[k], coords[k + 1], coords[k + 2], coords[k + 3]];
+            k += 4;
+            const [ax, ay] = toView(x, y);
+            const [bx, by] = toView(x + w, y + h);
+            const [x0, x1] = [Math.min(ax, bx), Math.max(ax, bx)];
+            const [y0, y1] = [Math.min(ay, by), Math.max(ay, by)];
+            if (filled) {
+              const thin = Math.min(x1 - x0, y1 - y0);
+              if (thin < 2.5) addSeg(x0, y0, x1, y1, Math.max(0.25, thin), color);
+              else if (color !== "ffffff") fills.push({ x0, y0, x1, y1, color });
+            }
+            if (stroked) {
+              const t = Math.max(0.25, lineWidth * scale);
+              addSeg(x0, y0, x1, y0, t, strokeColor);
+              addSeg(x0, y1, x1, y1, t, strokeColor);
+              addSeg(x0, y0, x0, y1, t, strokeColor);
+              addSeg(x1, y0, x1, y1, t, strokeColor);
+            }
+          } else if (op === OPS.moveTo) {
+            [cx, cy] = [coords[k], coords[k + 1]];
+            k += 2;
+          } else if (op === OPS.lineTo) {
+            const [nx, ny] = [coords[k], coords[k + 1]];
+            k += 2;
+            if (stroked) {
+              const [ax, ay] = toView(cx, cy);
+              const [bx, by] = toView(nx, ny);
+              addSeg(ax, ay, bx, by, Math.max(0.25, lineWidth * scale), strokeColor);
+            }
+            [cx, cy] = [nx, ny];
+          } else if (op === OPS.curveTo) k += 6;
+          else if (op === OPS.curveTo2 || op === OPS.curveTo3) k += 4;
+        }
+        // A filled four-sided path drawn with lines (not a rectangle operator) can be a box too.
+        if (filled && !Array.prototype.includes.call(pops, OPS.rectangle) && !Array.prototype.some.call(pops, (o: number) => o === OPS.curveTo || o === OPS.curveTo2 || o === OPS.curveTo3)) {
+          const pts: [number, number][] = [];
+          for (let i = 0, j = 0; i < pops.length; i++) {
+            if (pops[i] === OPS.moveTo || pops[i] === OPS.lineTo) {
+              pts.push(toView(coords[j], coords[j + 1]));
+              j += 2;
+            }
+          }
+          if (pts.length >= 4 && pts.length <= 5) {
+            const xs = pts.map((q) => q[0]);
+            const ys = pts.map((q) => q[1]);
+            const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+            const onBox = pts.every(([x, y]) => (Math.abs(x - x0) < 0.5 || Math.abs(x - x1) < 0.5) && (Math.abs(y - y0) < 0.5 || Math.abs(y - y1) < 0.5));
+            if (onBox) {
+              const thin = Math.min(x1 - x0, y1 - y0);
+              if (thin < 2.5) addSeg(x0, y0, x1, y1, Math.max(0.25, thin), color);
+              else if (color !== "ffffff") fills.push({ x0, y0, x1, y1, color });
+            }
+          }
+        }
+      };
       for (let i = 0; i < ops.fnArray.length; i++) {
         const fn = ops.fnArray[i];
         const args = ops.argsArray[i] as unknown[];
@@ -117,6 +209,9 @@ export async function analyzePdf(bytes: Uint8Array, opts: { ocr?: boolean } = {}
           case OPS.setFillGray:
             fill = toHex([Number(args[0]) * 255, Number(args[0]) * 255, Number(args[0]) * 255]);
             break;
+          case OPS.setStrokeGray:
+            stroke = toHex([Number(args[0]) * 255, Number(args[0]) * 255, Number(args[0]) * 255]);
+            break;
           case OPS.setLineWidth:
             lineWidth = Number(args[0]) || 1;
             break;
@@ -127,6 +222,19 @@ export async function analyzePdf(bytes: Uint8Array, opts: { ocr?: boolean } = {}
           case OPS.constructPath: {
             const mm = args[2] as ArrayLike<number> | undefined;
             pending = mm && mm.length >= 4 ? [mm[0], mm[1], mm[2], mm[3]] : null;
+            curPath = { ops: args[0] as ArrayLike<number>, coords: args[1] as ArrayLike<number> };
+            break;
+          }
+          case OPS.paintImageXObject:
+          case OPS.paintInlineImageXObject: {
+            if (!opts.images) break;
+            // An image fills the unit square of the current transform.
+            const corners = [toView(0, 0), toView(1, 0), toView(0, 1), toView(1, 1)];
+            const xs = corners.map((q) => q[0]);
+            const ys = corners.map((q) => q[1]);
+            const box = { x0: Math.min(...xs), y0: Math.min(...ys), x1: Math.max(...xs), y1: Math.max(...ys) };
+            if (fn === OPS.paintImageXObject) pics.push({ id: String(args[0]), ...box });
+            else pics.push({ inline: args[0], ...box });
             break;
           }
           case OPS.fill:
@@ -135,6 +243,8 @@ export async function analyzePdf(bytes: Uint8Array, opts: { ocr?: boolean } = {}
           case OPS.eoFillStroke:
           case OPS.stroke:
           case OPS.closeStroke: {
+            collectPath(fn !== OPS.fill && fn !== OPS.eoFill, fn !== OPS.stroke && fn !== OPS.closeStroke, fill, stroke);
+            curPath = null;
             if (!pending) break;
             const stroked = fn === OPS.stroke || fn === OPS.closeStroke;
             const [a, b] = apply(ctm, pending[0], pending[1]);
@@ -153,6 +263,7 @@ export async function analyzePdf(bytes: Uint8Array, opts: { ocr?: boolean } = {}
           }
           case OPS.endPath:
             pending = null;
+            curPath = null;
             break;
         }
       }
@@ -212,13 +323,87 @@ export async function analyzePdf(bytes: Uint8Array, opts: { ocr?: boolean } = {}
           console.error("[pdftek] OCR failed", err);
         }
       }
-      pages.push(layoutPage(p, vp.width, vp.height, runs, dedupeRules(rules), links));
+      // A line just under a word or two (a link's underline) is not a divider.
+      rules.splice(0, rules.length, ...rules.filter((r) => !underlinesText(r, runs)));
+      let pageRuns = runs;
+      let tables: Table[] = [];
+      let pageRules = dedupeRules(rules);
+      if (opts.tables) {
+        ({ tables, rest: pageRuns } = detectTables(hSegs, vSegs, fills, runs, toLines));
+        // Table borders become cell borders, not paragraph rules.
+        pageRules = pageRules.filter((r) => !tables.some((t) => r.y >= t.y0 - 2 && r.y <= t.y1 + 2 && r.x0 < t.x1 && r.x1 > t.x0));
+      }
+      const layout = layoutPage(p, vp.width, vp.height, pageRuns, pageRules, links, tables);
+      if (opts.images && pics.length) layout.images = await pageImages(page, pics, vp.width, vp.height, visibleChars > 0);
+      pages.push(layout);
       page.cleanup();
     }
   } finally {
     await doc.destroy();
   }
   return pages;
+}
+
+/** True when a rule sits just under a baseline and spans only text on that line (an underline). */
+function underlinesText(r: Rule, runs: Run[]): boolean {
+  const on = runs.filter((t) => t.w > 0 && r.y - t.y >= -0.5 && r.y - t.y <= t.size * 0.4 && t.x < r.x1 && t.x + t.w > r.x0);
+  if (!on.length) return false;
+  const x0 = Math.min(...on.map((t) => t.x));
+  const x1 = Math.max(...on.map((t) => t.x + t.w));
+  return r.x0 >= x0 - 3 && r.x1 <= x1 + 3;
+}
+
+// ---------- pictures ----------
+
+type RawImage = { width: number; height: number; kind?: number; data?: Uint8Array | Uint8ClampedArray };
+
+/**
+ * Pictures drawn on a page, as PNGs with their position. A picture covering most of a page that
+ * also has text is the page's own scan (its text is already the text layer), so it's left out.
+ */
+async function pageImages(
+  page: { objs: { get(id: string, cb: (v: unknown) => void): unknown }; commonObjs: { get(id: string, cb: (v: unknown) => void): unknown } },
+  pics: { id?: string; inline?: unknown; x0: number; y0: number; x1: number; y1: number }[],
+  width: number,
+  height: number,
+  hasText: boolean,
+): Promise<PageImage[]> {
+  const sharp = (await import("sharp")).default;
+  const out: PageImage[] = [];
+  for (const pic of pics.slice(0, 30)) {
+    const w = pic.x1 - pic.x0;
+    const h = pic.y1 - pic.y0;
+    if (w < 8 || h < 8) continue;
+    if (hasText && w * h > width * height * 0.6) continue;
+    try {
+      const img = (pic.inline ??
+        (await new Promise<unknown>((resolve) => {
+          const store = pic.id!.startsWith("g_") ? page.commonObjs : page.objs;
+          store.get(pic.id!, resolve);
+          setTimeout(() => resolve(null), 3000);
+        }))) as RawImage | null;
+      if (!img?.data || !img.width || !img.height) continue;
+      let channels: 1 | 3 | 4 = img.kind === 2 ? 3 : 4;
+      let data: Buffer = Buffer.from(img.data.buffer, img.data.byteOffset, img.data.byteLength);
+      if (img.kind === 1) {
+        // 1 bit per pixel, rows padded to whole bytes.
+        const row = Math.ceil(img.width / 8);
+        const gray = Buffer.alloc(img.width * img.height);
+        for (let y = 0; y < img.height; y++) for (let x = 0; x < img.width; x++) gray[y * img.width + x] = (img.data[y * row + (x >> 3)] >> (7 - (x & 7))) & 1 ? 255 : 0;
+        data = gray;
+        channels = 1;
+      }
+      if (data.length < img.width * img.height * channels) continue;
+      const png = await sharp(data, { raw: { width: img.width, height: img.height, channels } })
+        .resize({ width: Math.min(img.width, 1600), withoutEnlargement: true })
+        .png({ compressionLevel: 8 })
+        .toBuffer();
+      out.push({ x0: pic.x0, y0: pic.y0, x1: pic.x1, y1: pic.y1, data: png });
+    } catch (err) {
+      console.warn("[pdftek] image skipped", err);
+    }
+  }
+  return out;
 }
 
 // ---------- geometry helpers ----------
@@ -398,21 +583,23 @@ function isCentered(l: Line, leftMargin: number, rightEdge: number) {
   return l.segs.length === 1 && lpad > 24 && Math.abs(lpad - rpad) < Math.max(8, (rightEdge - leftMargin) * 0.03);
 }
 
-function layoutPage(number: number, width: number, height: number, runs: Run[], rules: Rule[], links: Link[]): PageLayout {
+function layoutPage(number: number, width: number, height: number, runs: Run[], rules: Rule[], links: Link[], tables: Table[] = []): PageLayout {
   const lines = toLines(runs);
-  if (!lines.length) {
+  if (!lines.length && !tables.length) {
     return { number, width, height, lines, blocks: [], rules, links, leftMargin: 72, rightEdge: width - 72, topMargin: 72, bottomMargin: 72, bodySize: 11, lineRatio: 1.2, tabular: false };
   }
-  const leftMargin = clamp(Math.min(...lines.map((l) => l.left), ...rules.map((r) => r.x0)), 12, width / 3);
-  const rightEdge = clamp(Math.max(...lines.map((l) => l.right), ...rules.map((r) => r.x1)), width * 0.5, width - 12);
-  const topMargin = clamp(lines[0].y - lines[0].size * 1.1, 12, height / 3);
+  const leftMargin = clamp(Math.min(...lines.map((l) => l.left), ...rules.map((r) => r.x0), ...tables.map((t) => t.x0)), 12, width / 3);
+  const rightEdge = clamp(Math.max(...lines.map((l) => l.right), ...rules.map((r) => r.x1), ...tables.map((t) => t.x1)), width * 0.5, width - 12);
+  const firstTop = Math.min(...lines.map((l) => l.y - l.size * 1.1), ...tables.map((t) => t.y0));
+  const topMargin = clamp(firstTop, 12, height / 3);
   const last = lines[lines.length - 1];
   // Leave slack below the last baseline: word processors reserve a full line box, and a hair of
   // extra height must never push a page's last line onto a new page (each PDF page is its own section).
-  const bottomMargin = clamp(height - last.y - last.size * 1.2 - 18, 10, height / 3);
+  const lastBottom = Math.max(last ? last.y + last.size * 1.2 : 0, ...tables.map((t) => t.y1 + 4));
+  const bottomMargin = clamp(height - lastBottom - 18, 10, height / 3);
   const textWidth = rightEdge - leftMargin;
-  const sizes = lines.map((l) => l.size).sort((a, b) => a - b);
-  const bodySize = sizes[Math.floor(sizes.length / 2)];
+  const sizes = (lines.length ? lines : tables.flatMap((t) => t.rows.flatMap((r) => r.cells.flatMap((c) => c.lines)))).map((l) => l.size).sort((a, b) => a - b);
+  const bodySize = sizes[Math.floor(sizes.length / 2)] ?? 11;
   const tabular = lines.length >= 4 && lines.filter((l) => l.segs.length >= 3).length / lines.length >= 0.4;
 
   // Group lines into paragraph blocks.
@@ -423,9 +610,11 @@ function layoutPage(number: number, width: number, height: number, runs: Run[], 
     const bulletGroup = g && startsBullet(g[0]);
     const contLeft = g && (g.length > 1 ? g[1].left : bulletGroup ? bulletTextX(g[0]) : g[0].left);
     const ruleBetween = prev && rules.some((r) => r.y > prev.y && r.y < line.y - line.size * 0.6);
+    const tableBetween = prev && tables.some((t) => t.y0 > prev.y && t.y0 < line.y);
     const canMerge =
       prev &&
       !ruleBetween &&
+      !tableBetween &&
       prev.segs.length === 1 &&
       line.segs.length === 1 &&
       Math.abs(prev.size - line.size) < 0.6 &&
@@ -433,6 +622,12 @@ function layoutPage(number: number, width: number, height: number, runs: Run[], 
       line.y - prev.y > 0 &&
       line.y - prev.y < line.size * 1.75 &&
       prev.right - leftMargin > textWidth * 0.7 &&
+      // Lines of wrapped text span most of the column; short stacked lines (a signature block
+      // placed on the right) are separate lines even when they end at the right edge.
+      prev.right - prev.left > textWidth * 0.5 &&
+      // A wrap only happens when the next word didn't fit; room to spare means a deliberate break
+      // (signature blocks, addresses).
+      rightEdge - prev.right < firstWordWidth(line) + line.size * 1.2 &&
       !startsBullet(line) &&
       contLeft !== undefined &&
       Math.abs(line.left - contLeft) < line.size * 2.5 &&
@@ -448,19 +643,49 @@ function layoutPage(number: number, width: number, height: number, runs: Run[], 
   ratios.sort((a, b) => a - b);
   const lineRatio = clamp(ratios.length ? ratios[Math.floor(ratios.length / 2)] : 1.2, 1.05, 2.2);
 
+  // Text blocks and tables, top to bottom.
+  const items: ({ kind: "text"; g: Line[]; y: number } | { kind: "table"; t: Table; y: number })[] = [
+    ...groups.map((g) => ({ kind: "text" as const, g, y: g[0].y })),
+    ...tables.map((t) => ({ kind: "table" as const, t, y: t.y0 })),
+  ].sort((a, b) => a.y - b.y);
+
   let prevY: number | null = null;
-  const blocks: Block[] = groups.map((g, i) => {
+  // Where the previous item ends: a baseline for text, the bottom border for a table.
+  let prevTableBottom: number | null = null;
+  let prevLineHeight = bodySize * lineRatio;
+  const blocks: Block[] = items.map((item, i) => {
+    if (item.kind === "table") {
+      const t = item.t;
+      const above = prevTableBottom ?? (prevY === null ? null : prevY + prevLineHeight * 0.25);
+      const block: Block = {
+        lines: [],
+        kind: "table",
+        table: t,
+        centered: false,
+        firstIndent: Math.max(0, t.x0 - leftMargin),
+        indent: Math.max(0, t.x0 - leftMargin),
+        spaceBefore: i === 0 || above === null ? 0 : clamp(t.y0 - above, 0, height),
+        lineHeight: 0,
+      };
+      prevTableBottom = t.y1;
+      prevY = null;
+      return block;
+    }
+    const g = item.g;
     const first = g[0];
     const own = g.length > 1 ? (g[g.length - 1].y - first.y) / (g.length - 1) : first.size * lineRatio;
     let lineHeight = clamp(own, first.size * 1.05, first.size * 2.4);
-    // Extra space above = distance from the previous baseline minus one line of this block.
-    let gap = prevY === null ? 0 : first.y - prevY - lineHeight;
-    if (gap < 0 && g.length === 1 && prevY !== null) {
+    // Extra space above = distance from the previous baseline minus one line of this block. After a
+    // table, from the table's bottom border to the top of this line (about 80% of a line above its baseline).
+    let gap = prevTableBottom !== null ? first.y - lineHeight * 0.8 - prevTableBottom : prevY === null ? 0 : first.y - prevY - lineHeight;
+    if (gap < 0 && g.length === 1 && prevY !== null && prevTableBottom === null) {
       // Tightly stacked single lines (title over employer): tighten this line instead of adding space.
       lineHeight = Math.max(first.size * 1.05, first.y - prevY);
       gap = 0;
     }
     prevY = g[g.length - 1].y;
+    prevTableBottom = null;
+    prevLineHeight = lineHeight;
     const centered = g.length === 1 && isCentered(first, leftMargin, rightEdge);
     const firstIndent = Math.max(0, first.left - leftMargin);
     const block: Block = {
@@ -487,9 +712,9 @@ function layoutPage(number: number, width: number, height: number, runs: Run[], 
   // Attach rules to the nearest block above (or the first block, for a rule above everything).
   for (const r of rules) {
     let above: Block | undefined;
-    for (const b of blocks) if (b.lines[b.lines.length - 1].y < r.y) above = b;
-    if (above) above.ruleBelow ??= r;
-    else if (blocks[0]) blocks[0].ruleAbove ??= r;
+    for (const b of blocks) if ((b.table ? b.table.y1 : b.lines[b.lines.length - 1].y) < r.y) above = b;
+    if (above && !above.table) above.ruleBelow ??= r;
+    else if (!above && blocks[0] && !blocks[0].table) blocks[0].ruleAbove ??= r;
   }
 
   // A rule rendered as a paragraph/cell border takes its own vertical room; don't count it twice.
@@ -498,6 +723,15 @@ function layoutPage(number: number, width: number, height: number, runs: Run[], 
   });
 
   return { number, width, height, lines, blocks, rules, links, leftMargin, rightEdge, topMargin, bottomMargin, bodySize, lineRatio, tabular };
+}
+
+/** Width of a line's first word, estimated from its run's measured width. */
+function firstWordWidth(line: Line): number {
+  const run = line.segs[0]?.runs.find((r) => r.str.trim());
+  if (!run) return 0;
+  const text = run.str.trim();
+  const word = text.split(/\s+/)[0];
+  return run.w ? (run.w * word.length) / Math.max(1, text.length) : word.length * run.size * 0.5;
 }
 
 function bulletTextX(first: Line): number {
