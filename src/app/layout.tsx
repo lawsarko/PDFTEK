@@ -4,13 +4,19 @@ import "./globals.css";
 import { ToastProvider } from "@/components/toast";
 import { PaywallHost } from "@/components/paywall";
 import { AuthLinkCatcher } from "@/components/auth-link-catcher";
+import { PurchaseTracker } from "@/components/purchase-tracker";
 import { DomTranslator, I18nProvider } from "@/components/i18n";
 import { coverage, getI18n, pick } from "@/lib/i18n/server";
 import { IN_PROGRESS, LOCALES } from "@/lib/i18n/locales";
 import SITE_STRINGS from "@/i18n/catalog-site.json";
 
-// Google Analytics (GA4). GA_MEASUREMENT_ID can override it; set it to "off" to disable.
+// Google Analytics (GA4) and Google Ads share one Google tag. GA_MEASUREMENT_ID / GOOGLE_ADS_ID
+// override the IDs; set either to "off" to disable it. GOOGLE_ADS_CONVERSION_LABEL (from the Ads
+// conversion action, e.g. "AbC-D_efG-h12_34-567") turns on purchase conversions.
 const GA_ID = process.env.GA_MEASUREMENT_ID === "off" ? "" : process.env.GA_MEASUREMENT_ID || "G-V6BFFW3SN2";
+const ADS_ID = process.env.GOOGLE_ADS_ID === "off" ? "" : process.env.GOOGLE_ADS_ID || "AW-18531956954";
+const ADS_CONVERSION = ADS_ID && process.env.GOOGLE_ADS_CONVERSION_LABEL ? `${ADS_ID}/${process.env.GOOGLE_ADS_CONVERSION_LABEL}` : "";
+const TAG_IDS = [GA_ID, ADS_ID].filter(Boolean);
 
 const SITE = (process.env.APP_URL || "https://pdftek.com").replace(/\/$/, "");
 const DESCRIPTION =
@@ -93,15 +99,17 @@ export default async function RootLayout({
         />
       </head>
       <body>
-        {GA_ID && (
+        {TAG_IDS.length > 0 && (
           <>
-            <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
+            {/* One Google tag for every ID (Google asks for no more than one tag per page). */}
+            <Script src={`https://www.googletagmanager.com/gtag/js?id=${TAG_IDS[0]}`} strategy="afterInteractive" />
             <Script id="google-tag" strategy="afterInteractive">
               {`window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
-gtag('config', '${GA_ID}');`}
+${TAG_IDS.map((id) => `gtag('config', '${id}');`).join("\n")}`}
             </Script>
+            <PurchaseTracker adsConversion={ADS_CONVERSION} />
           </>
         )}
         <I18nProvider locale={locale} dict={dict}>
