@@ -11,11 +11,13 @@ import { IN_PROGRESS, LOCALES } from "@/lib/i18n/locales";
 import SITE_STRINGS from "@/i18n/catalog-site.json";
 
 // Google Analytics (GA4) and Google Ads share one Google tag. GA_MEASUREMENT_ID / GOOGLE_ADS_ID
-// override the IDs; set either to "off" to disable it. GOOGLE_ADS_CONVERSION_LABEL (from the Ads
-// conversion action, e.g. "AbC-D_efG-h12_34-567") turns on purchase conversions.
+// override the IDs; set either to "off" to disable it. GOOGLE_ADS_CONVERSION_LABEL overrides the
+// Purchase conversion label ("off" stops reporting conversions).
 const GA_ID = process.env.GA_MEASUREMENT_ID === "off" ? "" : process.env.GA_MEASUREMENT_ID || "G-V6BFFW3SN2";
 const ADS_ID = process.env.GOOGLE_ADS_ID === "off" ? "" : process.env.GOOGLE_ADS_ID || "AW-18531956954";
-const ADS_CONVERSION = ADS_ID && process.env.GOOGLE_ADS_CONVERSION_LABEL ? `${ADS_ID}/${process.env.GOOGLE_ADS_CONVERSION_LABEL}` : "";
+// The "Purchase" conversion action in Google Ads.
+const ADS_LABEL = process.env.GOOGLE_ADS_CONVERSION_LABEL ?? (process.env.GOOGLE_ADS_ID ? "" : "uInNCLe1yKcdENrx3IRF");
+const ADS_CONVERSION = ADS_ID && ADS_LABEL && ADS_LABEL !== "off" ? `${ADS_ID}/${ADS_LABEL}` : "";
 const TAG_IDS = [GA_ID, ADS_ID].filter(Boolean);
 
 const SITE = (process.env.APP_URL || "https://pdftek.com").replace(/\/$/, "");
