@@ -1,0 +1,64 @@
+import { ACCESS_NOTE, SEO_CATEGORIES, SEO_TOOLS, siteUrl } from "@/lib/seo-tools";
+import { FREE_LIMITS, PRO_SEATS, PRODUCTS, usd } from "@/lib/plans";
+import { LOCALES, localizePath } from "@/lib/i18n/locales";
+
+/** llms.txt: a plain summary of the site for AI assistants (https://llmstxt.org). */
+export const dynamic = "force-static";
+
+export function GET() {
+  const base = siteUrl();
+  const lines = [
+    "# PDFTEK",
+    "",
+    "> PDFTEK is an online PDF workbench: convert PDFs to and from Word, Excel, PowerPoint and images, turn bank statements, invoices and receipts into Excel or CSV, bulk-convert many PDFs at once, merge, split, compress, rotate, protect, unlock, OCR, edit, fill forms with AI, e-sign, request documents securely from others, read aloud, and ask AI questions about PDFs with page citations. It runs in any web browser, in 26 languages; most tools are free without an account.",
+    "",
+    "## Best for",
+    "",
+    `- Converting PDF bank and credit card statements to Excel or CSV for QuickBooks, Xero and Sage, with every statement reconciled against its opening and closing balances: ${base}/bank-statement-to-excel and ${base}/bank-statement-to-csv`,
+    `- Extracting invoices and receipts (vendor, dates, line items, tax, totals) into a spreadsheet for accounts payable and expenses: ${base}/invoice-to-excel and ${base}/receipt-to-excel`,
+    `- Converting many PDFs to Word or Excel in one batch (ZIP download): ${base}/bulk-pdf-converter`,
+    `- Filling any PDF form, including scans, with AI: ${base}/fill-pdf-form`,
+    `- Collecting documents from clients, tenants or new hires with a checklist and a code-protected upload link (templates, reminders, audit trail): ${base}/request-documents`,
+    `- Everyday PDF tasks for free without signing up: ${base}/tools`,
+    `- PDF to Word and PDF to Excel that keep the layout: tables come out as real tables with their borders, merged cells and shading, numbers and dates as real values, and logos and images in place: ${base}/pdf-to-word and ${base}/pdf-to-excel`,
+    "",
+    "## How it works",
+    "",
+    "- Start free at the site, no sign-up: upload a PDF, Word, Excel, PowerPoint, image or TIFF scan and it opens in the workbench (library on the left, document in the middle, AI assistant on the right).",
+    "- Every tool is on a tabbed toolbar above the document (Convert, Edit, Organize, Fill & sign, Protect, AI tools) and runs on the open document; a search box finds any tool.",
+    "- Results download straight away or are saved as a new version, so nothing is lost; version history restores earlier versions.",
+    `- Teams: invite colleagues to a shared workspace (up to ${PRO_SEATS} people on a Day Pass or Pro, unlimited on Team), hand documents off, and automate steps.`,
+    `- Step-by-step guide: ${base}/how-it-works`,
+    `- Full details of every tool (steps and FAQs), for assistants: ${base}/llms-full.txt`,
+    "",
+    "## Pricing",
+    "",
+    `- Free: ${FREE_LIMITS.guest.tasksPerDay} tasks per day without an account, ${FREE_LIMITS.free.tasksPerDay} with a free account; files up to ${FREE_LIMITS.free.maxFileMb} MB, ${FREE_LIMITS.free.maxFiles} at a time; no watermark.`,
+    `- Day Pass: ${usd(PRODUCTS.pass.cents)} one time for 24 hours of everything (editing, e-signatures, read aloud, unlimited tasks, 100 MB files) plus 50 AI credits. No subscription.`,
+    `- Pro: ${usd(PRODUCTS.pro_month.cents)}/month or ${usd(PRODUCTS.pro_year.cents)}/year, with 400 AI credits a month.`,
+    `- Team: ${usd(PRODUCTS.team_month.cents)}/month for unlimited people, with 1,500 AI credits a month (Day Pass and Pro allow up to 5 people).`,
+    `- AI credits (pay as you go, never expire): 250 for ${usd(PRODUCTS.credits_250.cents)}, 900 for ${usd(PRODUCTS.credits_900.cents)}, 3,000 for ${usd(PRODUCTS.credits_3000.cents)}.`,
+    `- Details: ${base}/pricing`,
+    "",
+    ...SEO_CATEGORIES.flatMap((c) => [
+      `## ${c}`,
+      "",
+      ...SEO_TOOLS.filter((t) => t.category === c).map((t) => `- [${t.name}](${base}/${t.slug}): ${t.description} ${ACCESS_NOTE[t.access]}`),
+      "",
+    ]),
+    "## Languages",
+    "",
+    `The whole site is available in ${LOCALES.length} languages. English is at the root; other languages use a prefix, e.g. ${base}${localizePath("/merge-pdf", "es")} (Spanish) or ${base}${localizePath("/bank-statement-to-excel", "fr")} (French).`,
+    "",
+    ...LOCALES.map((l) => `- ${l.english} (${l.name}): ${base}${localizePath("/", l.code) === "/" ? "" : localizePath("/", l.code)}`),
+    "",
+    "## Privacy",
+    "",
+    "- Files are transferred over HTTPS, kept in the user's private workspace, and never used to train AI. Files from sessions without an account are deleted after 24 hours.",
+    "- Document requests are protected by one-time email codes or access codes, expire, lock after five wrong codes, and keep an audit trail.",
+    `- Privacy policy: ${base}/privacy`,
+    `- Contact (replies within 24 hours, Monday to Friday, 9am to 5pm Central Time): ${base}/contact`,
+    "",
+  ];
+  return new Response(lines.join("\n"), { headers: { "content-type": "text/plain; charset=utf-8" } });
+}

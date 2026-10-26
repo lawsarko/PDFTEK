@@ -1,0 +1,13 @@
+services:
+  pdftek:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file: .env
+    environment:
+      DATA_DIR: /data
+    volumes:
+      - pdftek-data:/data
+    restart: unless-stopped
+volumes:
+  pdftek-data:
