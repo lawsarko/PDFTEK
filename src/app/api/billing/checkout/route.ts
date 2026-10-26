@@ -39,7 +39,11 @@ export const POST = route(async (req) => {
     if (ws?.plan === product.plan) throw badRequest("This workspace already has that plan. Manage it from Settings → Billing.");
   }
   const origin = publicOrigin(req);
-  const back = input.returnTo?.startsWith("/") && !input.returnTo.startsWith("//") ? input.returnTo : `/app/${wid}`;
+  // After paying, people go where they can use what they bought: back to the app page they were on
+  // (mid-task, e.g. the upgrade window while editing), or to their workbench when they bought from a
+  // website page such as Pricing.
+  const asked = input.returnTo?.startsWith("/") && !input.returnTo.startsWith("//") ? input.returnTo : "";
+  const back = asked.startsWith(`/app/${wid}`) ? asked : `/app/${wid}`;
 
   if (fakePayments()) {
     const sessionId = id("fake_");

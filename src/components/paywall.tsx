@@ -66,9 +66,9 @@ function useResumeCheckout(onError: (msg: string) => void) {
 
 const PURCHASED: Record<string, string> = {
   pass: "Day Pass active: everything is unlocked for 24 hours.",
-  pro_month: "Welcome to pdftek Pro!",
-  pro_year: "Welcome to pdftek Pro!",
-  team_month: "Welcome to pdftek Team!",
+  pro_month: "Welcome to pdftek Pro! Unlimited tasks, editing, e-signatures and 400 AI credits are ready.",
+  pro_year: "Welcome to pdftek Pro! Unlimited tasks, editing, e-signatures and 400 AI credits are ready.",
+  team_month: "Welcome to pdftek Team! Invite your teammates from the account menu → Members.",
   credits_250: "250 credits added.",
   credits_900: "900 credits added.",
   credits_3000: "3,000 credits added.",
@@ -115,8 +115,7 @@ export function PaywallHost() {
     if (bought || restored) {
       if (bought) toast(PURCHASED[bought] ?? "Thanks for your purchase!", "success");
       else toast("Welcome back! Your purchase is restored.", "success");
-      url.searchParams.delete("purchased");
-      url.searchParams.delete("save");
+      for (const k of ["purchased", "save", "order", "paid", "new"]) url.searchParams.delete(k);
       window.history.replaceState(null, "", url.pathname + url.search + url.hash);
       notifyUsage();
       void offerSave(Boolean(restored));
