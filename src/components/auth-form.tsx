@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { TRIAL_DAYS } from "@/lib/plans";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { api, errMsg, ApiError } from "@/lib/client/api";
@@ -30,7 +31,14 @@ export function AuthForm({
   const next = params.get("next");
   // Arriving from "Go Pro" / "Start Team": say why an account is needed first.
   const planId = params.get("plan");
-  const plan = planId === "team_month" ? "pdftek Team" : planId === "pro_month" || planId === "pro_year" ? "pdftek Pro" : null;
+  const plan =
+    planId === "team_month"
+      ? "pdftek Team"
+      : planId === "pro_trial"
+        ? t("your {days}-day free trial of pdftek Pro", { days: TRIAL_DAYS })
+        : planId === "pro_month" || planId === "pro_year"
+          ? "pdftek Pro"
+          : null;
   const [form, setForm] = useState({ name: "", email: inviteEmail ?? "", password: "", workspaceName: "" });
   const [error, setError] = useState<string | null>(() => {
     const e = params.get("error");

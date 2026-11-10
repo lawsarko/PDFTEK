@@ -13,8 +13,8 @@ import { Library } from "./library";
 import { DocumentPane } from "./document-pane";
 import { Assistant } from "./assistant";
 import { UploadModal } from "./upload-modal";
-import { notifyPaywall, openSaveAccount } from "../paywall";
-import { FREE_LIMITS } from "@/lib/plans";
+import { daysLeft, notifyPaywall, openSaveAccount, startCheckout } from "../paywall";
+import { FREE_LIMITS, PRODUCTS, TRIAL_DAYS, usd } from "@/lib/plans";
 
 export function Workbench({ wid }: { wid: string }) {
   const router = useRouter();
@@ -160,6 +160,7 @@ export function Workbench({ wid }: { wid: string }) {
         <TopBar />
         {info.me.is_guest && <GuestBanner paid={info.billing.membership || info.billing.credits > 0} />}
         {!info.me.is_guest && info.me.email_verified === false && info.capabilities.accountEmail && <VerifyBanner email={info.me.email} />}
+        {!info.me.is_guest && <TrialBanner wid={wid} info={info} />}
         <div className="main" data-view={mobileView}>
           <Library />
           <DocumentPane key={active?.id ?? "none"} />
@@ -191,6 +192,71 @@ export function Workbench({ wid }: { wid: string }) {
         )}
       </div>
     </WorkbenchContext.Provider>
+  );
+}
+
+/**
+ * The free Pro trial in the workbench: an offer for accounts that haven't had it (card at checkout,
+ * first charge when it ends), then a countdown to the first charge while it runs. Dismissing hides
+ * it for a day, except in the trial's last two days.
+ */
+function TrialBanner({ wid, info }: { wid: string; info: WorkspaceInfo }) {
+  const toast = useToast();
+  const e = info.billing;
+  const mode = e.trialEndsAt ? "active" : e.trialAvailable && info.role === "owner" && !e.membership ? "offer" : null;
+  const key = `pdftek-trial-banner:${wid}:${mode}`;
+  const [hidden, setHidden] = useState(true);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    try {
+      const at = Number(localStorage.getItem(key));
+      const days = e.trialEndsAt ? daysLeft(e.trialEndsAt) : 99;
+      // The last two days of a trial always show, so nobody is surprised when it ends.
+      setHidden(Boolean(at && Date.now() - at < 86_400_000 && days > 2));
+    } catch {
+      setHidden(false);
+    }
+  }, [key, e.trialEndsAt]);
+  if (!mode || hidden) return null;
+  const dismiss = () => {
+    setHidden(true);
+    try {
+      localStorage.setItem(key, String(Date.now()));
+    } catch {}
+  };
+  const act = async () => {
+    setBusy(true);
+    try {
+      if (mode === "offer") await startCheckout("pro_trial", wid);
+      else window.location.href = `/app/${wid}/settings?tab=billing`;
+    } catch (err) {
+      toast(errMsg(err), "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const ends = e.trialEndsAt ? new Date(e.trialEndsAt).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "";
+  return (
+    <div className={`guest-banner trial-banner ${mode === "active" && e.trialEndsAt && daysLeft(e.trialEndsAt) <= 2 ? "urgent" : ""}`}>
+      <I.sparkle size={14} />
+      <span className="grow">
+        {mode === "offer" ? (
+          <>
+            <b>Try everything in Pro free for {TRIAL_DAYS} days.</b> Editing, e-signatures, bulk tools and AI. Then {usd(PRODUCTS.pro_trial.cents)}/month; cancel anytime before the trial ends and you won&apos;t be charged.
+          </>
+        ) : (
+          <>
+            <b>Pro trial: {daysLeft(e.trialEndsAt!)} day{daysLeft(e.trialEndsAt!) === 1 ? "" : "s"} left.</b> Pro continues at {usd(PRODUCTS.pro_trial.cents)}/month from {ends}. To stop, cancel before then and you won&apos;t be charged.
+          </>
+        )}
+      </span>
+      <button className="btn btn-sm btn-primary" onClick={act} disabled={busy}>
+        {busy && <span className="spinner" />} {mode === "offer" ? "Start free trial" : "Manage plan"}
+      </button>
+      <button className="btn btn-sm btn-ghost" onClick={dismiss} aria-label="Dismiss">
+        <I.x size={14} />
+      </button>
+    </div>
   );
 }
 

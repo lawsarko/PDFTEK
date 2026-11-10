@@ -11,6 +11,9 @@ import type { Ctx } from "./auth";
  *  - Past the limit, a task costs credits; or buy a Day Pass / Pro for unlimited tasks.
  *  - Edit, Read aloud, e-signatures, document requests and automations need a Day Pass or a
  *    membership.
+ *  - Pro has a 3-day free trial: Stripe collects the card at checkout and charges when the trial
+ *    ends (cancel before then and nothing is charged). One trial per account; 50 AI credits during
+ *    it, the full monthly allowance from the first paid month.
  *  - Teammates: Free is just you, a Day Pass or Pro allows up to 5 people, Team is unlimited.
  *  - Anything that calls the AI is paid with credits, metered on the real API cost. Passes and
  *    memberships include credits; credit packs top up and never expire.
@@ -18,8 +21,9 @@ import type { Ctx } from "./auth";
 
 export type Tier = "guest" | "free" | "pass" | "pro" | "team" | "admin";
 
+export { TRIAL_DAYS, TRIAL_CREDITS } from "./plans";
 export { FREE_LIMITS, PAID_LIMITS, PRO_SEATS, EXTRA_TASK_CREDITS, AI_MIN_CREDITS, PRODUCTS, type ProductId } from "./plans";
-import { FREE_LIMITS, PAID_LIMITS, PRO_SEATS, EXTRA_TASK_CREDITS, AI_MIN_CREDITS, PRODUCTS, type ProductId, type Entitlements } from "./plans";
+import { FREE_LIMITS, PAID_LIMITS, PRO_SEATS, EXTRA_TASK_CREDITS, AI_MIN_CREDITS, PRODUCTS, TRIAL_CREDITS, type ProductId, type Entitlements } from "./plans";
 export type { Entitlements };
 /** 1 credit buys this many dollars of AI usage at the API's list price (≈1.8× markup at pack prices). */
 const USD_PER_CREDIT = 1 / 150;
@@ -104,6 +108,8 @@ export function entitlements(ctx: Ctx, req?: Request): Entitlements {
     paymentsEnabled: paymentsEnabled(),
     guest: ctx.user.is_guest,
     purchaseEmail: ctx.user.is_guest ? guestPurchaseEmail(ctx.workspace.id) : null,
+    trialEndsAt: ws.plan !== "free" && ws.trial_ends_at && ws.trial_ends_at > now() ? ws.trial_ends_at : null,
+    trialAvailable: canStartTrial(ctx.user.id, ctx.workspace.id),
   };
 }
 
@@ -114,6 +120,50 @@ const totalCredits = (e: Entitlements) => e.credits + e.allowance;
 export function requireMembership(ctx: Ctx, feature: string) {
   if (entitlements(ctx).membership) return;
   throw new HttpError(402, `${feature} needs a Day Pass ($1.99 for 24 hours) or pdftek Pro.`, "membership_required");
+}
+
+// ---------- free trial ----------
+
+/** An account (not a guest) that owns this workspace, has never had a trial, and isn't paying. */
+export function canStartTrial(userId: string, workspaceId: string): boolean {
+  const u = get<{ is_guest: number; trial_used_at: number | null; email: string }>("SELECT is_guest, trial_used_at, email FROM users WHERE id = ?", userId);
+  if (!u || u.is_guest || u.trial_used_at || isAdmin(u.email)) return false;
+  const owner = get("SELECT 1 FROM memberships WHERE workspace_id = ? AND user_id = ? AND role = 'owner'", workspaceId, userId);
+  const ws = get<{ plan: string; trial_ends_at: number | null }>("SELECT plan, trial_ends_at FROM workspaces WHERE id = ?", workspaceId);
+  return Boolean(owner && ws && ws.plan === "free" && !ws.trial_ends_at);
+}
+
+/** Runs from the scheduler: a day before a trial ends, remind the owner when and how much they'll be charged. */
+export async function sendTrialNotices() {
+  const { appUrl, mailConfigured, sendMail } = await import("./mail");
+  if (!mailConfigured()) return;
+  const rows = all<{ id: string; trial_ends_at: number; email: string; name: string }>(
+    `SELECT w.id, w.trial_ends_at, u.email, u.name FROM workspaces w
+       JOIN memberships m ON m.workspace_id = w.id AND m.role = 'owner' JOIN users u ON u.id = m.user_id
+      WHERE w.trial_ends_at BETWEEN ? AND ? AND w.trial_notice < 1 AND w.plan = 'pro' AND u.is_guest = 0`,
+    now(),
+    now() + 86_400_000,
+  );
+  const price = `$${(PRODUCTS.pro_trial.cents / 100).toFixed(2)}`;
+  for (const w of rows) {
+    const first = w.name.split(" ")[0] || "there";
+    const day = new Date(w.trial_ends_at).toUTCString().slice(0, 16);
+    try {
+      await sendMail({
+        to: w.email,
+        subject: `Your pdftek Pro trial ends on ${day}`,
+        heading: "Your free trial ends soon",
+        paragraphs: [
+          `Hi ${first}, your free pdftek Pro trial ends on ${day}. After that, Pro continues at ${price}/month on the card you added, and you keep 400 AI credits every month.`,
+          "Nothing to do if you want to keep it. To stop, cancel before then in Settings → Billing and you won't be charged; your account goes back to the Free plan and your files stay.",
+        ],
+        cta: { label: "Manage my plan", url: appUrl(`/app/${w.id}/settings?tab=billing`) },
+      });
+      run("UPDATE workspaces SET trial_notice = 1 WHERE id = ?", w.id);
+    } catch (err) {
+      console.error("[pdftek] trial notice failed", w.id, err);
+    }
+  }
 }
 
 // ---------- people ----------
@@ -347,6 +397,13 @@ export function fulfill(f: Fulfilment): boolean {
         f.subscriptionId ?? null,
         f.workspaceId,
       );
+    }
+    if (p.trialDays) {
+      // Trial started: Pro now, first charge (and the full monthly credits) when it ends.
+      const ends = now() + p.trialDays * 86_400_000;
+      run("UPDATE workspaces SET trial_ends_at = ?, trial_notice = 0, allowance_credits = ?, allowance_expires_at = ? WHERE id = ?", ends, TRIAL_CREDITS, ends, f.workspaceId);
+      run("UPDATE users SET trial_used_at = ? WHERE id IN (SELECT user_id FROM memberships WHERE workspace_id = ? AND role = 'owner')", now(), f.workspaceId);
+      ledger(f.workspaceId, TRIAL_CREDITS, "Free trial AI credits", { session: f.sessionId });
     }
     return true;
   });

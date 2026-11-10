@@ -2,7 +2,9 @@ import { Fragment } from "react";
 import { pageMeta } from "@/lib/seo-meta";
 import { currentUser } from "@/lib/auth";
 import { MarketingNav, MarketingFooter } from "@/components/marketing";
-import { CreditPacks, PlanCards } from "@/components/pricing";
+import { CreditPacks, PlanCards, type TrialState } from "@/components/pricing";
+import { firstWorkspaceFor } from "@/lib/auth";
+import { canStartTrial } from "@/lib/billing";
 import { FREE_LIMITS, PRICING_FAQ, PRODUCTS, PRO_SEATS } from "@/lib/plans";
 import { Reveal } from "@/components/motion";
 import { I } from "@/components/icons";
@@ -115,6 +117,12 @@ function CellView({ c, yes, no }: { c: Cell; yes: string; no: string }) {
 export default async function Pricing() {
   const user = await currentUser();
   const { t, info, lp } = await getI18n();
+  // The free trial is offered to visitors (they create an account first) and to accounts that haven't had it.
+  let trial: TrialState = { state: "offer" };
+  if (user && !user.is_guest) {
+    const wid = firstWorkspaceFor(user.id);
+    trial = wid && canStartTrial(user.id, wid) ? { state: "offer" } : null;
+  }
   return (
     <div className="mk">
       <JsonLd
@@ -153,7 +161,7 @@ export default async function Pricing() {
         </p>
       </section>
       <section className="mk-section" style={{ paddingTop: 0 }}>
-        <PlanCards />
+        <PlanCards trial={trial} />
         <a href="#compare" className="compare-more">
           {t("See every feature by plan")} ↓
         </a>

@@ -1,5 +1,5 @@
 import { ACCESS_NOTE, SEO_CATEGORIES, SEO_TOOLS, siteUrl } from "@/lib/seo-tools";
-import { FREE_LIMITS, PRO_SEATS, PRODUCTS, usd } from "@/lib/plans";
+import { FREE_LIMITS, PRO_SEATS, PRODUCTS, TRIAL_CREDITS, TRIAL_DAYS, usd } from "@/lib/plans";
 import { LOCALES, localizePath } from "@/lib/i18n/locales";
 
 /** llms.txt: a plain summary of the site for AI assistants (https://llmstxt.org). */
@@ -34,6 +34,7 @@ export function GET() {
     "## Pricing",
     "",
     `- Free: ${FREE_LIMITS.guest.tasksPerDay} tasks per day without an account, ${FREE_LIMITS.free.tasksPerDay} with a free account; files up to ${FREE_LIMITS.free.maxFileMb} MB, ${FREE_LIMITS.free.maxFiles} at a time; no watermark.`,
+    `- Free trial: Pro is free for ${TRIAL_DAYS} days (with ${TRIAL_CREDITS} AI credits). A card is added at the start and charged ${usd(PRODUCTS.pro_trial.cents)}/month when the trial ends; cancelling before then costs nothing. One trial per account.`,
     `- Day Pass: ${usd(PRODUCTS.pass.cents)} one time for 24 hours of everything (editing, e-signatures, read aloud, unlimited tasks, 100 MB files) plus 50 AI credits. No subscription.`,
     `- Pro: ${usd(PRODUCTS.pro_month.cents)}/month or ${usd(PRODUCTS.pro_year.cents)}/year, with 400 AI credits a month.`,
     `- Team: ${usd(PRODUCTS.team_month.cents)}/month for unlimited people, with 1,500 AI credits a month (Day Pass and Pro allow up to 5 people).`,

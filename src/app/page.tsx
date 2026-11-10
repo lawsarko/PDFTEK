@@ -4,7 +4,7 @@ import { I, Logo } from "@/components/icons";
 import { MarketingNav, MarketingFooter } from "@/components/marketing";
 import { JsonLd } from "@/components/json-ld";
 import { SEO_TOOLS, siteUrl } from "@/lib/seo-tools";
-import { PRODUCTS } from "@/lib/plans";
+import { TRIAL_DAYS, PRODUCTS } from "@/lib/plans";
 import { alternatesFor, getI18n } from "@/lib/i18n/server";
 import { LOCALES } from "@/lib/i18n/locales";
 import { ConvertDemo, CountUp, FlowSequence, LiveChat, Reveal, ScrollProgress, Spotlight, TiltOnScroll, Typewriter } from "@/components/motion";
@@ -18,6 +18,10 @@ export async function generateMetadata() {
 const POPULAR = ["fill-pdf-form", "bank-statement-to-excel", "invoice-to-excel", "pdf-to-word", "merge-pdf", "compress-pdf", "word-to-pdf", "jpg-to-pdf", "pdf-to-jpg", "split-pdf", "edit-pdf", "sign-pdf", "protect-pdf", "chat-with-pdf"];
 
 const HOME_FAQ: [string, string][] = [
+  [
+    "Is there a free trial of Pro?",
+    `Yes. Pro is free for ${TRIAL_DAYS} days. You add a card when you start and nothing is charged during the trial; cancel anytime before it ends and you won't be charged at all.`,
+  ],
           ["Does the AI make things up?", "pdftek answers only from your documents and cites the page for every claim. Click a citation and the passage is highlighted in the viewer, so you can check any answer in seconds."],
           ["Can it read scanned documents and other languages?", "Yes. The assistant reads scans directly, and in-browser OCR adds a searchable text layer in 13 languages. Search, read-aloud and conversions work across 40+ languages."],
           ["Are the e-signatures legally binding?", "pdftek captures consent, signer identity via unique email links, IP addresses and timestamps, and adds a certificate of completion to the signed PDF. That's the standard evidence under ESIGN and eIDAS for simple electronic signatures. Check your jurisdiction's requirements for regulated documents."],

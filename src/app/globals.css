@@ -961,3 +961,11 @@ select.ff-field { padding: 0 2px; appearance: auto; }
   .rb-head { flex-wrap: wrap; padding: 6px 8px 0; }
   .rb-search { width: 100%; order: -1; }
 }
+
+/* Free trial */
+.trial-offer { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--amber-line); background: var(--amber-soft); }
+.price-alt { margin-top: 8px; background: none; border: none; color: var(--text-lo); font: inherit; font-size: 12.5px; text-decoration: underline; cursor: pointer; align-self: center; }
+.price-alt:hover { color: var(--text-hi); }
+.trial-banner { background: var(--amber-soft); border-bottom-color: var(--amber-line); }
+.trial-banner svg:first-child { color: var(--amber); }
+.trial-banner.urgent { background: rgba(224, 176, 74, 0.2); }

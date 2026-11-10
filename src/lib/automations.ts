@@ -344,6 +344,8 @@ export async function onEvent(
 let ticking = false;
 let lastCleanup = 0;
 
+let lastTrialRun = 0;
+
 export async function tick() {
   if (ticking) return;
   ticking = true;
@@ -355,6 +357,11 @@ export async function tick() {
     }
     const { sendDueReminders } = await import("./requests");
     await sendDueReminders().catch((err) => console.error("[pdftek] request reminders failed", err));
+    if (now() - lastTrialRun > 3_600_000) {
+      lastTrialRun = now();
+      const { sendTrialNotices } = await import("./billing");
+      await sendTrialNotices().catch((err) => console.error("[pdftek] trial notices failed", err));
+    }
     const due = all<AutomationRow>("SELECT * FROM automations WHERE enabled = 1 AND next_run_at IS NOT NULL AND next_run_at <= ?", now());
     for (const a of due) {
       const trigger = JSON.parse(a.trigger_json) as Trigger;

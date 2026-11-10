@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { PRODUCTS, FREE_LIMITS, PRO_SEATS, type ProductId, usd } from "@/lib/plans";
+import { PRODUCTS, FREE_LIMITS, PRO_SEATS, TRIAL_DAYS, type ProductId, usd } from "@/lib/plans";
 import { startCheckout } from "./paywall";
 import { I } from "./icons";
 import { useToast } from "./toast";
@@ -33,13 +33,29 @@ type Card = {
   cta: string;
   product?: ProductId;
   href?: string;
+  /** A secondary way in, under the main button (e.g. "or subscribe now"). */
+  alt?: { label: string; product: ProductId };
   featured?: boolean;
 };
 
+/** Whether the Pro card offers the free trial (visitors, and accounts that haven't had one). */
+export type TrialState = { state: "offer" } | null;
+
 /** The four plan cards. `current` hides the buy button for the plan already active. */
-export function PlanCards({ workspaceId, current, yearly: initialYearly = false }: { workspaceId?: string; current?: string; yearly?: boolean }) {
+export function PlanCards({
+  workspaceId,
+  current,
+  yearly: initialYearly = false,
+  trial = null,
+}: {
+  workspaceId?: string;
+  current?: string;
+  yearly?: boolean;
+  trial?: TrialState;
+}) {
   const { busy, buy } = useBuy(workspaceId);
   const t = useT();
+
   const [yearly, setYearly] = useState(initialYearly);
   // The highlight follows the plan being pointed at, tapped or tabbed to; Pro when none is.
   const [active, setActive] = useState<string | null>(null);
@@ -67,7 +83,7 @@ export function PlanCards({ workspaceId, current, yearly: initialYearly = false 
       name: t("Day Pass"),
       price: usd(PRODUCTS.pass.cents),
       per: t("one time"),
-      note: t("24 hours · no subscription"),
+      note: t("No account, no subscription · 24 hours"),
       lead: t("Everything in Pro, for 24 hours:"),
       features: [
         t("Unlimited conversions and tasks"),
@@ -102,6 +118,14 @@ export function PlanCards({ workspaceId, current, yearly: initialYearly = false 
       cta: t("Go Pro"),
       product: pro === PRODUCTS.pro_year ? "pro_year" : "pro_month",
       featured: true,
+      ...(trial?.state === "offer"
+        ? {
+            note: t("{days} days free, then {price}/month. Cancel anytime before the trial ends and you won't be charged.", { days: TRIAL_DAYS, price: usd(PRODUCTS.pro_trial.cents) }),
+            cta: t("Start {days}-day free trial", { days: TRIAL_DAYS }),
+            product: "pro_trial" as ProductId,
+            alt: { label: t("or subscribe now"), product: (pro === PRODUCTS.pro_year ? "pro_year" : "pro_month") as ProductId },
+          }
+        : {}),
     },
     {
       key: "team",
@@ -168,6 +192,11 @@ export function PlanCards({ workspaceId, current, yearly: initialYearly = false 
               ) : (
                 <button className={`btn btn-lg ${lit ? "btn-primary" : ""}`} style={{ marginTop: "auto" }} disabled={!!busy} onClick={() => buy(c.product!)}>
                   {busy === c.product && <span className="spinner" />} {c.cta}
+                </button>
+              )}
+              {c.alt && !isCurrent && (
+                <button className="price-alt" disabled={!!busy} onClick={() => buy(c.alt!.product)}>
+                  {busy === c.alt.product && <span className="spinner" />} {c.alt.label}
                 </button>
               )}
             </div>

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { PRODUCTS, EXTRA_TASK_CREDITS, FREE_LIMITS, type Entitlements, type ProductId, usd } from "@/lib/plans";
+import { PRODUCTS, EXTRA_TASK_CREDITS, FREE_LIMITS, TRIAL_DAYS, type Entitlements, type ProductId, usd } from "@/lib/plans";
 import { I } from "./icons";
 import { stripLocale } from "@/lib/i18n/locales";
 import { Modal } from "./modal";
@@ -28,6 +28,9 @@ export function openSaveAccount() {
 export function notifyUsage() {
   if (typeof window !== "undefined") window.dispatchEvent(new Event("pdftek:usage"));
 }
+
+/** Days left until a time, rounded up (a trial ending later today still shows 1). */
+export const daysLeft = (until: number) => Math.max(1, Math.ceil((until - Date.now()) / 86_400_000));
 
 export async function startCheckout(product: ProductId, workspaceId?: string) {
   const res = await fetch("/api/billing/checkout", {
@@ -66,6 +69,7 @@ function useResumeCheckout(onError: (msg: string) => void) {
 
 const PURCHASED: Record<string, string> = {
   pass: "Day Pass active: everything is unlocked for 24 hours.",
+  pro_trial: "Your free Pro trial has started. Everything is unlocked; you won't be charged until it ends.",
   pro_month: "Welcome to pdftek Pro! Unlimited tasks, editing, e-signatures and 400 AI credits are ready.",
   pro_year: "Welcome to pdftek Pro! Unlimited tasks, editing, e-signatures and 400 AI credits are ready.",
   team_month: "Welcome to pdftek Team! Invite your teammates from the account menu → Members.",
@@ -81,6 +85,7 @@ export function PaywallHost() {
   const [busy, setBusy] = useState<ProductId | null>(null);
   const [wid, setWid] = useState<string | undefined>();
   const [save, setSave] = useState<{ email: string | null } | null>(null);
+  const [ent, setEnt] = useState<Entitlements | null>(null);
   useResumeCheckout((msg) => toast(msg, "error"));
 
   // Guests who paid are asked to create an account right away, so the purchase isn't tied to one browser.
@@ -100,7 +105,11 @@ export function PaywallHost() {
   useEffect(() => {
     const open = (e: Event) => {
       setReason((e as CustomEvent<Reason>).detail);
-      setWid(window.location.pathname.match(/\/app\/(ws_[^/?#]+)/)?.[1]);
+      const w = window.location.pathname.match(/\/app\/(ws_[^/?#]+)/)?.[1];
+      setWid(w);
+      // Whether to offer the free trial (accounts that haven't had one) or an account (guests).
+      setEnt(null);
+      if (w) void fetch(`/api/workspaces/${w}/usage`).then((r) => (r.ok ? r.json() : null)).then(setEnt).catch(() => {});
     };
     window.addEventListener("pdftek:paywall", open);
     const url = new URL(window.location.href);
@@ -171,6 +180,19 @@ export function PaywallHost() {
     <Modal title={title} onClose={() => { setReason(null); setBusy(null); }}>
       <div className="col gap-12">
         {reason.message && <p className="muted" style={{ margin: 0 }}>{reason.message}</p>}
+        {!seats && ent && !ent.membership && (ent.trialAvailable || ent.guest) && (
+          <div className="trial-offer">
+            <span className="grow">
+              <b>Try Pro free for {TRIAL_DAYS} days</b>
+              <span className="tiny muted" style={{ display: "block" }}>
+                Then {usd(PRODUCTS.pro_trial.cents)}/month. Cancel anytime before the trial ends and you won&apos;t be charged.
+              </span>
+            </span>
+            <button className="btn btn-primary btn-sm" disabled={!!busy} onClick={() => buy("pro_trial")}>
+              {busy === "pro_trial" && <span className="spinner" />} Start free trial
+            </button>
+          </div>
+        )}
         <div className="col gap-8">
           {options.map((o) => {
             const p = PRODUCTS[o.id];
@@ -234,7 +256,9 @@ export function UsageMeter({ wid }: { wid: string }) {
       : e.tier === "team"
         ? "Team"
         : e.tier === "pro"
-          ? "Pro"
+          ? e.trialEndsAt
+            ? `Pro trial · ${daysLeft(e.trialEndsAt)}d left`
+            : "Pro"
           : e.tier === "pass"
             ? `Day Pass · ${hours}h left`
             : `${Math.max(0, (e.taskLimit ?? 0) - e.tasksToday)} of ${e.taskLimit} free tasks left`;

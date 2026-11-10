@@ -1,5 +1,5 @@
 import { stripe } from "@/lib/stripe";
-import { fulfill, type ProductId } from "@/lib/billing";
+import { PRODUCTS, fulfill, type ProductId } from "@/lib/billing";
 import { get } from "@/lib/db";
 import { sha256 } from "@/lib/ids";
 
@@ -40,7 +40,8 @@ export async function GET(req: Request) {
           wid,
           email,
         )!.n;
-        extra = `&order=${sha256(s.id).slice(0, 16)}&paid=${s.amount_total ?? 0}&new=${before ? 0 : 1}`;
+        const listCents = PRODUCTS[s.metadata.product]?.cents ?? 0;
+        extra = `&order=${sha256(s.id).slice(0, 16)}&paid=${s.amount_total || listCents}&new=${before ? 0 : 1}`;
         fulfill({
           workspaceId: wid,
           product: s.metadata.product,

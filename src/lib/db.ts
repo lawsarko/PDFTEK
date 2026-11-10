@@ -443,6 +443,9 @@ const ADDED_COLUMNS: [table: string, column: string, ddl: string, backfill?: str
   ["doc_requests", "reminders_sent", "INTEGER NOT NULL DEFAULT 0"],
   ["doc_requests", "packet", "INTEGER NOT NULL DEFAULT 0"],
   ["doc_requests", "packet_document_id", "TEXT"],
+  // Free trial: once per account; which reminder emails went out (1 = ending soon, 2 = ended).
+  ["users", "trial_used_at", "INTEGER"],
+  ["workspaces", "trial_notice", "INTEGER NOT NULL DEFAULT 0"],
 ];
 
 type GlobalWithDb = typeof globalThis & { __pdftekDb?: DatabaseSync };

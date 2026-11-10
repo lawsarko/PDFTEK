@@ -6,7 +6,7 @@ import type { Member, WorkspaceInfo } from "@/lib/client/types";
 import { AppShell } from "@/components/app-shell";
 import { I } from "@/components/icons";
 import { useToast } from "@/components/toast";
-import { CreditPacks, PlanCards } from "@/components/pricing";
+import { CreditPacks, PlanCards, type TrialState } from "@/components/pricing";
 import type { Entitlements } from "@/lib/plans";
 
 type Invite = { id: string; email: string; role: string; token: string; created_at: number };
@@ -340,7 +340,8 @@ function Billing({ wid, info }: { wid: string; info: WorkspaceInfo; reload: () =
       setBusy(false);
     }
   };
-  const tierName = { guest: "Free (no account)", free: "Free", pass: "Day Pass", pro: "Pro", team: "Team", admin: "Admin" }[e.tier];
+  const tierName = e.trialEndsAt ? "Pro trial" : { guest: "Free (no account)", free: "Free", pass: "Day Pass", pro: "Pro", team: "Team", admin: "Admin" }[e.tier];
+  const trial: TrialState = e.trialAvailable && owner ? { state: "offer" } : null;
   const current = e.tier === "team" ? "team" : e.tier === "pro" ? "pro" : e.tier === "pass" ? "pass" : e.tier === "admin" ? "" : "free";
   return (
     <div className="col gap-16">
@@ -350,7 +351,9 @@ function Billing({ wid, info }: { wid: string; info: WorkspaceInfo; reload: () =
             <div className="eyebrow">Current plan</div>
             <div style={{ fontFamily: "var(--font-display)", fontSize: 26, fontWeight: 700, marginTop: 4 }}>{tierName}</div>
             <div className="small muted mt-8">
-              {e.taskLimit !== null
+              {e.trialEndsAt
+                ? `Free trial until ${new Date(e.trialEndsAt).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}. Then Pro continues on your card; cancel before then under "Manage subscription" and you won't be charged.`
+                : e.taskLimit !== null
                 ? `${e.tasksToday} of ${e.taskLimit} free tasks used today · files up to ${e.maxFileMb} MB`
                 : e.passUntil
                   ? `Unlimited tasks until ${new Date(e.passUntil).toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" })}`
@@ -379,7 +382,7 @@ function Billing({ wid, info }: { wid: string; info: WorkspaceInfo; reload: () =
       <div className="card">
         <h3 style={{ fontSize: 16 }}>Plans</h3>
         <div className="mt-12">
-          <PlanCards workspaceId={wid} current={current} yearly={false} />
+          <PlanCards workspaceId={wid} current={current} yearly={false} trial={trial} />
         </div>
       </div>
 

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { body, json, publicOrigin, route, badRequest, HttpError } from "@/lib/http";
 import { currentOrGuest, membership } from "@/lib/auth";
 import { get } from "@/lib/db";
-import { PRODUCTS, fakePayments, fulfill, paymentsEnabled, type ProductId } from "@/lib/billing";
+import { PRODUCTS, canStartTrial, fakePayments, fulfill, paymentsEnabled, type ProductId } from "@/lib/billing";
 import { stripe } from "@/lib/stripe";
 import { id } from "@/lib/ids";
 
@@ -37,6 +37,9 @@ export const POST = route(async (req) => {
     if (role !== "owner") throw badRequest("Only the workspace owner can start a subscription.");
     const ws = get<{ plan: string }>("SELECT plan FROM workspaces WHERE id = ?", wid);
     if (ws?.plan === product.plan) throw badRequest("This workspace already has that plan. Manage it from Settings → Billing.");
+    if (product.trialDays && !canStartTrial(user.id, wid)) {
+      throw new HttpError(409, "This account has already had its free trial. You can subscribe to Pro directly, or get a Day Pass for 24 hours.", "trial_used");
+    }
   }
   const origin = publicOrigin(req);
   // After paying, people go where they can use what they bought: back to the app page they were on
@@ -69,7 +72,15 @@ export const POST = route(async (req) => {
     line_items: { 0: { price_data: priceData, quantity: 1 } },
     metadata: { workspace_id: wid, product: input.product },
     ...(product.mode === "subscription"
-      ? { subscription_data: { metadata: { workspace_id: wid, product: input.product, plan: product.plan } } }
+      ? {
+          subscription_data: {
+            metadata: { workspace_id: wid, product: input.product, plan: product.plan },
+            // Free trial: Stripe collects the card now and charges when the trial ends; if the card is
+            // removed or the subscription cancelled before then, it simply ends.
+            ...(product.trialDays ? { trial_period_days: product.trialDays, trial_settings: { end_behavior: { missing_payment_method: "cancel" } } } : {}),
+          },
+          ...(product.trialDays ? { payment_method_collection: "always" } : {}),
+        }
       : {
           // Stripe refuses customer_creation together with an existing customer (someone who has
           // bought before), so it's only sent for first-time buyers.

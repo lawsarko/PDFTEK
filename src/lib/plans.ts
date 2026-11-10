@@ -10,13 +10,17 @@ export const FREE_LIMITS = {
 export const PAID_LIMITS = { tasksPerDay: 2000, maxFileMb: 100, maxFiles: 50 } as const; // fair use
 /** People in a workspace (you included) on a Day Pass or Pro. Team has no limit; Free is just you. */
 export const PRO_SEATS = 5;
+/** Free Pro trial: card collected at signup by Stripe, first charge when it ends, cancel anytime before. */
+export const TRIAL_DAYS = 3;
+/** AI credits during the trial (AI costs real money per request); the full 400 start with the first paid month. */
+export const TRIAL_CREDITS = 30;
 
 /** A task beyond the free daily limit costs this many credits. */
 export const EXTRA_TASK_CREDITS = 2;
 /** Minimum balance to start an AI request (the real cost is charged after it finishes). */
 export const AI_MIN_CREDITS = 5;
 
-export type ProductId = "pass" | "pro_month" | "pro_year" | "team_month" | "credits_250" | "credits_900" | "credits_3000";
+export type ProductId = "pass" | "pro_trial" | "pro_month" | "pro_year" | "team_month" | "credits_250" | "credits_900" | "credits_3000";
 export type Product = {
   name: string;
   description: string;
@@ -26,6 +30,8 @@ export type Product = {
   plan?: "pro" | "business";
   credits?: number;
   passHours?: number;
+  /** Free days before the first charge (Stripe collects the card at checkout). */
+  trialDays?: number;
 };
 
 export const PRODUCTS: Record<ProductId, Product> = {
@@ -36,6 +42,15 @@ export const PRODUCTS: Record<ProductId, Product> = {
     mode: "payment",
     passHours: 24,
     credits: 50,
+  },
+  pro_trial: {
+    name: "pdftek Pro",
+    description: "3 days free, then billed monthly. Cancel anytime before the trial ends and you won't be charged.",
+    cents: 599,
+    mode: "subscription",
+    interval: "month",
+    plan: "pro",
+    trialDays: TRIAL_DAYS,
   },
   pro_month: { name: "pdftek Pro", description: "Unlimited tasks, editing, read aloud, e-signatures, up to 5 people and 400 AI credits every month.", cents: 599, mode: "subscription", interval: "month", plan: "pro" },
   pro_year: { name: "pdftek Pro (yearly)", description: "Everything in Pro, billed yearly: 4 months free.", cents: 4799, mode: "subscription", interval: "year", plan: "pro" },
@@ -64,9 +79,21 @@ export type Entitlements = {
   guest: boolean;
   /** Email given at checkout, to pre-fill "create your account" for paying guests. */
   purchaseEmail: string | null;
+  /** End of the free Pro trial while it runs. */
+  trialEndsAt: number | null;
+  /** This account can still start its free trial. */
+  trialAvailable: boolean;
 };
 
 export const PRICING_FAQ: [string, string][] = [
+  [
+    "Is there a free trial?",
+    `Yes. Pro comes with ${TRIAL_DAYS} days free: editing, e-signatures, bulk tools, document requests and ${TRIAL_CREDITS} AI credits. You add a card when you start, and nothing is charged during the trial. If you keep Pro, the monthly price starts when the trial ends; cancel anytime before then in Settings → Billing and you won't be charged. We email you the day before it ends.`,
+  ],
+  [
+    "Should I get a Day Pass or the free trial?",
+    "The free trial suits you if you'll use pdftek regularly: try Pro for a few days, then keep it or cancel before the trial ends. The Day Pass is for one-off jobs: pay once, no account, no subscription, nothing to cancel.",
+  ],
   ["Do I need an account?", "No. Every free tool works without signing up, and you can buy a Day Pass or credits without an account too. A free account doubles your daily free tasks and keeps your files."],
   [
     "What counts as a task?",
