@@ -88,7 +88,7 @@ function guides(t: (s: string, v?: Record<string, string | number>) => string): 
     {
       id: "edit",
       icon: <I.edit size={18} />,
-      title: t("Edit text, images and redact"),
+      title: t("Edit PDF and redact"),
       plan: "member",
       intro: t("Change the words in a PDF, add text and images, highlight, draw, and permanently remove sensitive information."),
       steps: [
@@ -169,11 +169,11 @@ function guides(t: (s: string, v?: Record<string, string | number>) => string): 
         t("Open a document and use Chat in the assistant panel on the right. Ask anything, like “When does this lease end?”"),
         t("Click a citation to jump to the exact page."),
         t("Use Extract to pull tables and key terms into a spreadsheet."),
-        t("Click Read aloud to listen, with the voice, language and speed you choose (Day Pass, Pro or Team)."),
+        t("Click Read PDF to listen, with the voice, language and speed you choose (Day Pass, Pro or Team)."),
       ],
       try: [
         { label: t("Ask AI about a PDF"), href: "/go/ask" },
-        { label: t("Read aloud"), href: "/go/read-aloud" },
+        { label: t("Read PDF"), href: "/go/read-aloud" },
       ],
     },
     {

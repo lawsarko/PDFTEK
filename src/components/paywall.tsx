@@ -172,7 +172,7 @@ export function PaywallHost() {
       ]
     : [
         { id: "pass", badge: "No subscription", sub: "Everything unlocked for 24 hours + 50 AI credits" },
-        { id: "pro_month", badge: "Most popular", sub: "Unlimited tasks, edit, read aloud, e-sign + 400 AI credits/mo" },
+        { id: "pro_month", badge: "Most popular", sub: "Unlimited tasks, Edit PDF, Read PDF, e-sign + 400 AI credits/mo" },
         ...(code === "limit_reached" ? [{ id: "credits_250" as ProductId, sub: `Pay per task: ${EXTRA_TASK_CREDITS} credits each (≈125 tasks), never expire` }] : [{ id: "pro_year" as ProductId, sub: "Pro billed yearly: 4 months free" }]),
       ];
 

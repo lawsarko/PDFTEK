@@ -44,7 +44,7 @@ export const RIBBON: { key: string; label: string; acts: Act[] }[] = [
     key: "edit",
     label: "Edit",
     acts: [
-      { key: "edit", label: "Edit text & images", icon: <I.edit size={18} />, hint: "Change text, move and add images", pro: true },
+      { key: "edit", label: "Edit PDF", icon: <I.edit size={18} />, hint: "Change text, move and add images", pro: true },
       { key: "edit-text", label: "Add text", icon: <I.text size={18} />, hint: "Type anywhere on the page", pro: true },
       { key: "edit-mark", label: "Highlight", icon: <I.highlight size={18} />, hint: "Highlight, underline or strike out", pro: true },
       { key: "edit-ink", label: "Draw", icon: <I.pencil size={18} />, hint: "Pen, marker and shapes", pro: true },
@@ -96,7 +96,7 @@ export const RIBBON: { key: string; label: string; acts: Act[] }[] = [
       { key: "ask", label: "Ask a question", icon: <I.chat size={18} />, hint: "Answers cite the page they came from", ai: true },
       { key: "summarize", label: "Summarize", icon: <I.sparkle size={18} />, hint: "Key points in a few lines", ai: true },
       { key: "extract-data", label: "Extract data", icon: <I.table size={18} />, hint: "Pull tables and key terms into a sheet", ai: true },
-      { key: "read", label: "Read aloud", icon: <I.speaker size={18} />, hint: "Listen in 11 languages", pro: true },
+      { key: "read", label: "Read PDF", icon: <I.speaker size={18} />, hint: "Listen in 11 languages", pro: true },
       { key: "fill", label: "Fill form", icon: <I.form size={18} />, hint: "AI fills forms from your profile", ai: true },
     ],
   },

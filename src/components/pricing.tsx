@@ -88,8 +88,8 @@ export function PlanCards({
       features: [
         t("Unlimited conversions and tasks"),
         t("Files up to 100 MB, 50 at a time"),
-        t("Edit text and images, true redaction"),
-        t("Bulk convert, e-signatures, read aloud"),
+        t("Edit PDF: text, images and true redaction"),
+        t("Bulk convert, e-signatures, Read PDF"),
         t("Invite up to {n} people", { n: PRO_SEATS - 1 }),
         t("50 AI credits included"),
         t("Pay once, nothing renews"),
@@ -107,10 +107,10 @@ export function PlanCards({
       features: [
         t("Unlimited conversions and tasks, no daily limit"),
         t("Files up to 100 MB, 50 at a time"),
-        t("Edit text and images, highlight, draw, true redaction"),
+        t("Edit PDF: text, images, highlight, draw and true redaction"),
         t("Bulk convert many PDFs to Word or Excel in one ZIP"),
         t("E-signature requests with audit certificates"),
-        t("Read aloud in 11 languages"),
+        t("Read PDF: listen in 11 languages"),
         t("Automations and document requests"),
         t("Up to {n} people: you and {m} teammates", { n: PRO_SEATS, m: PRO_SEATS - 1 }),
         t("400 AI credits a month: chat with PDFs, AI form filling, statements and invoices to Excel"),

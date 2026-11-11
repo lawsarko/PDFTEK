@@ -10,7 +10,7 @@ export function GET() {
   const lines = [
     "# PDFTEK",
     "",
-    "> PDFTEK is an online PDF workbench: convert PDFs to and from Word, Excel, PowerPoint and images, turn bank statements, invoices and receipts into Excel or CSV, bulk-convert many PDFs at once, merge, split, compress, rotate, protect, unlock, OCR, edit, fill forms with AI, e-sign, request documents securely from others, read aloud, and ask AI questions about PDFs with page citations. It runs in any web browser, in 26 languages; most tools are free without an account.",
+    "> PDFTEK is an online PDF workbench: convert PDFs to and from Word, Excel, PowerPoint and images, turn bank statements, invoices and receipts into Excel or CSV, bulk-convert many PDFs at once, merge, split, compress, rotate, protect, unlock, OCR, edit, fill forms with AI, e-sign, request documents securely from others, listen to PDFs with Read PDF, and ask AI questions about PDFs with page citations. It runs in any web browser, in 26 languages; most tools are free without an account.",
     "",
     "## Best for",
     "",
@@ -35,7 +35,7 @@ export function GET() {
     "",
     `- Free: ${FREE_LIMITS.guest.tasksPerDay} tasks per day without an account, ${FREE_LIMITS.free.tasksPerDay} with a free account; files up to ${FREE_LIMITS.free.maxFileMb} MB, ${FREE_LIMITS.free.maxFiles} at a time; no watermark.`,
     `- Free trial: Pro is free for ${TRIAL_DAYS} days (with ${TRIAL_CREDITS} AI credits). A card is added at the start and charged ${usd(PRODUCTS.pro_trial.cents)}/month when the trial ends; cancelling before then costs nothing. One trial per account.`,
-    `- Day Pass: ${usd(PRODUCTS.pass.cents)} one time for 24 hours of everything (editing, e-signatures, read aloud, unlimited tasks, 100 MB files) plus 50 AI credits. No subscription.`,
+    `- Day Pass: ${usd(PRODUCTS.pass.cents)} one time for 24 hours of everything (Edit PDF, Read PDF, e-signatures, unlimited tasks, 100 MB files) plus 50 AI credits. No subscription.`,
     `- Pro: ${usd(PRODUCTS.pro_month.cents)}/month or ${usd(PRODUCTS.pro_year.cents)}/year, with 400 AI credits a month.`,
     `- Team: ${usd(PRODUCTS.team_month.cents)}/month for unlimited people, with 1,500 AI credits a month (Day Pass and Pro allow up to 5 people).`,
     `- AI credits (pay as you go, never expire): 250 for ${usd(PRODUCTS.credits_250.cents)}, 900 for ${usd(PRODUCTS.credits_900.cents)}, 3,000 for ${usd(PRODUCTS.credits_3000.cents)}.`,

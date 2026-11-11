@@ -37,7 +37,7 @@ export type Product = {
 export const PRODUCTS: Record<ProductId, Product> = {
   pass: {
     name: "pdftek Day Pass",
-    description: "24 hours of unlimited tasks, editing, read aloud and e-signatures, plus 50 AI credits.",
+    description: "24 hours of unlimited tasks, Edit PDF, Read PDF and e-signatures, plus 50 AI credits.",
     cents: 199,
     mode: "payment",
     passHours: 24,
@@ -52,7 +52,7 @@ export const PRODUCTS: Record<ProductId, Product> = {
     plan: "pro",
     trialDays: TRIAL_DAYS,
   },
-  pro_month: { name: "pdftek Pro", description: "Unlimited tasks, editing, read aloud, e-signatures, up to 5 people and 400 AI credits every month.", cents: 599, mode: "subscription", interval: "month", plan: "pro" },
+  pro_month: { name: "pdftek Pro", description: "Unlimited tasks, Edit PDF, Read PDF, e-signatures, up to 5 people and 400 AI credits every month.", cents: 599, mode: "subscription", interval: "month", plan: "pro" },
   pro_year: { name: "pdftek Pro (yearly)", description: "Everything in Pro, billed yearly: 4 months free.", cents: 4799, mode: "subscription", interval: "year", plan: "pro" },
   team_month: { name: "pdftek Team", description: "Everything in Pro for unlimited people, with 1,500 AI credits every month.", cents: 1499, mode: "subscription", interval: "month", plan: "business" },
   credits_250: { name: "250 AI credits", description: "Pay as you go. Credits never expire.", cents: 299, mode: "payment", credits: 250 },
@@ -111,7 +111,7 @@ export const PRICING_FAQ: [string, string][] = [
     "How much do bank statement and invoice conversions cost?",
     "Your first statement or invoice document each month (up to 10 pages) is free. After that they use AI credits, about 6 credits per page. Converting many files at once and combining them into one spreadsheet needs a Day Pass or Pro.",
   ],
-  ["What does the Day Pass include?", `24 hours of everything in Pro: unlimited tasks, files up to ${PAID_LIMITS.maxFileMb} MB, editing, read aloud and e-signatures, plus 50 AI credits. It doesn't renew.`],
+  ["What does the Day Pass include?", `24 hours of everything in Pro: unlimited tasks, files up to ${PAID_LIMITS.maxFileMb} MB, Edit PDF, Read PDF and e-signatures, plus 50 AI credits. It doesn't renew.`],
   ["Can I cancel Pro anytime?", "Yes. Cancel from Settings → Billing in one click; Pro stays active until the end of the period you paid for."],
   ["Is my data safe?", "Files are encrypted in transit, never sold or used to train AI, and files from visitors without an account are deleted after 24 hours."],
 ];

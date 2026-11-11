@@ -117,7 +117,7 @@ export function ReadAloud({ doc, startPage, onClose }: { doc: Doc; startPage: nu
 
   const cur = sentences?.[idx];
   return (
-    <div className="tts-bar" role="region" aria-label="Read aloud">
+    <div className="tts-bar" role="region" aria-label="Read PDF">
       {!supported ? (
         <div className="small">Your browser doesn’t support speech synthesis.</div>
       ) : !sentences ? (
@@ -156,7 +156,7 @@ export function ReadAloud({ doc, startPage, onClose }: { doc: Doc; startPage: nu
             {idx + 1}/{sentences.length}
           </span>
         )}
-        <button className="icon-btn" onClick={onClose} aria-label="Close read aloud">
+        <button className="icon-btn" onClick={onClose} aria-label="Close Read PDF">
           <I.x size={16} />
         </button>
       </div>

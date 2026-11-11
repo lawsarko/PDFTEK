@@ -126,7 +126,7 @@ export function DocumentPane() {
 
   const startEdit = (tool: EditorTool) => {
     if (lockedByOther) return toast(`${active?.checkedOutBy?.name} has the edit lock. You can edit once it's checked in or handed to you.`, "info");
-    if (requirePro("Text editing")) setEditing(tool);
+    if (requirePro("Edit PDF")) setEditing(tool);
   };
   const toAssistant = (tab: string) => {
     setAssistantTab(tab);
@@ -226,7 +226,7 @@ export function DocumentPane() {
         break;
       case "read":
         if (tts) setTts(false);
-        else if (requirePro("Read aloud")) setTts(true);
+        else if (requirePro("Read PDF")) setTts(true);
         break;
     }
   };
@@ -243,7 +243,7 @@ export function DocumentPane() {
       member={member}
       hasDoc={!!active}
       ready={!!pdf}
-      labels={{ checkout: lockedByMe ? "Check in" : "Check out", read: tts ? "Stop reading" : "Read aloud" }}
+      labels={{ checkout: lockedByMe ? "Check in" : "Check out", read: tts ? "Stop reading" : "Read PDF" }}
       menu={
         formatsOpen && active
           ? {

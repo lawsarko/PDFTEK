@@ -62,7 +62,7 @@ function compareGroups(t: (s: string, v?: Record<string, string | number>) => st
     {
       group: t("Edit"),
       rows: [
-        [t("Edit existing text and images"), false, true, true, true],
+        [t("Edit PDF: change text and images"), false, true, true, true],
         [t("Add text, highlight, draw and shapes"), false, true, true, true],
         [t("True redaction (content removed, not just covered)"), false, true, true, true],
       ],
@@ -83,7 +83,7 @@ function compareGroups(t: (s: string, v?: Record<string, string | number>) => st
         [t("Chat with PDFs, answers cite the page"), credits, credits, credits, credits],
         [t("Bank statements and invoices to Excel"), t("1 document / month"), credits, credits, credits],
         [t("Many statements or invoices into one spreadsheet"), false, true, true, true],
-        [t("Read aloud in 11 languages"), false, true, true, true],
+        [t("Read PDF: listen in 11 languages"), false, true, true, true],
       ],
     },
     {

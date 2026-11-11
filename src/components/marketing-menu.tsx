@@ -167,7 +167,7 @@ const ENTRIES: Entry[] = [
   { label: "Fill form", href: "/go/fill-form", icon: <I.form size={18} /> },
   { label: "Sign", href: "/go/sign", icon: <I.sign size={18} /> },
   { label: "Organize", groups: ORGANIZE, icon: <I.layers size={18} /> },
-  { label: "Read aloud", href: "/go/read-aloud", icon: <I.speaker size={18} /> },
+  { label: "Read PDF", href: "/go/read-aloud", icon: <I.speaker size={18} /> },
   {
     label: "Ask AI",
     href: "/go/ask",

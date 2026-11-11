@@ -36,8 +36,8 @@ const MARQUEE_A = [
   ["JPG", "PDF"], ["PDF", "PNG"], ["Scan", "searchable PDF"], ["HEIC", "PDF"], ["PDF", "TIFF"], ["Text", "PDF"],
 ];
 const MARQUEE_B = [
-  "✍️ E-signatures", "🔍 OCR in 13 languages", "🤖 AI answers with page citations", "✂️ Split & merge", "🖍️ Click-to-edit text",
-  "⬛ True redaction", "🔔 Automations", "📥 Document requests", "🔊 Read aloud", "🧾 Extract to Excel", "🔒 Version history", "🧭 Compare & redline",
+  "✍️ E-signatures", "🔍 OCR in 13 languages", "🤖 AI answers with page citations", "✂️ Split & merge", "🖍️ Edit PDF",
+  "⬛ True redaction", "🔔 Automations", "📥 Document requests", "🔊 Read PDF", "🧾 Extract to Excel", "🔒 Version history", "🧭 Compare & redline",
 ];
 
 const FEATURES: { icon: React.ReactNode; title: string; body: string }[] = [

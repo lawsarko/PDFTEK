@@ -9,7 +9,7 @@ import type { Ctx } from "./auth";
  *
  *  - Everyone (signed in or not) gets the everyday tools free up to a daily task limit.
  *  - Past the limit, a task costs credits; or buy a Day Pass / Pro for unlimited tasks.
- *  - Edit, Read aloud, e-signatures, document requests and automations need a Day Pass or a
+ *  - Edit PDF, Read PDF, e-signatures, document requests and automations need a Day Pass or a
  *    membership.
  *  - Pro has a 3-day free trial: Stripe collects the card at checkout and charges when the trial
  *    ends (cancel before then and nothing is charged). One trial per account; 50 AI credits during
