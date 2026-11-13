@@ -415,6 +415,22 @@ CREATE TABLE IF NOT EXISTS contact_messages (
   emailed INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL
 );
+
+-- Optional feedback from the workbench ("did pdftek give you what you needed?").
+CREATE TABLE IF NOT EXISTS feedback (
+  id TEXT PRIMARY KEY,
+  user_id TEXT,
+  workspace_id TEXT,
+  answer TEXT NOT NULL,
+  looking_for TEXT NOT NULL DEFAULT '',
+  message TEXT NOT NULL DEFAULT '',
+  tier TEXT,
+  locale TEXT,
+  page TEXT,
+  emailed INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS feedback_created ON feedback(created_at);
 `;
 
 /** Columns added after the first release; created on startup when missing. */

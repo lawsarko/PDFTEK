@@ -9,6 +9,7 @@ import { LanguageDialog, useLanguageName } from "../i18n";
 import { Menu, Modal } from "../modal";
 import { useToast } from "../toast";
 import { useWB } from "./context";
+import { FeedbackDialog } from "./feedback";
 
 type WsLite = { id: string; name: string; role: string; plan: string };
 type Hit = { document_id: string; page: number; snippet: string; name: string };
@@ -24,6 +25,7 @@ export function TopBar() {
   const [langOpen, setLangOpen] = useState(false);
   const languageName = useLanguageName();
   const [newWs, setNewWs] = useState(false);
+  const [feedback, setFeedback] = useState(false);
 
   useEffect(() => {
     api<{ workspaces: WsLite[] }>("/api/me").then((r) => setWorkspaces(r.workspaces)).catch(() => {});
@@ -86,6 +88,9 @@ export function TopBar() {
       <Link href={`/app/${wid}/compare`} className="tool-btn hide-mobile" title="Compare documents">
         <I.compare size={14} /> Compare
       </Link>
+      <button className="tool-btn hide-mobile" onClick={() => setFeedback(true)} title="Tell us if pdftek gave you what you needed">
+        <I.chat size={14} /> Feedback
+      </button>
       <div className="grow show-mobile" />
       <Notifications />
       <div className="menu-wrap">
@@ -123,6 +128,15 @@ export function TopBar() {
           >
             <I.globe size={14} /> {languageName}
           </button>
+          <button
+            className="menu-item"
+            onClick={() => {
+              setUserMenu(false);
+              setFeedback(true);
+            }}
+          >
+            <I.chat size={14} /> Send feedback
+          </button>
           <Link className="menu-item" href="/contact">
             <I.mail size={14} /> Contact support
           </Link>
@@ -134,6 +148,7 @@ export function TopBar() {
       </div>
 
       {langOpen && <LanguageDialog onClose={() => setLangOpen(false)} />}
+      {feedback && <FeedbackDialog wid={wid} onClose={() => setFeedback(false)} />}
       {newWs && (
         <NewWorkspaceModal
           onClose={() => setNewWs(false)}
