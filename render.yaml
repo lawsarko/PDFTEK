@@ -1,0 +1,39 @@
+# Render Blueprint: deploys pdftek from the Dockerfile, which bundles LibreOffice so Word, Excel and
+# PowerPoint files convert to PDF. In Render: New > Blueprint, pick this repository, then fill in the
+# secret values when prompted.
+services:
+  - type: web
+    name: pdftek
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter # a persistent disk requires a paid instance type
+    healthCheckPath: /
+    envVars:
+      - key: PORT
+        value: "3000"
+      - key: DATA_DIR
+        value: /data
+      - key: APP_URL
+        sync: false # e.g. https://pdftek.onrender.com
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: SMTP_URL
+        sync: false # optional: signature-request emails, e.g. smtps://resend:KEY@smtp.resend.com:465
+      - key: MAIL_FROM
+        sync: false # e.g. pdftek <no-reply@yourdomain.com>
+      - key: SUPABASE_URL
+        sync: false # sign-in (passwords, Google, confirmation and reset emails)
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false # optional: moves older accounts into Supabase
+      - key: ADMIN_EMAILS
+        sync: false # your own account email: unlimited use, free AI
+    disk:
+      name: pdftek-data
+      mountPath: /data
+      sizeGB: 5
