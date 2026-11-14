@@ -52,9 +52,9 @@ export function TopBar() {
           ))}
         </div>
       ) : null}
-      <div className="menu-wrap">
-        <button className="btn btn-sm btn-ghost" onClick={() => setWsMenu((v) => !v)} aria-haspopup="menu">
-          <span className="ellipsis" style={{ maxWidth: 140 }}>
+      <div className="menu-wrap ws-wrap">
+        <button className="btn btn-sm btn-ghost ws-btn" onClick={() => setWsMenu((v) => !v)} aria-haspopup="menu">
+          <span className="ellipsis ws-name">
             {workspaces.length > 1 && workspaces.length <= 4 ? "" : info.workspace.name}
           </span>
           <I.chevron size={14} />

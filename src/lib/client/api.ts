@@ -45,7 +45,18 @@ export function errMsg(e: unknown) {
   return e instanceof Error ? e.message : "Something went wrong.";
 }
 
-export function download(blob: Blob, name: string) {
+export const FILE_READY = "pdftek:file-ready";
+export const DOWNLOADED = "pdftek:downloaded";
+
+/** Touch devices (phones and tablets), where a browser download is hard to find afterwards. */
+export function isHandheld() {
+  if (typeof window === "undefined") return false;
+  const coarse = window.matchMedia?.("(pointer: coarse)").matches && !window.matchMedia?.("(pointer: fine)").matches;
+  return coarse || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
+}
+
+/** The classic browser download. */
+export function saveBlob(blob: Blob, name: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -53,7 +64,21 @@ export function download(blob: Blob, name: string) {
   document.body.appendChild(a);
   a.click();
   a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+/**
+ * Hand a finished file to the person. On phones and tablets it opens the "Your file is ready"
+ * sheet (Save to Files, share, open); on computers it downloads straight away.
+ */
+export function download(blob: Blob, name: string) {
+  const w = window as unknown as { __pdftekSaveSheet?: boolean };
+  if (w.__pdftekSaveSheet && isHandheld()) {
+    window.dispatchEvent(new CustomEvent(FILE_READY, { detail: { blob, name } }));
+    return;
+  }
+  saveBlob(blob, name);
+  window.dispatchEvent(new CustomEvent(DOWNLOADED, { detail: { name } }));
 }
 
 export function timeAgo(t: number) {

@@ -242,7 +242,8 @@ function TrialBanner({ wid, info }: { wid: string; info: WorkspaceInfo }) {
       <span className="grow">
         {mode === "offer" ? (
           <>
-            <b>Try everything in Pro free for {TRIAL_DAYS} days.</b> Editing, e-signatures, bulk tools and AI. Then {usd(PRODUCTS.pro_trial.cents)}/month; cancel anytime before the trial ends and you won&apos;t be charged.
+            <b>Try everything in Pro free for {TRIAL_DAYS} days.</b>{" "}
+            <span className="hide-mobile">Editing, e-signatures, bulk tools and AI. Then {usd(PRODUCTS.pro_trial.cents)}/month; cancel anytime before the trial ends and you won&apos;t be charged.</span>
           </>
         ) : (
           <>

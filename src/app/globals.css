@@ -178,6 +178,16 @@ button.chip:hover { border-color: var(--steel); color: var(--text-hi); }
 .ws-chip:hover { color: var(--text-hi); }
 .ws-chip.active { background: var(--amber); color: #1a1206; font-weight: 600; }
 .topbar-search { flex: 1; max-width: 460px; position: relative; }
+.ws-name { max-width: 140px; }
+@media (max-width: 560px) {
+  /* Everything in the top bar fits on a phone: the workspace name shortens instead of pushing
+     the bell and account menu off the screen. */
+  .topbar { gap: 6px; padding: 0 10px; }
+  .topbar > * { flex-shrink: 0; }
+  .topbar > .ws-wrap { flex-shrink: 1; min-width: 0; }
+  .ws-btn { max-width: 100%; min-width: 0; padding-left: 6px; padding-right: 6px; }
+  .ws-name { max-width: 120px; min-width: 0; }
+}
 .topbar-search .input { padding-left: 32px; background: var(--panel); }
 .topbar-search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--slate); }
 .search-results { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); z-index: 70; max-height: 60vh; overflow-y: auto; padding: 6px; }
@@ -958,8 +968,49 @@ select.ff-field { padding: 0 2px; appearance: auto; }
   .rb-ico { width: 30px; height: 30px; }
 }
 @media (max-width: 560px) {
-  .rb-head { flex-wrap: wrap; padding: 6px 8px 0; }
-  .rb-search { width: 100%; order: -1; }
+  .rb-head { flex-wrap: wrap; gap: 6px; padding: 8px 8px 0; }
+  .rb-search { width: 100%; order: -1; height: 36px; }
+  .rb-search input { font-size: 16px; } /* 16px stops iPhone zooming in on focus */
+  /* Tabs and tools scroll sideways, with a fade showing there is more. */
+  .rb-tabs { mask-image: linear-gradient(to right, #000 85%, transparent); -webkit-mask-image: linear-gradient(to right, #000 85%, transparent); padding-right: 24px; }
+  .rb-tab { padding: 10px 11px; font-size: 13.5px; }
+  /* Tools: one row of equal tiles, in order, that scrolls sideways so the document stays in view.
+     The tile cut off at the edge shows there is more to swipe. */
+  .ribbon { z-index: 40; } /* dropdowns (e.g. More formats) sit above the page zoom controls */
+  .rb-body {
+    display: flex; flex-wrap: nowrap; gap: 4px; padding: 8px 8px 10px; overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity; scrollbar-width: none;
+  }
+  .rb-body::-webkit-scrollbar { display: none; }
+  .rb-body > .menu-wrap { scroll-snap-align: start; flex: 0 0 auto; }
+  .rb-btn { width: 80px; min-width: 0; max-width: none; height: 84px; padding: 7px 4px 6px; gap: 5px; justify-content: flex-start; }
+  .rb-ico { width: 34px; height: 34px; flex-shrink: 0; }
+  .rb-label { font-size: 11px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
+  /* Badges sit on the icon's corner instead of over the label. */
+  .rb-btn .pro-tag, .rb-btn .rb-ai { top: 1px; right: 8px; font-size: 8px; padding: 0 3px; line-height: 13px; }
+  .rb-btn .pro-tag + .rb-ai { top: 16px; }
+  .rb-body .menu-wrap > .menu { position: fixed; left: 8px; right: 8px; top: auto; bottom: 72px; max-height: 60vh; overflow-y: auto; }
+}
+
+/* "Your file is ready": save / share sheet (phones and tablets) */
+.save-backdrop { position: fixed; inset: 0; z-index: 120; background: rgba(5, 8, 12, .62); display: flex; align-items: center; justify-content: center; padding: 16px; animation: save-fade .15s ease-out; }
+.save-sheet { width: 100%; max-width: 420px; min-width: 0; box-sizing: border-box; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px 18px; box-shadow: var(--shadow); }
+.save-grip { display: none; width: 38px; height: 4px; border-radius: 4px; background: var(--line); margin: 0 auto 10px; }
+.save-title { font-size: 17px; font-weight: 600; margin: 0; color: var(--text-hi); }
+.save-file { display: flex; align-items: center; gap: 12px; margin: 14px 0; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--ink); }
+.save-ext { flex-shrink: 0; width: 44px; height: 52px; border-radius: 8px; display: grid; place-items: center; font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--amber); background: var(--amber-soft); border: 1px solid var(--amber-line); }
+.save-name { display: block; font-weight: 500; color: var(--text-hi); }
+.save-actions { display: flex; flex-direction: column; gap: 8px; }
+.save-btn { justify-content: flex-start; gap: 12px; min-height: 56px; padding: 10px 14px; text-align: left; font-size: 15px; width: 100%; white-space: normal; }
+.save-hint { display: block; font-size: 12px; font-weight: 400; opacity: .75; margin-top: 2px; }
+/* While the sheet is open, messages show at the top so they don't cover its buttons. */
+body:has(.save-backdrop) .toasts { bottom: auto; top: calc(14px + env(safe-area-inset-top)); }
+@keyframes save-fade { from { opacity: 0; } }
+@keyframes save-up { from { transform: translateY(40px); opacity: .4; } }
+@media (max-width: 560px) {
+  .save-backdrop { align-items: flex-end; padding: 0; }
+  .save-sheet { max-width: none; border-radius: 18px 18px 0 0; border-bottom: none; padding-bottom: calc(18px + env(safe-area-inset-bottom)); animation: save-up .2s ease-out; }
+  .save-grip { display: block; }
 }
 
 /* Free trial */

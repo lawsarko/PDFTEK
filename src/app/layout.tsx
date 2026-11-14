@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import "./globals.css";
 import { ToastProvider } from "@/components/toast";
+import { SaveSheetHost } from "@/components/save-sheet";
 import { PaywallHost } from "@/components/paywall";
 import { AuthLinkCatcher } from "@/components/auth-link-catcher";
 import { PurchaseTracker } from "@/components/purchase-tracker";
@@ -123,6 +124,7 @@ ${TAG_IDS.map((id) => `gtag('config', '${id}');`).join("\n")}`}
           <ToastProvider>
             {children}
             <PaywallHost />
+            <SaveSheetHost />
             <AuthLinkCatcher />
           </ToastProvider>
           <DomTranslator locale={locale} />
