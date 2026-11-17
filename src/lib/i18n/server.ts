@@ -4,6 +4,7 @@ import { all, get, run } from "../db";
 import { now } from "../ids";
 import { DEFAULT_LOCALE, LOCALE_COOKIE, LOCALE_HEADER, isLocale, localeInfo, localizePath, LOCALES } from "./locales";
 import { compile, fill, isPattern, norm, type Dict } from "./match";
+import { REVIEWED } from "./reviewed";
 
 /**
  * Server-side translation. Pages call `const { t } = await getI18n()` and wrap their English text in
@@ -56,12 +57,15 @@ export function dictFor(locale: string): Cache {
     return hit;
   }
   const exact: Record<string, string> = {};
-  const patterns: [string, string][] = [];
-  for (const r of all<{ source: string; text: string }>("SELECT source, text FROM i18n_text WHERE locale = ?", locale)) {
-    if (isPattern(r.source)) patterns.push([r.source, r.text]);
+  const byPattern = new Map<string, string>();
+  const rows = all<{ source: string; text: string }>("SELECT source, text FROM i18n_text WHERE locale = ?", locale);
+  // Human-reviewed translations (src/i18n/reviewed) always win over machine ones.
+  const reviewed = Object.entries(REVIEWED[locale] ?? {}).map(([source, text]) => ({ source: norm(source), text }));
+  for (const r of [...rows, ...reviewed]) {
+    if (isPattern(r.source)) byPattern.set(r.source, r.text);
     else exact[r.source] = r.text;
   }
-  const dict = { exact, patterns };
+  const dict = { exact, patterns: [...byPattern] };
   const c = { version: v, checked: Date.now(), dict, lookup: compile(dict) };
   caches.set(locale, c);
   return c;

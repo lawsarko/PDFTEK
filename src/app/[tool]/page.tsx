@@ -161,7 +161,7 @@ export default async function ToolPage({ params }: P) {
           {related.map((r) => (
             <Link key={r.slug} href={lp(`/${r.slug}`)} className="seo-tile">
               <b>{t(r.name)}</b>
-              <span>{t(`${r.description.split(". ")[0]}.`)}</span>
+              <span>{t(`${r.description.split(". ")[0].replace(/\.$/, "")}.`)}</span>
             </Link>
           ))}
         </div>

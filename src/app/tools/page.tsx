@@ -43,7 +43,7 @@ export default async function ToolsHub() {
             {SEO_TOOLS.filter((tool) => tool.category === c).map((tool) => (
               <Link key={tool.slug} href={lp(`/${tool.slug}`)} className="seo-tile">
                 <b>{t(tool.name)}</b>
-                <span>{t(`${tool.description.split(". ")[0]}.`)}</span>
+                <span>{t(`${tool.description.split(". ")[0].replace(/\.$/, "")}.`)}</span>
               </Link>
             ))}
           </div>

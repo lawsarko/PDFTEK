@@ -5,6 +5,8 @@ import { aiConfigured, structured } from "../ai";
 import { HttpError } from "../http";
 import { LOCALES, DEFAULT_LOCALE } from "./locales";
 import { bumpI18n, registerSources } from "./server";
+import { norm } from "./match";
+import { REVIEWED, STYLE } from "./reviewed";
 import catalog from "../../i18n/catalog.json";
 
 /**
@@ -41,6 +43,44 @@ async function registerAll() {
   registerSources(texts, "data");
 }
 
+/**
+ * Reviewed translations go into the table, so the translator treats them as done. Runs after
+ * noteStyleVersions, so they are newer than any redo cut-off and are never re-sent.
+ */
+function applyReviewed() {
+  const at = now();
+  for (const [locale, entries] of Object.entries(REVIEWED)) {
+    tx(() => {
+      for (const [source, text] of Object.entries(entries)) {
+        const key = norm(source);
+        registerSources([key], "data");
+        run("INSERT OR REPLACE INTO i18n_text (locale, source, text, created_at) VALUES (?, ?, ?, ?)", locale, key, text, at);
+      }
+    });
+  }
+  bumpI18n();
+}
+
+/**
+ * When a language's style guide changes, its existing machine translations are redone. The old
+ * text stays in place (and visible) until each string's new translation is saved.
+ */
+const redoBefore = new Map<string, number>();
+function noteStyleVersions() {
+  for (const [locale, style] of Object.entries(STYLE)) {
+    const key = `style:${locale}`;
+    const row = all<{ value: string; at: number }>("SELECT value, at FROM i18n_state WHERE key = ?", key)[0];
+    if (!row || Number(row.value) !== style.version) {
+      setState(key, String(style.version));
+      redoBefore.set(locale, now());
+    } else if (row.at) {
+      // Still finishing a redo from an earlier start: keep going from when it began.
+      const pending = all<{ n: number }>("SELECT count(*) AS n FROM i18n_text WHERE locale = ? AND created_at < ?", locale, row.at)[0]?.n ?? 0;
+      if (pending) redoBefore.set(locale, row.at);
+    }
+  }
+}
+
 const SCHEMA = {
   type: "object",
   additionalProperties: false,
@@ -58,6 +98,7 @@ function system(language: string, native: string) {
 
 Rules:
 - Write what a native ${language} product team would ship: natural, clear and concise, in the register modern consumer software uses in ${language}. Keep terminology consistent across strings.
+- Localize, don't translate word for word: rephrase so each sentence sounds like it was written in ${language} from the start, with the same meaning. Avoid calques and English sentence structure; use the idioms, word order and units a native reader expects. A reader should never be able to tell the text was translated.
 - Never translate: the brand names PDFTEK and pdftek, product and format names (PDF, Word, Excel, PowerPoint, JPG, PNG, WEBP, TIFF, XLSX, CSV, OCR, Stripe, Google, QuickBooks, Xero, Slack, Teams, Claude), URLs, email addresses, file names, prices, and code.
 - Placeholders like {0}, {1}, {n} or {name} must appear in your translation exactly as written; move them where the grammar needs them.
 - "(s)" marks an optional English plural ending: write the natural form for ${language} without "(s)".
@@ -70,8 +111,9 @@ Rules:
 async function translateBatch(locale: string, rows: { text: string }[]) {
   const info = LOCALES.find((l) => l.code === locale)!;
   const items = rows.map((r, i) => ({ id: i, text: r.text }));
+  const style = STYLE[locale]?.notes;
   const out = await structured<{ items: { id: number; text: string }[] }>({
-    system: system(info.english, info.name),
+    system: system(info.english, info.name) + (style ? `\n\nStyle guide for ${info.english}:\n${style}` : ""),
     content: [{ type: "text", text: `Translate these ${items.length} strings into ${info.english}. Input JSON:\n${JSON.stringify(items)}` }],
     schema: SCHEMA,
     effort: "low",
@@ -96,12 +138,14 @@ async function translateBatch(locale: string, rows: { text: string }[]) {
 /** Missing strings for a language (page copy and short UI text first), skipping ones in flight. */
 function missing(locale: string, skip: Set<string>) {
   const cap = batchCap.get(locale) ?? BATCH_MAX;
+  // Missing strings, plus machine translations older than a style-guide change (redone in place).
   const rows = all<{ text: string }>(
     `SELECT s.text FROM i18n_source s
-      WHERE NOT EXISTS (SELECT 1 FROM i18n_text x WHERE x.locale = ? AND x.source = s.text)
+      WHERE NOT EXISTS (SELECT 1 FROM i18n_text x WHERE x.locale = ? AND x.source = s.text AND x.created_at >= ?)
       ORDER BY CASE s.origin WHEN 'page' THEN 0 WHEN 'data' THEN 1 ELSE 2 END, length(s.text)
       LIMIT 600`,
     locale,
+    redoBefore.get(locale) ?? 0,
   );
   const batch: { text: string }[] = [];
   let chars = 0;
@@ -184,7 +228,10 @@ async function tick() {
 export function startTranslator() {
   if (started || process.env.PDFTEK_TRANSLATE === "0") return;
   started = true;
-  void registerAll().catch((e) => console.error("[pdftek] i18n registration failed", e));
+  void registerAll()
+    .then(noteStyleVersions)
+    .then(applyReviewed)
+    .catch((e) => console.error("[pdftek] i18n registration failed", e));
   if (!aiConfigured()) {
     console.info("[pdftek] translator idle: no Anthropic API key");
     setState("lastError", "No Anthropic API key: set ANTHROPIC_API_KEY on the server to translate the site.");

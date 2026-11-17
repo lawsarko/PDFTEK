@@ -341,13 +341,14 @@ function ProductShot({ t }: { t: (s: string) => string }) {
       </div>
       <div style={{ background: "var(--ink)", padding: 22, display: "flex", justifyContent: "center" }}>
         <div style={{ background: "var(--paper)", color: "#2b2a26", width: "100%", maxWidth: 420, padding: "28px 30px", borderRadius: 2, boxShadow: "var(--shadow)" }}>
-          <div className="mono" style={{ fontSize: 9, letterSpacing: ".1em", color: "#8a8471" }}>MASTER SERVICE AGREEMENT · PAGE 2 OF 14</div>
-          <div style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 17, margin: "12px 0" }}>3. Term &amp; Termination</div>
+          <div className="mono" style={{ fontSize: 9, letterSpacing: ".1em", color: "#8a8471" }}>{t("MASTER SERVICE AGREEMENT · PAGE 2 OF 14")}</div>
+          <div style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 17, margin: "12px 0" }}>{t("3. Term & Termination")}</div>
           <p style={{ lineHeight: 1.7, margin: "0 0 10px" }}>
-            This Agreement shall commence on the Effective Date and continue for an initial term of twenty-four (24) months, automatically renewing unless either party provides notice at least sixty (60) days prior…
+            {t("This Agreement shall commence on the Effective Date and continue for an initial term of twenty-four (24) months, automatically renewing unless either party provides notice at least sixty (60) days prior…")}
           </p>
           <p style={{ lineHeight: 1.7, margin: 0 }}>
-            <span className="hl-sweep">Client may additionally terminate for convenience upon ninety (90) days&apos; written notice</span>, subject to the wind-down obligations set forth in Section 8.
+            <span className="hl-sweep">{t("Client may additionally terminate for convenience upon ninety (90) days' written notice")}</span>
+            {t(", subject to the wind-down obligations set forth in Section 8.")}
           </p>
         </div>
       </div>
