@@ -1,0 +1,117 @@
+/**
+ * Prices and limits, shared by the server (enforcement, Stripe Checkout) and the UI (pricing page,
+ * paywall). Change a price here and it changes everywhere.
+ */
+
+export const FREE_LIMITS = {
+  guest: { tasksPerDay: 3, maxFileMb: 20, maxFiles: 5 },
+  free: { tasksPerDay: 6, maxFileMb: 20, maxFiles: 5 },
+} as const;
+export const PAID_LIMITS = { tasksPerDay: 2000, maxFileMb: 100, maxFiles: 50 } as const; // fair use
+/** People in a workspace (you included) on a Day Pass or Pro. Team has no limit; Free is just you. */
+export const PRO_SEATS = 5;
+/** Free Pro trial: card collected at signup by Stripe, first charge when it ends, cancel anytime before. */
+export const TRIAL_DAYS = 3;
+/** AI credits during the trial (AI costs real money per request); the full 400 start with the first paid month. */
+export const TRIAL_CREDITS = 30;
+
+/** A task beyond the free daily limit costs this many credits. */
+export const EXTRA_TASK_CREDITS = 2;
+/** Minimum balance to start an AI request (the real cost is charged after it finishes). */
+export const AI_MIN_CREDITS = 5;
+
+export type ProductId = "pass" | "pro_trial" | "pro_month" | "pro_year" | "team_month" | "credits_250" | "credits_900" | "credits_3000";
+export type Product = {
+  name: string;
+  description: string;
+  cents: number;
+  mode: "payment" | "subscription";
+  interval?: "month" | "year";
+  plan?: "pro" | "business";
+  credits?: number;
+  passHours?: number;
+  /** Free days before the first charge (Stripe collects the card at checkout). */
+  trialDays?: number;
+};
+
+export const PRODUCTS: Record<ProductId, Product> = {
+  pass: {
+    name: "pdftek Day Pass",
+    description: "24 hours of unlimited tasks, Edit PDF, Read PDF and e-signatures, plus 50 AI credits.",
+    cents: 199,
+    mode: "payment",
+    passHours: 24,
+    credits: 50,
+  },
+  pro_trial: {
+    name: "pdftek Pro",
+    description: "3 days free, then billed monthly. Cancel anytime before the trial ends and you won't be charged.",
+    cents: 599,
+    mode: "subscription",
+    interval: "month",
+    plan: "pro",
+    trialDays: TRIAL_DAYS,
+  },
+  pro_month: { name: "pdftek Pro", description: "Unlimited tasks, Edit PDF, Read PDF, e-signatures, up to 5 people and 400 AI credits every month.", cents: 599, mode: "subscription", interval: "month", plan: "pro" },
+  pro_year: { name: "pdftek Pro (yearly)", description: "Everything in Pro, billed yearly: 4 months free.", cents: 4799, mode: "subscription", interval: "year", plan: "pro" },
+  team_month: { name: "pdftek Team", description: "Everything in Pro for unlimited people, with 1,500 AI credits every month.", cents: 1499, mode: "subscription", interval: "month", plan: "business" },
+  credits_250: { name: "250 AI credits", description: "Pay as you go. Credits never expire.", cents: 299, mode: "payment", credits: 250 },
+  credits_900: { name: "900 AI credits", description: "Pay as you go. Credits never expire.", cents: 899, mode: "payment", credits: 900 },
+  credits_3000: { name: "3,000 AI credits", description: "Pay as you go. Credits never expire.", cents: 2499, mode: "payment", credits: 3000 },
+};
+
+
+export const usd = (cents: number) => `$${(cents / 100).toFixed(cents % 100 ? 2 : 0)}`;
+
+export type Entitlements = {
+  tier: "guest" | "free" | "pass" | "pro" | "team" | "admin";
+  membership: boolean;
+  tasksToday: number;
+  taskLimit: number | null;
+  maxFileMb: number;
+  maxFiles: number;
+  passUntil: number | null;
+  credits: number;
+  allowance: number;
+  allowanceExpiresAt: number | null;
+  paymentsEnabled: boolean;
+  /** Using pdftek without an account (purchases live in this browser until they sign up). */
+  guest: boolean;
+  /** Email given at checkout, to pre-fill "create your account" for paying guests. */
+  purchaseEmail: string | null;
+  /** End of the free Pro trial while it runs. */
+  trialEndsAt: number | null;
+  /** This account can still start its free trial. */
+  trialAvailable: boolean;
+};
+
+export const PRICING_FAQ: [string, string][] = [
+  [
+    "Is there a free trial?",
+    `Yes. Pro comes with ${TRIAL_DAYS} days free: editing, e-signatures, bulk tools, document requests and ${TRIAL_CREDITS} AI credits. You add a card when you start, and nothing is charged during the trial. If you keep Pro, the monthly price starts when the trial ends; cancel anytime before then in Settings → Billing and you won't be charged. We email you the day before it ends.`,
+  ],
+  [
+    "Should I get a Day Pass or the free trial?",
+    "The free trial suits you if you'll use pdftek regularly: try Pro for a few days, then keep it or cancel before the trial ends. The Day Pass is for one-off jobs: pay once, no account, no subscription, nothing to cancel.",
+  ],
+  ["Do I need an account?", "No. Every free tool works without signing up, and you can buy a Day Pass or credits without an account too. A free account doubles your daily free tasks and keeps your files."],
+  [
+    "What counts as a task?",
+    "One conversion or one tool run: converting a file, merging, splitting, compressing, protecting, unlocking, OCR, and so on. Opening and reading PDFs is free and unlimited.",
+  ],
+  [
+    "What are credits?",
+    `Credits pay for AI (questions, summaries, extraction, comparisons) and for tasks beyond the free daily limit (${EXTRA_TASK_CREDITS} credits each). AI is charged on what each request actually costs, so short questions cost a few credits and long documents a little more. Purchased credits never expire.`,
+  ],
+  [
+    "I paid without an account. How do I keep it?",
+    "Right after paying, pdftek offers to save your purchase to an account: just add a password. If you skipped that and changed devices or cleared your browser, use \"Restore a purchase\" on the sign-in page with the email you used at checkout.",
+  ],
+  [
+    "How much do bank statement and invoice conversions cost?",
+    "Your first statement or invoice document each month (up to 10 pages) is free. After that they use AI credits, about 6 credits per page. Converting many files at once and combining them into one spreadsheet needs a Day Pass or Pro.",
+  ],
+  ["What does the Day Pass include?", `24 hours of everything in Pro: unlimited tasks, files up to ${PAID_LIMITS.maxFileMb} MB, Edit PDF, Read PDF and e-signatures, plus 50 AI credits. It doesn't renew.`],
+  ["Can I cancel Pro anytime?", "Yes. Cancel from Settings → Billing in one click; Pro stays active until the end of the period you paid for."],
+  ["Is my data safe?", "Files are encrypted in transit, never sold or used to train AI, and files from visitors without an account are deleted after 24 hours."],
+];
