@@ -7,6 +7,7 @@ import type { Doc } from "@/lib/client/types";
 import { loadPdf, pageToCanvas } from "@/lib/client/pdf";
 import { I } from "@/components/icons";
 import { Modal } from "@/components/modal";
+import { ScanButton } from "../scan";
 import { useToast } from "@/components/toast";
 
 /**
@@ -31,11 +32,11 @@ export const TOOL_TITLES: Record<ToolKey, string> = {
 };
 
 /** Uploads files to the workspace library and hands back the created documents. */
-export function UploadButton({ wid, onDone, multiple = false, label = "Upload a PDF", accept = ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.rtf,.txt,.jpg,.jpeg,.png,.tif,.tiff" }: { wid: string; onDone: (d: Doc[]) => void; multiple?: boolean; label?: string; accept?: string }) {
+export function UploadButton({ wid, onDone, multiple = false, label = "Upload a PDF", accept = ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.rtf,.txt,.jpg,.jpeg,.png,.tif,.tiff", scan = true }: { wid: string; onDone: (d: Doc[]) => void; multiple?: boolean; label?: string; accept?: string; /** Also offer "Scan" (camera → PDF). */ scan?: boolean }) {
   const toast = useToast();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
-  const upload = async (files: FileList | null) => {
+  const upload = async (files: FileList | File[] | null) => {
     if (!files?.length) return;
     setBusy(true);
     try {
@@ -52,12 +53,13 @@ export function UploadButton({ wid, onDone, multiple = false, label = "Upload a 
     }
   };
   return (
-    <>
+    <span className="row gap-6" style={{ flexWrap: "wrap" }}>
       <button className="btn btn-sm" disabled={busy} onClick={() => input.current?.click()}>
         {busy ? <span className="spinner" /> : <I.upload size={13} />} {busy ? "Uploading…" : label}
       </button>
       <input ref={input} type="file" hidden multiple={multiple} accept={accept} onChange={(e) => void upload(e.target.files)} />
-    </>
+      {scan && <ScanButton label="Scan" title="Scan a document" onScanned={(file) => upload([file])} />}
+    </span>
   );
 }
 

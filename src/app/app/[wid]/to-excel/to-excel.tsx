@@ -9,6 +9,8 @@ import type { FinKind, FinResult, InvoiceResult, StatementResult } from "@/lib/f
 import { AppShell } from "@/components/app-shell";
 import { I } from "@/components/icons";
 import { Modal } from "@/components/modal";
+import { ScanButton } from "@/components/scan";
+import { imagesToPdf, toJpeg } from "@/lib/client/images";
 import { notifyPaywall } from "@/components/paywall";
 import { useToast } from "@/components/toast";
 
@@ -29,16 +31,18 @@ const MODES: { key: Mode; label: string; icon: React.ReactNode }[] = [
   { key: "bulk", label: "Bulk convert", icon: <I.layers size={14} /> },
 ];
 
-const COPY: Record<Mode, { title: string; lead: string; drop: string }> = {
+const COPY: Record<Mode, { title: string; lead: string; drop: string; scan?: string }> = {
   statement: {
     title: "Bank statements to Excel",
     lead: "Turn PDF bank and credit card statements into clean transaction rows: date, description, money in, money out and balance. Every statement is checked against its running and closing balances.",
-    drop: "Drop bank or credit card statements (PDF), or browse",
+    drop: "Drop bank or credit card statements (PDF or photos), or browse",
+    scan: "Scan every page of one statement, in order, then save. Scan each statement separately.",
   },
   invoice: {
     title: "Invoices & receipts to Excel",
     lead: "Pull vendor, invoice number, dates, line items, tax and totals out of invoices and receipts, one row per invoice plus a line-item sheet. Totals are checked so mistakes stand out.",
-    drop: "Drop invoices or receipts (PDF), or browse",
+    drop: "Drop invoices or receipts (PDF or photos), or browse",
+    scan: "Capture each invoice or receipt as its own page. Several receipts can go in one scan: each page is read separately."
   },
   bulk: {
     title: "Bulk convert PDFs",
@@ -175,8 +179,20 @@ export function ToExcel({ wid }: { wid: string }) {
   };
 
   const upload = async (files: File[]) => {
-    const pdfs = files.filter((f) => /\.pdf$/i.test(f.name) || f.type === "application/pdf");
-    if (!pdfs.length) return toast("Choose PDF files.", "error");
+    const isPdf = (f: File) => /\.pdf$/i.test(f.name) || f.type === "application/pdf";
+    const isPhoto = (f: File) => f.type.startsWith("image/") || /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name);
+    const pdfs = files.filter(isPdf);
+    // Photos (e.g. from the phone camera) are turned into one PDF each, in the browser.
+    for (const f of files.filter(isPhoto)) {
+      try {
+        const j = await toJpeg(f, { enhance: true });
+        const pdf = await imagesToPdf([j], "fit");
+        pdfs.push(new File([pdf as BlobPart], f.name.replace(/\.[^.]+$/, "") + ".pdf", { type: "application/pdf" }));
+      } catch (e) {
+        toast(`${f.name}: ${errMsg(e)}`, "error");
+      }
+    }
+    if (!pdfs.length) return toast("Choose PDF files or photos.", "error");
     if (needsBulk(pdfs.length)) return;
     setUploading(true);
     try {
@@ -301,13 +317,26 @@ export function ToExcel({ wid }: { wid: string }) {
           <div className="tiny faint" style={{ marginTop: 4 }}>
             {member ? `Up to ${ent?.maxFiles ?? 50} files at a time · ${ent?.maxFileMb ?? 100} MB each` : `One file at a time on the free plan · up to ${ent?.maxFileMb ?? 20} MB`}
           </div>
-          <input ref={input} type="file" accept=".pdf,application/pdf" multiple={member} hidden onChange={(e) => void upload([...(e.target.files ?? [])])} />
+          <input ref={input} type="file" accept={mode === "bulk" ? ".pdf,application/pdf" : ".pdf,application/pdf,image/*,.heic"} multiple={member} hidden onChange={(e) => void upload([...(e.target.files ?? [])])} />
         </div>
-        {pdfLibrary.length > 0 && (
-          <div className="row" style={{ marginTop: 10 }}>
-            <button className="btn btn-sm btn-ghost" onClick={() => setPicking(true)}>
-              <I.folder size={13} /> Choose from your library
-            </button>
+        {(copy.scan || pdfLibrary.length > 0) && (
+          <div className="row wrap gap-8" style={{ marginTop: 10 }}>
+            {copy.scan && (
+              <ScanButton
+                className="btn"
+                label={mode === "statement" ? "Scan a statement" : "Scan invoices or receipts"}
+                title={mode === "statement" ? "Scan a bank statement" : "Scan invoices or receipts"}
+                baseName={mode === "statement" ? "Statement scan" : "Receipt scan"}
+                saveLabel="Use this scan"
+                hint={copy.scan}
+                onScanned={(file) => upload([file])}
+              />
+            )}
+            {pdfLibrary.length > 0 && (
+              <button className="btn btn-sm btn-ghost" onClick={() => setPicking(true)}>
+                <I.folder size={13} /> Choose from your library
+              </button>
+            )}
           </div>
         )}
 

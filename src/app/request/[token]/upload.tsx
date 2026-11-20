@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api, errMsg } from "@/lib/client/api";
 import { I, Logo, Wordmark } from "@/components/icons";
 import { ACCEPT_EXT, type Accept } from "@/lib/request-templates";
+import { ScanButton } from "@/components/scan";
 
 type Item = {
   id: string;
@@ -204,9 +205,20 @@ function ItemCard({ token, item, onChange }: { token: string; item: Item; onChan
         )}
         {error && <div className="error-text tiny">{error}</div>}
       </div>
-      <button className={`btn btn-sm ${done ? "btn-ghost" : ""}`} disabled={busy} onClick={() => input.current?.click()}>
-        {busy ? <span className="spinner" /> : <I.upload size={12} />} {done ? "Replace" : "Upload"}
-      </button>
+      <div className="rq-item-actions">
+        <button className={`btn btn-sm ${done ? "btn-ghost" : ""}`} disabled={busy} onClick={() => input.current?.click()}>
+          {busy ? <span className="spinner" /> : <I.upload size={12} />} {done ? "Replace" : "Upload"}
+        </button>
+        {!done && (
+          <ScanButton
+            label="Scan"
+            title={`Scan: ${item.label}`}
+            baseName={item.label}
+            saveLabel="Use this scan"
+            onScanned={(file) => upload([file])}
+          />
+        )}
+      </div>
       <input
         ref={input}
         type="file"

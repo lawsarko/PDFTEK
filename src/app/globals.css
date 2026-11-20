@@ -879,6 +879,24 @@ select.ff-field { padding: 0 2px; appearance: auto; }
 .rq-bar span { display: block; height: 100%; background: var(--good); border-radius: inherit; transition: width .3s; }
 .rq-item { display: flex; gap: 12px; align-items: center; padding: 12px; border: 1px dashed var(--line); border-radius: 10px; background: var(--ink); transition: border-color .15s, background .15s; }
 .rq-item.over { border-color: var(--amber); background: var(--amber-soft); }
+.rq-item-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+.rq-item-actions .btn { justify-content: center; }
+
+/* Camera scanner (components/scan.tsx) */
+.scan-view { position: relative; background: #000; border-radius: 10px; overflow: hidden; aspect-ratio: 4 / 3; max-height: 52vh; margin: 0 auto; width: 100%; }
+.scan-view video { width: 100%; height: 100%; object-fit: contain; display: block; }
+.scan-guide { position: absolute; top: 3%; bottom: 3%; left: 50%; transform: translateX(-50%); aspect-ratio: 1 / 1.414; border: 2px solid var(--amber); border-radius: 6px; box-shadow: 0 0 0 9999px rgba(0,0,0,.35); pointer-events: none; }
+.scan-wait { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.scan-thumb { position: relative; flex-shrink: 0; }
+.scan-thumb img { height: 90px; border-radius: 4px; border: 1px solid var(--line); display: block; }
+.scan-thumb-n { position: absolute; left: 4px; bottom: 4px; font-size: 10px; background: rgba(0,0,0,.65); color: #fff; border-radius: 3px; padding: 0 4px; }
+.scan-thumb-actions { position: absolute; top: 0; right: 0; display: flex; gap: 2px; }
+.scan-thumb-actions .icon-btn { background: rgba(0,0,0,.6); color: #fff; width: 22px; height: 22px; }
+@media (max-width: 560px) {
+  .scan-view { aspect-ratio: 3 / 4; max-height: 56vh; }
+  .scan-actions .btn { flex: 1 1 auto; justify-content: center; }
+  .scan-actions .grow { display: none; }
+}
 .rq-item.done { border-style: solid; border-color: rgba(111, 179, 122, 0.45); }
 .rq-item.returned { border-style: solid; border-color: var(--amber-line); }
 .rq-check { width: 28px; height: 28px; flex: none; border-radius: 8px; display: grid; place-items: center; background: var(--panel); color: var(--slate); }

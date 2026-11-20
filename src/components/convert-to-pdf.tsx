@@ -6,6 +6,7 @@ import type { Doc } from "@/lib/client/types";
 import { toJpeg } from "@/lib/client/images";
 import { I } from "./icons";
 import { Modal } from "./modal";
+import { ScanButton } from "./scan";
 import { useToast } from "./toast";
 
 const OFFICE_RE = /\.(docx?|odt|rtf|pptx?|odp|xlsx?|ods|html?)$/i;
@@ -149,6 +150,17 @@ export function ConvertToPdfModal({ wid, onClose }: { wid: string; onClose: () =
               e.target.value = "";
             }}
           />
+        </div>
+
+        <div className="row wrap gap-8">
+          <ScanButton
+            label="Scan paper documents"
+            onScanned={(file) => {
+              setItems((cur) => [...cur.filter((i) => i.status !== "done"), { file, status: "queued" as const }].slice(0, 20));
+              setMerged(null);
+            }}
+          />
+          <span className="tiny faint">Use your camera to turn paper pages into a PDF.</span>
         </div>
 
         {officeBlocked && (

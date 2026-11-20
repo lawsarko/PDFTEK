@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { api, errMsg } from "@/lib/client/api";
 import type { Doc } from "@/lib/client/types";
-import { enhance, imagesToPdf, toJpeg, isTiffName, tiffPages } from "@/lib/client/images";
+import { imagesToPdf, toJpeg, isTiffName, tiffPages } from "@/lib/client/images";
+import { ScanCapture } from "../scan";
 import { I } from "../icons";
 import { Modal } from "../modal";
 import { useToast } from "../toast";
@@ -232,106 +233,13 @@ function ImagesToPdf({ onDone }: { onDone: () => void }) {
 function Scanner({ onDone }: { onDone: () => void }) {
   const upload = useUploader();
   const toast = useToast();
-  const video = useRef<HTMLVideoElement>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [pages, setPages] = useState<Img[]>([]);
-  const [doEnhance, setDoEnhance] = useState(true);
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    let s: MediaStream | null = null;
-    navigator.mediaDevices
-      ?.getUserMedia({ video: { facingMode: "environment", width: { ideal: 2560 }, height: { ideal: 1920 } }, audio: false })
-      .then((m) => {
-        s = m;
-        setStream(m);
-        if (video.current) video.current.srcObject = m;
-      })
-      .catch(() => setError("Camera access was blocked or no camera is available. You can still upload photos under “Images → PDF”."));
-    if (!navigator.mediaDevices) setError("Camera isn't available in this browser.");
-    return () => s?.getTracks().forEach((t) => t.stop());
-  }, []);
-
-  const capture = async () => {
-    const v = video.current;
-    if (!v || !v.videoWidth) return;
-    // Crop to the guide frame (A4 portrait ratio, centered).
-    const ratio = 1 / 1.414;
-    let cw = v.videoWidth * 0.86;
-    let ch = cw / ratio;
-    if (ch > v.videoHeight * 0.94) {
-      ch = v.videoHeight * 0.94;
-      cw = ch * ratio;
-    }
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.round(cw);
-    canvas.height = Math.round(ch);
-    const ctx = canvas.getContext("2d")!;
-    ctx.drawImage(v, (v.videoWidth - cw) / 2, (v.videoHeight - ch) / 2, cw, ch, 0, 0, cw, ch);
-    if (doEnhance) enhance(ctx, canvas.width, canvas.height);
-    const blob = await new Promise<Blob>((r) => canvas.toBlob((b) => r(b!), "image/jpeg", 0.88));
-    const j = await toJpeg(blob);
-    setPages((p) => [...p, { id: Math.random().toString(36).slice(2), ...j }]);
-  };
-
-  const save = async () => {
-    setBusy(true);
-    try {
-      const pdf = await imagesToPdf(pages, "fit");
-      const stamp = new Date().toISOString().slice(0, 16).replace("T", " ").replace(":", ".");
-      await upload([new File([pdf as BlobPart], `Scan ${stamp}.pdf`, { type: "application/pdf" })], "scan", "Scan to PDF");
-      toast("Scan saved — run OCR from the document toolbar to make it searchable", "success");
-      stream?.getTracks().forEach((t) => t.stop());
-      onDone();
-    } catch (e) {
-      toast(errMsg(e), "error");
-      setBusy(false);
-    }
-  };
-
   return (
-    <div className="col gap-12">
-      {error ? (
-        <div className="notice">{error}</div>
-      ) : (
-        <div style={{ position: "relative", background: "#000", borderRadius: 10, overflow: "hidden", aspectRatio: "4 / 3", maxHeight: "52vh", margin: "0 auto", width: "100%" }}>
-          <video ref={video} autoPlay playsInline muted style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-          <div style={{ position: "absolute", top: "3%", bottom: "3%", left: "50%", transform: "translateX(-50%)", aspectRatio: "1 / 1.414", border: "2px solid var(--amber)", borderRadius: 6, boxShadow: "0 0 0 9999px rgba(0,0,0,.35)", pointerEvents: "none" }} />
-          {!stream && (
-            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span className="spinner spinner-lg" />
-            </div>
-          )}
-        </div>
-      )}
-      <div className="row between wrap">
-        <label className="check">
-          <input type="checkbox" checked={doEnhance} onChange={(e) => setDoEnhance(e.target.checked)} /> Auto-crop & enhance
-        </label>
-        <span className="mono small muted">{pages.length} page{pages.length === 1 ? "" : "s"}</span>
-      </div>
-      {pages.length > 0 && (
-        <div className="row gap-8" style={{ overflowX: "auto", paddingBottom: 4 }}>
-          {pages.map((p, i) => (
-            <div key={p.id} style={{ position: "relative", flexShrink: 0 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.url} alt={`Page ${i + 1}`} style={{ height: 90, borderRadius: 4, border: "1px solid var(--line)" }} />
-              <button className="icon-btn" style={{ position: "absolute", top: 0, right: 0, background: "rgba(0,0,0,.6)" }} onClick={() => setPages(pages.filter((x) => x.id !== p.id))} aria-label="Remove page">
-                <I.x size={11} />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-      <div className="row" style={{ justifyContent: "flex-end", gap: 8 }}>
-        <button className="btn" disabled={!stream} onClick={capture}>
-          <I.camera size={14} /> Capture page
-        </button>
-        <button className="btn btn-primary" disabled={!pages.length || busy} onClick={save}>
-          {busy && <span className="spinner" />} Save as PDF
-        </button>
-      </div>
-    </div>
+    <ScanCapture
+      onDone={async (file) => {
+        await upload([file], "scan", "Scan to PDF");
+        toast("Scan saved. Run OCR from the document toolbar to make it searchable.", "success");
+        onDone();
+      }}
+    />
   );
 }
