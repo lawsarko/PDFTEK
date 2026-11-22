@@ -11,7 +11,7 @@ import path from "node:path";
  * at the top-left (y grows downward).
  */
 
-export type Run = { str: string; x: number; y: number; w: number; size: number; font: string; bold: boolean; italic: boolean; color: string; /** Background color behind the text (OCR pages). */ bg?: string };
+export type Run = { str: string; x: number; y: number; w: number; size: number; font: string; /** The PDF's own font name (e.g. "OCR A"). */ raw?: string; bold: boolean; italic: boolean; color: string; /** Background color behind the text (OCR pages). */ bg?: string };
 export type Seg = { x: number; end: number; runs: Run[] };
 export type Line = { y: number; size: number; segs: Seg[]; left: number; right: number };
 export type Rule = { x0: number; x1: number; y: number; thickness: number; color: string };
@@ -58,6 +58,8 @@ export type PageLayout = {
   tabular: boolean;
   /** Pictures on the page (logos, photos, signatures), when asked for. */
   images?: PageImage[];
+  /** Where pictures are drawn (including image masks such as dotted leaders), when asked for. */
+  imageBoxes?: { x0: number; y0: number; x1: number; y1: number }[];
   /** For OCR'd pages: the page image with recognized text erased (graphics, boxes, logos). */
   background?: { data: Buffer; type: "jpg" };
   ocr?: boolean;
@@ -71,7 +73,7 @@ const SYMBOL_FONT = /symbol|wingding|dingbat|webding/i;
 
 const MAX_OCR_PAGES = 40;
 
-export async function analyzePdf(bytes: Uint8Array, opts: { ocr?: boolean; tables?: boolean; images?: boolean; /** Also OCR pages that are a single picture (photographed or scanned pages). */ ocrImages?: boolean } = {}): Promise<PageLayout[]> {
+export async function analyzePdf(bytes: Uint8Array, opts: { ocr?: boolean; tables?: boolean; images?: boolean; /** Record where pictures are drawn (layout.imageBoxes). */ imageBoxes?: boolean; /** Also OCR pages that are a single picture (photographed or scanned pages). */ ocrImages?: boolean } = {}): Promise<PageLayout[]> {
   let ocrBudget = opts.ocr === false ? 0 : MAX_OCR_PAGES;
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   const OPS = pdfjs.OPS;
@@ -107,6 +109,7 @@ export async function analyzePdf(bytes: Uint8Array, opts: { ocr?: boolean; table
       const vSegs: TSeg[] = [];
       const fills: Fill[] = [];
       const pics: { id?: string; inline?: unknown; x0: number; y0: number; x1: number; y1: number }[] = [];
+      const boxes: { x0: number; y0: number; x1: number; y1: number }[] = [];
       const toView = (x: number, y: number) => {
         const [a, b] = apply(ctm, x, y);
         return vp.convertToViewportPoint(a, b) as [number, number];
@@ -226,13 +229,16 @@ export async function analyzePdf(bytes: Uint8Array, opts: { ocr?: boolean; table
             break;
           }
           case OPS.paintImageXObject:
-          case OPS.paintInlineImageXObject: {
-            if (!opts.images) break;
+          case OPS.paintInlineImageXObject:
+          case OPS.paintImageMaskXObject: {
+            if (!opts.images && !opts.imageBoxes) break;
             // An image fills the unit square of the current transform.
             const corners = [toView(0, 0), toView(1, 0), toView(0, 1), toView(1, 1)];
             const xs = corners.map((q) => q[0]);
             const ys = corners.map((q) => q[1]);
             const box = { x0: Math.min(...xs), y0: Math.min(...ys), x1: Math.max(...xs), y1: Math.max(...ys) };
+            if (opts.imageBoxes && boxes.length < 2000) boxes.push(box);
+            if (!opts.images || fn === OPS.paintImageMaskXObject) break;
             if (fn === OPS.paintImageXObject) pics.push({ id: String(args[0]), ...box });
             else pics.push({ inline: args[0], ...box });
             break;
@@ -287,6 +293,7 @@ export async function analyzePdf(bytes: Uint8Array, opts: { ocr?: boolean; table
           w: visible ? (it.width * visible) / it.str.length : 0,
           size,
           font: officeFont(family(raw)),
+          raw,
           bold: /bold|black|heavy|semibold|demi/i.test(raw),
           italic: /italic|oblique/i.test(raw),
           color: dominantColor,
@@ -335,6 +342,7 @@ export async function analyzePdf(bytes: Uint8Array, opts: { ocr?: boolean; table
       }
       const layout = layoutPage(p, vp.width, vp.height, pageRuns, pageRules, links, tables);
       if (opts.images && pics.length) layout.images = await pageImages(page, pics, vp.width, vp.height, visibleChars > 0);
+      if (opts.imageBoxes) layout.imageBoxes = boxes;
       pages.push(layout);
       page.cleanup();
     }

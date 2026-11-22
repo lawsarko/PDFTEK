@@ -17,7 +17,7 @@ import {
   rgb,
   type PDFFont,
 } from "pdf-lib";
-import { analyzePdf, isRightAligned, segText, type Block, type Line, type PageLayout, type Seg } from "./pdf-layout";
+import { analyzePdf, isRightAligned, segText, type Block, type Line, type PageLayout, type Run, type Seg } from "./pdf-layout";
 import type { TableCell } from "./pdf-tables";
 import { loadFont } from "./fonts";
 import { subsetFont } from "./font-subset";
@@ -60,11 +60,52 @@ type Unit = {
   maxRight: number;
   maxBottom: number;
   serif: boolean;
+  /** Not visible on the page (white on white, covered, clipped): not redrawn. */
+  hidden?: boolean;
+  /** Text that grows past its original box covers what's there (thin dotted leaders) with the background. */
+  cover?: boolean;
+  /** Right-aligned text may grow leftwards up to here. */
+  minLeft?: number;
+  /** From a table cell (never joined with neighbours). */
+  cell?: boolean;
+  /** Baseline of the last line (for joining paragraph lines). */
+  baseline?: number;
 };
 
 export type Translator = (texts: string[], onBatch?: (done: number) => void) => Promise<string[]>;
 
 const HAS_LETTERS = /\p{L}{2,}/u;
+
+/**
+ * Fonts whose text is machine-read or pictorial, not words: postal and retail barcodes, OCR and MICR
+ * scan lines, icon and symbol fonts. Their text is left exactly as it is: not translated, not redrawn.
+ */
+const SPECIAL_FONT = /barcode|\bbar ?code|imb|usps|postnet|planet|intelligent ?mail|code ?(39|93|128)|3 ?of ?9|i2of5|interleaved|ean ?-?(8|13)|upc|pdf417|datamatrix|qr ?code|ocr ?-?[ab]\b|^ocr|micr|e-?13b|cmc ?7|symbol|dingbat|wingding|webding|icon|fontawesome|material ?icons/i;
+export const isSpecialFont = (name: string | undefined) => !!name && SPECIAL_FONT.test(name.replace(/^[A-Z]{6}\+/, "").replace(/#20/g, " "));
+/** Text nobody can read: hidden machine codes printed at 1–2 pt. */
+const TINY = 2.5;
+const keepRun = (r: Run) => r.size >= TINY && !isSpecialFont(r.raw);
+
+/** Drops runs that aren't translated (special fonts, hidden tiny text) and tightens boxes around the rest. */
+function cleanLines(lines: Line[]): Line[] {
+  const out: Line[] = [];
+  for (const l of lines) {
+    const segs: Seg[] = [];
+    for (const s of l.segs) {
+      if (s.runs.every(keepRun)) {
+        segs.push(s);
+        continue;
+      }
+      const runs = s.runs.filter(keepRun);
+      if (!runs.some((r) => r.str.trim())) continue;
+      segs.push({ runs, x: Math.min(...runs.map((r) => r.x)), end: Math.max(...runs.map((r) => r.x + r.w)) });
+    }
+    if (!segs.length) continue;
+    if (segs.length === l.segs.length && segs.every((s, i) => s === l.segs[i])) out.push(l);
+    else out.push({ ...l, segs, size: Math.max(...segs.flatMap((s) => s.runs.map((r) => r.size))), left: segs[0].x, right: Math.max(...segs.map((s) => s.end)) });
+  }
+  return out;
+}
 
 // ---------- 1. Units of text ----------
 
@@ -87,6 +128,18 @@ function joinLines(texts: string[]): string {
   return out;
 }
 
+/** Bold when most of the text is bold (a bold lead-in like "Note:" doesn't make the whole paragraph bold). */
+function mostlyBold(lines: Line[]): boolean {
+  let bold = 0;
+  let all = 0;
+  for (const l of lines) for (const s of l.segs) for (const r of s.runs) {
+    const n = r.str.trim().length;
+    all += n;
+    if (r.bold) bold += n;
+  }
+  return all > 0 && bold * 2 > all;
+}
+
 function unitFrom(page: PageLayout, lines: Line[], text: string, box: { x: number; right: number }, align: Align, leadingPts?: number): Unit | null {
   const run = firstRun(lines);
   if (!run || !text.trim()) return null;
@@ -103,21 +156,24 @@ function unitFrom(page: PageLayout, lines: Line[], text: string, box: { x: numbe
     w: Math.max(4, box.right - box.x),
     h: Math.max(size, bottom - top),
     size,
-    bold: run.bold,
+    bold: mostlyBold(lines),
     color: run.color || "000000",
     align,
     leading,
     maxRight: box.right,
     maxBottom: bottom,
+    baseline: last.y,
     serif: /times|georgia|garamond|serif|cambria|book|minion|palatino/i.test(run.font) && !/sans/i.test(run.font),
   };
 }
 
-function cellUnit(page: PageLayout, cell: TableCell): Unit | null {
+function cellUnit(page: PageLayout, raw: TableCell): Unit | null {
+  const cell = { ...raw, lines: cleanLines(raw.lines) };
   if (!cell.lines.length) return null;
   const text = joinLines(cell.lines.map((l) => l.segs.map(segText).join(" ")));
   const u = unitFrom(page, cell.lines, text, { x: cell.lines[0].left, right: cell.x1 - 2 }, "left");
   if (!u) return null;
+  u.cell = true;
   const right = Math.max(...cell.lines.map((l) => l.right));
   // Numbers pushed against the right border stay right-aligned.
   if (cell.x1 - right < 6 && cell.lines[0].left - cell.x0 > 8) u.align = "right";
@@ -129,7 +185,7 @@ function cellUnit(page: PageLayout, cell: TableCell): Unit | null {
 
 function pageUnits(page: PageLayout): Unit[] {
   const units: Unit[] = [];
-  for (const b of page.blocks as Block[]) {
+  for (let b of page.blocks as Block[]) {
     if (b.kind === "table" && b.table) {
       for (const row of b.table.rows) for (const cell of row.cells) {
         if (cell.vMerge === "continue") continue;
@@ -138,7 +194,9 @@ function pageUnits(page: PageLayout): Unit[] {
       }
       continue;
     }
-    if (!b.lines.length) continue;
+    const lines = cleanLines(b.lines);
+    if (!lines.length) continue;
+    b = { ...b, lines };
     if (b.lines.every((l) => seg(l))) {
       // A paragraph (or one-column line): translated as a whole and reflowed in its box.
       const text = joinLines(b.lines.map((l) => segText(l.segs[0])));
@@ -153,32 +211,125 @@ function pageUnits(page: PageLayout): Unit[] {
       for (const l of b.lines) {
         for (const s of l.segs) {
           const text = segText(s);
-          const u = unitFrom(page, [{ ...l, segs: [s] }], text, { x: s.x, right: s.end }, isRightAligned(s, page) ? "right" : "left");
+          // Its own size and baseline: a line can join text from both sides of the page.
+          const inked = s.runs.filter((r) => r.str.trim());
+          const size = Math.max(...inked.map((r) => r.size), 0) || l.size;
+          const big = inked.find((r) => r.size === size);
+          // (Small offsets stay on the line, so amounts keep lining up with their labels.)
+          const y = big && Math.abs(big.y - l.y) > size * 0.25 ? big.y : l.y;
+          const u = unitFrom(page, [{ ...l, segs: [s], size, y }], text, { x: s.x, right: s.end }, isRightAligned(s, page) ? "right" : "left");
           if (u) units.push(u);
         }
       }
     }
   }
-  // Room to grow: to the right up to the next text on the same band (or the margin), and down to
-  // the next text below.
-  const rightLimit = page.width - Math.max(18, Math.min(page.width - page.rightEdge, 54));
+  joinParagraphs(units);
+  // Values lined up on their right edge (amounts, dates in a summary box) are right-aligned, even
+  // where the analyzer saw a plain line: longer translations then grow leftwards and stay in the box.
   for (const u of units) {
+    if (u.align !== "left" || u.cell || u.h >= u.size * 1.7) continue;
+    const right = u.x + u.w;
+    const peers = units.filter((o) => o !== u && o.h < o.size * 1.7 && Math.abs(o.x + o.w - right) < 1.5 && Math.abs(o.x - u.x) > 3);
+    if (peers.length >= 2 && units.some((o) => o.x + o.w < u.x && o.top < u.top + u.h && o.top + o.h > u.top)) u.align = "right";
+  }
+  // Room to grow: to the right up to the next text or picture on the same band (or the margin), and
+  // down to the next text or picture below. Thin strips beside the text (dotted leaders drawn as
+  // images) aren't walls: longer text is drawn over them on a patch of background.
+  const rightLimit = page.width - Math.max(18, Math.min(page.width - page.rightEdge, 54));
+  const pictures = (page.imageBoxes ?? []).filter((b) => b.x1 - b.x0 > 2 && b.y1 - b.y0 > 2 && (b.x1 - b.x0) * (b.y1 - b.y0) < page.width * page.height * 0.6);
+  for (const u of units) {
+    const thin = (b: { y0: number; y1: number }) => b.y1 - b.y0 <= u.size * 1.6;
     if (u.align === "left") {
       let lim = Math.max(u.maxRight, rightLimit);
       for (const o of units) {
         if (o === u || o.x <= u.x + u.w - 1) continue;
         if (o.top < u.top + u.h && o.top + o.h > u.top) lim = Math.min(lim, o.x - 4);
       }
+      for (const b of pictures) {
+        if (b.x0 <= u.x + u.w - 1 || b.y0 >= u.top + u.h || b.y1 <= u.top) continue;
+        if (thin(b)) u.cover = true;
+        else lim = Math.min(lim, b.x0 - 4);
+      }
       u.maxRight = Math.max(u.x + u.w, lim);
+    } else if (u.align === "right") {
+      // Leftwards, up to the text beside it (a label) or the margin.
+      let lim = Math.min(u.x, Math.max(18, page.leftMargin * 0.5));
+      for (const o of units) {
+        if (o === u || o.x + o.w > u.x + 1) continue;
+        if (o.top < u.top + u.h && o.top + o.h > u.top) lim = Math.max(lim, o.x + o.w + 10);
+      }
+      u.minLeft = Math.min(u.x, lim);
     }
     let low = page.height - Math.max(12, page.bottomMargin * 0.5);
     for (const o of units) {
       if (o === u || o.top < u.top + u.h - 1) continue;
       if (o.x < u.x + u.w && o.x + o.w > u.x) low = Math.min(low, o.top - 1);
     }
+    for (const b of pictures) {
+      if (b.y0 < u.top + u.h - 1 || thin(b)) continue;
+      if (b.x0 < u.x + u.w && b.x1 > u.x) low = Math.min(low, b.y0 - 1);
+    }
     u.maxBottom = Math.max(u.maxBottom, Math.min(low, u.top + u.h + u.size * 6));
   }
   return units;
+}
+
+/**
+ * Some PDFs place every line of a paragraph on its own. Lines that clearly continue each other (same
+ * left edge, size and weight, regular line spacing, the line above running to the column's edge,
+ * nothing else beside them) are joined back into one paragraph, so it's translated as a whole
+ * sentence and reflowed, not line by line.
+ */
+function joinParagraphs(units: Unit[]) {
+  const single = (u: Unit) => !u.cell && u.align === "left" && u.h < u.size * 1.7 && u.baseline !== undefined;
+  const besideSomething = (u: Unit) => units.some((o) => o !== u && o.x > u.x + u.w && o.top < u.top + u.h - 1 && o.top + o.h > u.top + 1);
+  // Widest line starting at the same left edge nearby: the column's width.
+  const column = (u: Unit) =>
+    Math.max(u.w, ...units.filter((o) => single(o) && Math.abs(o.x - u.x) < 2 && Math.abs(o.size - u.size) < 0.6 && Math.abs(o.top - u.top) < u.size * 8).map((o) => o.w));
+  const order = units.filter(single).sort((a, b) => a.top - b.top || a.x - b.x);
+  const gone = new Set<Unit>();
+  for (const a of order) {
+    if (gone.has(a) || besideSomething(a)) continue;
+    let head = a;
+    let lastBase = a.baseline!;
+    let lastW = a.w;
+    let pitch = 0;
+    const lines = [a.text];
+    for (;;) {
+      const colW = column(a);
+      // A wrapped line runs (nearly) to the column's edge, and columns of prose are wide. Short lines
+      // stacked up (addresses, lists of details) stay separate.
+      if (colW < a.size * 14 || lastW < colW * 0.85) break;
+      const next = order.find(
+        (b) =>
+          !gone.has(b) && b !== a && Math.abs(b.x - a.x) < 2 && Math.abs(b.size - a.size) < 0.6 && b.serif === a.serif &&
+          b.baseline! > lastBase + a.size * 0.8 && b.baseline! - lastBase <= a.size * 1.45,
+      );
+      if (!next || besideSomething(next) || /^\s*([•▪◦‣\-–*]|\d+[.)]|[a-z][.)])\s/.test(next.text)) break;
+      // …and the sentence visibly carries on: the line ends mid-sentence or the next starts in lower case
+      // (scripts without case, like Chinese or Arabic, always qualify).
+      const prev = lines[lines.length - 1].trimEnd();
+      if (!/[\p{Ll}\p{Lo},;\-–(]$/u.test(prev) && !/^[\p{Ll}\p{Lo}\d(]/u.test(next.text.trimStart())) break;
+      const gap = next.baseline! - lastBase;
+      if (pitch && Math.abs(gap - pitch) > a.size * 0.25) break;
+      pitch = gap;
+      lines.push(next.text);
+      gone.add(next);
+      head = {
+        ...head,
+        w: Math.max(head.w, next.w),
+        h: next.top + next.h - head.top,
+        maxRight: Math.max(head.maxRight, next.maxRight),
+        maxBottom: Math.max(head.maxBottom, next.maxBottom),
+        // A bold lead-in ("Note:") followed by regular lines reads as a regular paragraph.
+        bold: head.bold && next.bold,
+      };
+      lastBase = next.baseline!;
+      lastW = next.w;
+    }
+    if (lines.length > 1) Object.assign(a, head, { text: joinLines(lines), leading: Math.max(1, pitch / a.size), baseline: lastBase });
+  }
+  for (let i = units.length - 1; i >= 0; i--) if (gone.has(units[i])) units.splice(i, 1);
 }
 
 // ---------- 2. Removing the original text ----------
@@ -239,11 +390,18 @@ function skipDict(s: string, i: number): number {
  * removed was visible (render mode other than 3), so scans with an invisible OCR layer can be
  * told apart from real text.
  */
-export function stripTextOperators(src: string): { out: string; visible: number; invisible: number } {
+/**
+ * Removes the text-showing operators from a content stream, keeping everything else (and the text
+ * positioning, so later text still lands where it should). Text in a font listed in `keep` (resource
+ * names such as "/F6") stays untouched.
+ */
+export function stripTextOperators(src: string, keep: Set<string> = new Set()): { out: string; visible: number; invisible: number } {
   const out: string[] = [];
   let operands: string[] = [];
   let mode = 0;
+  let font = "";
   const modes: number[] = [];
+  const fonts: string[] = [];
   let visible = 0;
   let invisible = 0;
   let i = 0;
@@ -292,22 +450,18 @@ export function stripTextOperators(src: string): { out: string; visible: number;
       continue;
     }
     if (tok === "BI") {
-      // Inline image: copy through "EI" untouched (its data is binary).
-      const id = src.indexOf("ID", i);
-      let end = id < 0 ? n : id + 3;
-      const m = /\sEI(?=[\s]|$)/g;
-      m.lastIndex = end;
-      const hit = m.exec(src);
-      end = hit ? hit.index + hit[0].length : n;
+      // Inline image: copy it through "EI" untouched (its data is binary).
+      const end = inlineImageEnd(src, i);
       out.push(src.slice(start, end));
       operands = [];
       i = end;
       continue;
     }
     if (tok === "Tr") mode = Number(operands[0]) || 0;
-    else if (tok === "q") modes.push(mode);
-    else if (tok === "Q") mode = modes.pop() ?? mode;
-    if (tok === "Tj" || tok === "TJ" || tok === "'" || tok === '"') {
+    else if (tok === "Tf") font = operands[0] ?? font;
+    else if (tok === "q") (modes.push(mode), fonts.push(font));
+    else if (tok === "Q") ((mode = modes.pop() ?? mode), (font = fonts.pop() ?? font));
+    if ((tok === "Tj" || tok === "TJ" || tok === "'" || tok === '"') && !keep.has(font)) {
       if (mode === 3) invisible++;
       else visible++;
       if (tok === "'") out.push("T*");
@@ -319,6 +473,59 @@ export function stripTextOperators(src: string): { out: string; visible: number;
     operands = [];
   }
   return { out: out.join("\n"), visible, invisible };
+}
+
+const COMPONENTS: Record<string, number> = { "/G": 1, "/DeviceGray": 1, "/CalGray": 1, "/RGB": 3, "/DeviceRGB": 3, "/CalRGB": 3, "/CMYK": 4, "/DeviceCMYK": 4, "/I": 1, "/Indexed": 1 };
+
+/**
+ * Where an inline image (BI … ID data EI) ends. Uncompressed images have an exact data length, which
+ * matters: their bytes can contain anything, including "EI". Otherwise, the first "EI" that stands
+ * on its own after the data.
+ */
+function inlineImageEnd(src: string, from: number): number {
+  const n = src.length;
+  const id = /\sID[\s\0]/g;
+  id.lastIndex = from - 1;
+  const hit = id.exec(src);
+  if (!hit) return n;
+  const dict = src.slice(from, hit.index);
+  const data = hit.index + hit[0].length;
+  const val = (...keys: string[]) => {
+    for (const k of keys) {
+      const m = new RegExp(`/${k}\\s*(/?[\\w.]+)`).exec(dict);
+      if (m) return m[1];
+    }
+    return undefined;
+  };
+  if (!val("F", "Filter")) {
+    const w = Number(val("W", "Width"));
+    const h = Number(val("H", "Height"));
+    const mask = val("IM", "ImageMask") === "true";
+    const bpc = mask ? 1 : Number(val("BPC", "BitsPerComponent"));
+    const comps = mask ? 1 : COMPONENTS[val("CS", "ColorSpace") ?? ""] ?? (/\/(CS|ColorSpace)\s*\[\s*\/(I|Indexed)\b/.test(dict) ? 1 : 0);
+    if (w > 0 && h > 0 && bpc > 0 && comps > 0) {
+      let end = data + Math.ceil((w * comps * bpc) / 8) * h;
+      while (end < n && WS.has(src[end])) end++;
+      if (src.startsWith("EI", end)) return end + 2;
+    }
+  }
+  const m = /[\s\0]EI(?=[\s\0]|$)/g;
+  m.lastIndex = data;
+  const e = m.exec(src);
+  return e ? e.index + e[0].length : n;
+}
+
+/** Resource names of the fonts whose text is left in place (barcodes, OCR lines, icons). */
+function keptFonts(pdf: PDFDocument, resources: PDFDict | undefined): Set<string> {
+  const keep = new Set<string>();
+  const fonts = resources?.lookupMaybe(PDFName.of("Font"), PDFDict);
+  if (!fonts) return keep;
+  for (const [name, ref] of fonts.entries()) {
+    const f = pdf.context.lookup(ref);
+    const base = f instanceof PDFDict ? f.get(PDFName.of("BaseFont"))?.toString() : undefined;
+    if (isSpecialFont(base?.slice(1))) keep.add(name.toString());
+  }
+  return keep;
 }
 
 function decode(stream: PDFStream): string | null {
@@ -350,7 +557,7 @@ function stripPageText(pdf: PDFDocument, page: PDFPage, seenForms: Set<string>):
     if (d === null) return null;
     parts.push(d);
   }
-  const r = stripTextOperators(parts.join("\n"));
+  const r = stripTextOperators(parts.join("\n"), keptFonts(pdf, node.Resources()));
   // Wrap the original drawing in q/Q so its graphics state can't leak into the new text.
   const ref = pdf.context.register(pdf.context.flateStream(Buffer.from(`q\n${r.out}\nQ\n`, "latin1")));
   node.set(PDFName.of("Contents"), pdf.context.obj([ref]));
@@ -377,7 +584,8 @@ function stripForms(pdf: PDFDocument, resources: PDFDict, seen: Set<string>): { 
     if (!(form instanceof PDFStream) || form.dict.get(PDFName.of("Subtype"))?.toString() !== "/Form") continue;
     const d = decode(form);
     if (d === null) continue;
-    const r = stripTextOperators(d);
+    const inner = form.dict.lookupMaybe(PDFName.of("Resources"), PDFDict);
+    const r = stripTextOperators(d, keptFonts(pdf, inner ?? resources));
     visible += r.visible;
     invisible += r.invisible;
     if (r.visible || r.invisible) {
@@ -389,7 +597,6 @@ function stripForms(pdf: PDFDocument, resources: PDFDict, seen: Set<string>): { 
       for (const [k, v] of dict.entries()) entries[k.asString().slice(1)] = v;
       pdf.context.assign(value, pdf.context.flateStream(Buffer.from(r.out, "latin1"), entries as never));
     }
-    const inner = form.dict.lookupMaybe(PDFName.of("Resources"), PDFDict);
     if (inner) {
       const f = stripForms(pdf, inner, seen);
       visible += f.visible;
@@ -536,7 +743,7 @@ type Layout = { size: number; lines: Piece[][]; width: number };
 
 function fit(u: Unit, text: string, primary: PDFFont, fallback: PDFFont, lang: TranslateLanguage): Layout {
   const oneLine = u.h < u.size * 1.7;
-  const roomW = Math.max(u.w, u.maxRight - u.x);
+  const roomW = u.align === "right" ? u.x + u.w - (u.minLeft ?? u.x) : Math.max(u.w, u.maxRight - u.x);
   const roomH = Math.max(u.h, u.maxBottom - u.top);
   const min = Math.max(4, u.size * 0.55);
   // Single lines: keep them on one line, using spare room to the right, before shrinking.
@@ -544,14 +751,17 @@ function fit(u: Unit, text: string, primary: PDFFont, fallback: PDFFont, lang: T
     for (let size = u.size; size >= Math.max(4, u.size * 0.72); size -= 0.25) {
       const ps = piecesFor(text, primary, fallback);
       const w = widthOf(ps, size);
-      if (w <= (u.align === "left" ? roomW : u.w + 2)) return { size, lines: [ps], width: Math.max(u.w, w) };
+      if (w <= (u.align === "center" ? u.w + 2 : roomW)) return { size, lines: [ps], width: Math.max(u.w, w) };
     }
   }
+  // Paragraphs: first in their own width, then using free room to the right, before shrinking.
+  const widths = u.align === "left" ? (oneLine ? [roomW] : roomW > u.w + 4 ? [u.w + 1, roomW] : [u.w + 1]) : [u.align === "right" ? roomW : u.w + 2];
   for (let size = u.size; size >= min; size -= 0.25) {
-    const width = u.align === "left" && !oneLine ? u.w + 1 : u.align === "left" ? roomW : u.w + 2;
-    const lines = wrap(text, width, size, primary, fallback, Boolean(lang.noSpaces));
-    const height = size * 0.92 + (lines.length - 1) * size * u.leading + size * 0.28;
-    if (height <= roomH + 0.5) return { size, lines, width };
+    for (const width of widths) {
+      const lines = wrap(text, width, size, primary, fallback, Boolean(lang.noSpaces));
+      const height = size * 0.92 + (lines.length - 1) * size * u.leading + size * 0.28;
+      if (height <= roomH + 0.5) return { size, lines, width };
+    }
   }
   const width = u.align === "left" ? roomW : u.w + 2;
   return { size: min, lines: wrap(text, width, min, primary, fallback, Boolean(lang.noSpaces)), width };
@@ -598,6 +808,20 @@ function drawUnit(page: PDFPage, u: Unit, text: string, fonts: Fonts, lang: Tran
     let x = u.align === "center" ? u.x + (u.w - w) / 2 : u.align === "right" ? u.x + u.w - w : u.x;
     if (flip) x = u.x + Math.max(u.w, w) - w;
     const baseline = u.top + layout.size * 0.92 + i * layout.size * u.leading;
+    if (u.cover && (x < u.x - 1 || x + w > u.x + u.w + 1)) {
+      // Clear what the longer text now sits on (dotted leaders), outside the original box only.
+      const [r, g, b] = u.bg ?? [255, 255, 255];
+      const fill = rgb(r / 255, g / 255, b / 255);
+      const top = baseline - layout.size * 0.95;
+      const h = layout.size * 1.25;
+      const patch = (a: number, z: number) => {
+        if (z - a < 0.5) return;
+        const [px, py] = pt(a, top + h);
+        page.drawRectangle({ x: px, y: py, width: z - a, height: h, color: fill, rotate });
+      };
+      patch(x - 1, u.x);
+      patch(u.x + u.w, x + w + 2);
+    }
     for (const p of ordered) {
       const [px, py] = pt(x, baseline);
       page.drawText(p.text, { x: px, y: py, size: layout.size, font: p.font, color, rotate });
@@ -644,12 +868,17 @@ export async function translatePdf(
   progress({ stage: "reading", done: 0, total });
   let pdfjsDoc: Awaited<ReturnType<typeof openPdfJs>> | null = null;
   const { layouts, units } = await exclusive(async () => {
-    const layouts = await analyzePdf(bytes, { ocr: true, tables: true, ocrImages: true });
+    const layouts = await analyzePdf(bytes, { ocr: true, tables: true, ocrImages: true, imageBoxes: true });
     const units = layouts.map(pageUnits);
     // The analyzer knows one text colour per page; sample each block's real text and background
     // colours from the rendered page (white headings on a coloured band, grey footers, …).
     pdfjsDoc = await openPdfJs(bytes);
-    for (let p = 0; p < units.length; p++) if (units[p].length) await sampleColors(pdfjsDoc, p + 1, units[p]).catch((e) => console.error("[pdftek] translate: colour sampling failed", e));
+    for (let p = 0; p < units.length; p++) {
+      if (!units[p].length) continue;
+      await sampleColors(pdfjsDoc, p + 1, units[p]).catch((e) => console.error("[pdftek] translate: colour sampling failed", e));
+      // Scans are redrawn from OCR, where every word is visible by definition.
+      if (!layouts[p].ocr) units[p] = units[p].filter((u) => !u.hidden);
+    }
     return { layouts, units };
   });
 
@@ -732,7 +961,22 @@ async function sampleColors(doc: Awaited<ReturnType<typeof openPdfJs>>, pageNumb
     const y0 = Math.floor(u.top * SAMPLE_SCALE);
     const y1 = Math.ceil((u.top + u.h) * SAMPLE_SCALE);
     if (x1 <= x0 || y1 <= y0) continue;
-    // Background: the most common colour on a ring just outside the text box.
+    // Background: the most common colour inside the box (glyphs cover far less of it than the
+    // background does). Falls back to a ring just outside when the box is mostly ink.
+    const inBox = new Map<number, { n: number; c: [number, number, number] }>();
+    let boxN = 0;
+    const bstep = Math.max(1, Math.floor(Math.sqrt(((x1 - x0) * (y1 - y0)) / 3000)));
+    for (let y = y0; y < y1; y += bstep) {
+      for (let x = x0; x < x1; x += bstep) {
+        const c = px(x, y);
+        const k = key(c);
+        const e = inBox.get(k);
+        if (e) e.n++;
+        else inBox.set(k, { n: 1, c });
+        boxN++;
+      }
+    }
+    const topIn = [...inBox.values()].sort((a, b) => b.n - a.n)[0];
     const ring = new Map<number, { n: number; c: [number, number, number] }>();
     const addRing = (c: [number, number, number]) => {
       const k = key(c);
@@ -743,14 +987,16 @@ async function sampleColors(doc: Awaited<ReturnType<typeof openPdfJs>>, pageNumb
     const stepX = Math.max(1, Math.floor((x1 - x0) / 60));
     for (let x = x0 - 2; x <= x1 + 2; x += stepX) (addRing(px(x, y0 - 3)), addRing(px(x, y1 + 2)));
     for (let y = y0; y <= y1; y += Math.max(1, Math.floor((y1 - y0) / 12))) (addRing(px(x0 - 3, y)), addRing(px(x1 + 3, y)));
-    const bg = [...ring.values()].sort((a, b) => b.n - a.n)[0]?.c ?? [255, 255, 255];
+    const bg = topIn && topIn.n >= boxN * 0.45 ? topIn.c : ([...ring.values()].sort((a, b) => b.n - a.n)[0]?.c ?? [255, 255, 255]);
     // Text: the most common colour inside the box that clearly differs from the background.
     const inside = new Map<number, { n: number; sum: [number, number, number]; far: number }>();
+    let ink = 0;
     const step = Math.max(1, Math.floor(Math.sqrt(((x1 - x0) * (y1 - y0)) / 4000)));
     for (let y = y0; y < y1; y += step) {
       for (let x = x0; x < x1; x += step) {
         const c = px(x, y);
         const d = dist(c, bg);
+        if (d > ink) ink = d;
         if (d < 90) continue;
         const k = key(c);
         const e = inside.get(k);
@@ -761,6 +1007,8 @@ async function sampleColors(doc: Awaited<ReturnType<typeof openPdfJs>>, pageNumb
     // Prefer well-populated colours, then the ones furthest from the background (glyph cores, not edges).
     const best = [...inside.values()].sort((a, b) => b.n * b.far - a.n * a.far)[0];
     u.bg = bg;
+    // Nothing drawn here at all: hidden text (white on white, clipped, covered). Leave it out.
+    if (ink < 24) u.hidden = true;
     if (best && best.n >= 3) {
       const c = best.sum.map((v) => Math.round(v / best.n));
       u.color = c.map((v) => v.toString(16).padStart(2, "0")).join("");
