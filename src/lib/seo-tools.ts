@@ -10,7 +10,7 @@ export type SeoTool = {
   slug: string;
   go: string;
   name: string;
-  category: "Convert from PDF" | "Convert to PDF" | "Organize" | "Optimize & secure" | "Edit & sign" | "AI & accessibility";
+  category: "Convert from PDF" | "Convert to PDF" | "Organize" | "Optimize & secure" | "Edit & sign" | "AI & accessibility" | "Workflow & integrations";
   title: string;
   description: string;
   h1: string;
@@ -41,6 +41,11 @@ const deviceFaq: [string, string] = [
   "No. PDFTEK runs in your web browser on Windows, Mac, Linux, iPhone, iPad and Android. Nothing to download or install.",
 ];
 
+const cloudFaq: [string, string] = [
+  "Can I use files from Google Drive, Dropbox or OneDrive?",
+  "Yes. Choose From cloud next to any upload button, connect your account once, and pick your files. Results can be saved back to your cloud storage with Save to cloud. On a phone you can also scan paper documents with the camera.",
+];
+
 export const SEO_TOOLS: SeoTool[] = [
   // ---------- convert from PDF ----------
   {
@@ -49,7 +54,7 @@ export const SEO_TOOLS: SeoTool[] = [
     name: "PDF to Word",
     category: "Convert from PDF",
     title: "PDF to Word Converter – Free, Editable DOCX Online",
-    description: "Convert PDF to an editable Word document (DOCX) online for free. Keeps headings, paragraphs, tables with their borders, and images. Scanned PDFs work too. No sign-up needed.",
+    description: "Convert PDF to an editable Word document (DOCX) free. Keeps headings, paragraphs, tables with borders and images. Scanned PDFs work too. No sign-up.",
     h1: "Convert PDF to Word",
     lead: "Turn any PDF into an editable Word document (.docx) in seconds. Text, headings and tables come out ready to edit in Microsoft Word, Google Docs or Pages.",
     steps: [
@@ -68,6 +73,7 @@ export const SEO_TOOLS: SeoTool[] = [
       ["Will the formatting be kept?", "PDFTEK keeps paragraphs, headings, lists, links, images and tables (with their borders, column widths and merged cells) so the document stays easy to edit. Very complex designs (magazine layouts, overlapping graphics) may need small touch-ups. Digital signatures can't carry over into an editable file; keep the original PDF for signed records."],
       ["Can I convert a scanned PDF to Word?", "Yes. Run OCR on the scan first (it's built in) so the text can be recognized, then convert to Word."],
       freeFaq,
+      cloudFaq,
       privacyFaq,
     ],
     related: ["word-to-pdf", "pdf-to-excel", "bulk-pdf-converter", "ocr-pdf"],
@@ -98,6 +104,7 @@ export const SEO_TOOLS: SeoTool[] = [
       ["Does it work with bank statements?", "For a statement laid out as it looks, PDF to Excel works. For clean transaction rows (date, description, money in, money out, balance) checked against the balances, use PDFTEK's Bank statement to Excel converter."],
       ["Can AI pull specific figures instead?", `Yes. Ask PDFTEK's AI to extract exactly the fields you need (totals, dates, parties) into a spreadsheet. ${AI_NOTE}`],
       freeFaq,
+      cloudFaq,
       privacyFaq,
     ],
     related: ["bank-statement-to-excel", "invoice-to-excel", "bulk-pdf-converter", "excel-to-pdf"],
@@ -109,7 +116,7 @@ export const SEO_TOOLS: SeoTool[] = [
     name: "Bank statement to Excel",
     category: "Convert from PDF",
     title: "Bank Statement to Excel Converter – PDF Statements to XLSX & CSV",
-    description: "Convert PDF bank and credit card statements to Excel or CSV. Clean transaction rows with dates, money in, money out and balance, checked against the statement. Any bank, scans too.",
+    description: "Convert bank and credit card statements to Excel or CSV: clean rows with date, money in, money out and balance, checked against the totals. Any bank, scans too.",
     h1: "Convert bank statements to Excel",
     lead: "Turn PDF bank and credit card statements into clean spreadsheet rows: date, description, money in, money out and running balance. Every statement is checked against its balances, so you can trust the numbers.",
     steps: [
@@ -129,6 +136,7 @@ export const SEO_TOOLS: SeoTool[] = [
       ["Can I convert several statements at once?", `Yes, with a ${usd(PRODUCTS.pass.cents)} Day Pass or Pro: upload a year of statements and download them as one spreadsheet with a summary sheet per account.`],
       ["How much does it cost?", `Your first statement each month (up to 10 pages) is free. After that it uses AI credits, about 6 per page: 250 credits cost ${usd(PRODUCTS.credits_250.cents)}, and Pro includes 400 a month.`],
       ["Can I import the result into QuickBooks or Xero?", "Yes. Download the CSV (Date, Description, Amount, Balance) and import it as a bank feed or transactions file."],
+      cloudFaq,
       privacyFaq,
     ],
     related: ["bank-statement-to-csv", "invoice-to-excel", "pdf-to-excel", "bulk-pdf-converter"],
@@ -140,7 +148,7 @@ export const SEO_TOOLS: SeoTool[] = [
     name: "Invoice to Excel",
     category: "Convert from PDF",
     title: "Invoice to Excel Converter – Extract Invoice & Receipt Data to XLSX",
-    description: "Extract vendor, invoice number, dates, line items, tax and totals from PDF invoices and receipts into Excel or CSV. Bulk-convert a whole folder of invoices into one spreadsheet.",
+    description: "Extract vendor, invoice number, dates, line items, tax and totals from invoices and receipts into Excel or CSV. A whole folder into one spreadsheet.",
     h1: "Convert invoices to Excel",
     lead: "Stop retyping invoices. PDFTEK pulls the vendor, invoice number, dates, line items, tax and totals out of PDF invoices and receipts into a spreadsheet, one row per invoice plus a sheet of line items.",
     steps: [
@@ -159,6 +167,7 @@ export const SEO_TOOLS: SeoTool[] = [
       ["Does it work with receipts and scanned invoices?", "Yes. Receipts, bills and scanned or photographed invoices all work."],
       ["Can I process many invoices at once?", `Yes, with a ${usd(PRODUCTS.pass.cents)} Day Pass or Pro you can upload many invoices together and download a single spreadsheet.`],
       ["How much does it cost?", `Your first document each month (up to 10 pages) is free. After that it uses AI credits, about 6 per page: 250 credits cost ${usd(PRODUCTS.credits_250.cents)}, and Pro includes 400 a month.`],
+      cloudFaq,
       privacyFaq,
     ],
     related: ["receipt-to-excel", "bank-statement-to-excel", "pdf-to-excel", "bulk-pdf-converter"],
@@ -200,11 +209,11 @@ export const SEO_TOOLS: SeoTool[] = [
     name: "Receipt to Excel",
     category: "Convert from PDF",
     title: "Receipt to Excel – Convert Receipts to a Spreadsheet for Expenses",
-    description: "Turn receipts (PDFs, scans and phone photos saved as PDF) into an Excel or CSV expense list: merchant, date, items, tax and total for every receipt.",
+    description: "Turn receipts (PDFs, scans and phone photos) into an Excel or CSV expense list: merchant, date, items, tax and total for every receipt. Scan with your camera.",
     h1: "Convert receipts to Excel",
     lead: "Scan or upload your receipts and get an expense spreadsheet with the merchant, date, line items, tax and total of each one, ready for expense reports and bookkeeping.",
     steps: [
-      ["Upload or scan your receipts", "PDFs, scanned receipts, or photos taken with your phone and saved as PDF."],
+      ["Upload or scan your receipts", "PDFs, phone photos, or receipts scanned with your camera right in the page."],
       ["PDFTEK reads every receipt", "Merchant, date, items, tax and total are extracted and the totals are checked."],
       ["Download Excel or CSV", "One row per receipt plus a sheet of line items, ready for expense reports."],
     ],
@@ -215,7 +224,7 @@ export const SEO_TOOLS: SeoTool[] = [
       "Many receipts into one spreadsheet with a Day Pass or Pro",
     ],
     faq: [
-      ["Can I use photos of receipts?", "Yes. Save or scan the photos as a PDF (PDFTEK's Scan to PDF does this from your phone camera), then convert."],
+      ["Can I use photos of receipts?", "Yes. Upload photos (JPG, PNG or HEIC) directly, or tap Scan to photograph receipts with your phone camera. They can also come from Google Drive, Dropbox or OneDrive, or be forwarded to your workspace's email address."],
       ["Does it work for expense reports?", "Yes. The spreadsheet has the date, merchant, category-ready description, tax and total of each receipt, which is what expense reports need."],
       ["How much does it cost?", `Your first document each month (up to 10 pages) is free. After that it uses AI credits, about 6 per page: 250 credits cost ${usd(PRODUCTS.credits_250.cents)}.`],
       privacyFaq,
@@ -257,7 +266,7 @@ export const SEO_TOOLS: SeoTool[] = [
     go: "request-documents",
     name: "Secure document requests",
     category: "Edit & sign",
-    title: "Request Documents Securely – Collect Files from Clients with a Checklist",
+    title: "Request Documents Securely – Collect Files From Clients",
     description: "Ask clients, tenants or new hires for documents with a checklist and a private upload link protected by a one-time code. Reminders, audit trail and PDF packets included.",
     h1: "Request documents securely",
     lead: "Stop chasing attachments over email. Send a checklist of the files you need, and people upload each one through a private link that only they can open. No account needed on their side.",
@@ -319,7 +328,7 @@ export const SEO_TOOLS: SeoTool[] = [
       ["Download", "Get one image per page."],
     ],
     benefits: ["One image per page", "JPG, PNG, WEBP and TIFF", "No watermark on free conversions", "Works on phones and computers"],
-    faq: [["Can I convert to PNG instead of JPG?", "Yes. PNG, WEBP and TIFF are also available."], freeFaq, deviceFaq, privacyFaq],
+    faq: [["Can I convert to PNG instead of JPG?", "Yes. PNG, WEBP and TIFF are also available."], freeFaq, deviceFaq, cloudFaq, privacyFaq],
     related: ["jpg-to-pdf", "pdf-to-powerpoint", "compress-pdf", "split-pdf"],
     access: "free",
   },
@@ -344,6 +353,7 @@ export const SEO_TOOLS: SeoTool[] = [
       ["Will my fonts and layout change?", "PDFTEK converts with a full office engine, so layout, tables and spacing are kept. Rare custom fonts are replaced by a close match if they aren't embedded in the file."],
       ["Can I convert several Word files at once?", `Yes, up to ${FREE_LIMITS.free.maxFiles} files at a time for free, and up to 50 with a Day Pass or Pro.`],
       freeFaq,
+      cloudFaq,
       privacyFaq,
     ],
     related: ["pdf-to-word", "merge-pdf", "sign-pdf", "excel-to-pdf"],
@@ -393,7 +403,7 @@ export const SEO_TOOLS: SeoTool[] = [
     name: "TIFF to PDF",
     category: "Convert to PDF",
     title: "TIFF to PDF Converter – Multi-page TIF Files to PDF Free Online",
-    description: "Convert TIFF and TIF images to PDF online, including multi-page TIFFs from scanners and faxes. Every page kept, real page size, sharp black-and-white text. Free, no sign-up.",
+    description: "Convert TIFF and TIF images to PDF, including multi-page TIFFs from scanners and faxes. Every page kept at its real size, with sharp text. Free, no sign-up.",
     h1: "Convert TIFF to PDF",
     lead: "Turn TIF and TIFF files into a PDF anyone can open, in any browser. Multi-page TIFFs from scanners and fax machines become multi-page PDFs, at their real page size.",
     steps: [
@@ -433,7 +443,7 @@ export const SEO_TOOLS: SeoTool[] = [
       ["Create the PDF", "Download one PDF with all your images."],
     ],
     benefits: ["Combine many photos into one PDF", "JPG, PNG, HEIC (iPhone) and WEBP", "Great for receipts and ID copies", "No watermark"],
-    faq: [["Can I convert iPhone photos (HEIC)?", "Yes. HEIC photos from iPhone and iPad are supported."], freeFaq, deviceFaq, privacyFaq],
+    faq: [["Can I convert iPhone photos (HEIC)?", "Yes. HEIC photos from iPhone and iPad are supported."], freeFaq, deviceFaq, cloudFaq, privacyFaq],
     related: ["pdf-to-jpg", "scan-to-pdf", "merge-pdf", "compress-pdf"],
     access: "free",
   },
@@ -477,6 +487,7 @@ export const SEO_TOOLS: SeoTool[] = [
       ["How many PDFs can I merge?", `Up to ${FREE_LIMITS.free.maxFiles} files at a time for free (${FREE_LIMITS.free.maxFileMb} MB each). A Day Pass or Pro raises that to 50 files of 100 MB.`],
       ["Can I merge Word files and images too?", "Yes. Convert them to PDF first (also free), then merge."],
       freeFaq,
+      cloudFaq,
       privacyFaq,
     ],
     related: ["split-pdf", "organize-pdf", "compress-pdf", "jpg-to-pdf"],
@@ -497,7 +508,7 @@ export const SEO_TOOLS: SeoTool[] = [
       ["Download", "Get the new PDFs."],
     ],
     benefits: ["Extract any page range", "Split into multiple files", "Original stays untouched", "No watermark"],
-    faq: [["Does splitting reduce quality?", "No. Pages are copied exactly; nothing is re-compressed."], freeFaq, deviceFaq, privacyFaq],
+    faq: [["Does splitting reduce quality?", "No. Pages are copied exactly; nothing is re-compressed."], freeFaq, deviceFaq, cloudFaq, privacyFaq],
     related: ["merge-pdf", "organize-pdf", "rotate-pdf", "compress-pdf"],
     access: "free",
   },
@@ -579,6 +590,7 @@ export const SEO_TOOLS: SeoTool[] = [
       ["How much smaller will my PDF get?", "It depends on the content. Scans and photo-heavy PDFs shrink the most, often by 90% or more. Text-only PDFs are usually small already."],
       ["Will the quality drop?", "Text and vector graphics stay sharp. Photos are recompressed; the balanced level keeps them looking good on screen and in print."],
       freeFaq,
+      cloudFaq,
       privacyFaq,
     ],
     related: ["merge-pdf", "pdf-to-jpg", "split-pdf", "protect-pdf"],
@@ -726,14 +738,22 @@ export const SEO_TOOLS: SeoTool[] = [
       ["Place fields and add signers", "Choose who signs where, and in what order."],
       ["Send", "Signers get an email link; you get the signed PDF and certificate."],
     ],
-    benefits: ["Signing order and reminders", "Certificate of completion with SHA-256 fingerprint", "Signers need no account", "Captures consent, timestamps and IP addresses"],
+    benefits: [
+      "Signing order and reminders",
+      "Certificate of completion with SHA-256 fingerprint",
+      "Signers need no account",
+      "Captures consent, timestamps and IP addresses",
+      "Reusable templates, bulk send and public signing links",
+      "Optionally collect a payment when someone signs (Stripe)",
+    ],
     faq: [
+      ["Can I reuse a document I send often?", "Yes. Save it as a template with roles (for example Client and Manager), then send it to one person, bulk send it to a whole list, or publish a signing link anyone can open."],
       ["Are the e-signatures legally binding?", "PDFTEK records consent, signer email identity, IP addresses and timestamps, and adds a certificate of completion: the standard evidence for simple electronic signatures under ESIGN (US) and eIDAS (EU). Check local rules for regulated documents."],
       ["Do signers need to pay or sign up?", "No. Signers open a secure link from their email and sign in the browser."],
       ["How much does it cost?", MEMBER_NOTE],
       privacyFaq,
     ],
-    related: ["edit-pdf", "word-to-pdf", "protect-pdf", "merge-pdf"],
+    related: ["esignature-templates", "signing-link-with-payment", "fill-pdf-form", "protect-pdf"],
     access: "member",
   },
 
@@ -848,6 +868,128 @@ export const SEO_TOOLS: SeoTool[] = [
     faq: [["Can AI summarize the changes?", `Yes. An AI summary of the important changes is available. ${AI_NOTE}`], freeFaq, deviceFaq, privacyFaq],
     related: ["chat-with-pdf", "edit-pdf", "sign-pdf", "pdf-to-word"],
     access: "free",
+  },
+
+  // ---------- workflow & integrations ----------
+  {
+    slug: "esignature-templates",
+    go: "esign-templates",
+    name: "E-Signature Templates & Bulk Send",
+    category: "Workflow & integrations",
+    title: "E-Signature Templates & Bulk Send – Send One Document to Many",
+    description: "Save contracts and forms as e-signature templates with roles and fields, then send them in seconds or bulk send to hundreds of people from a CSV list.",
+    h1: "Create e-signature templates and bulk send",
+    lead: "Set up the documents you send again and again (offer letters, NDAs, leases, consent forms) once. Then send them to one person in seconds, or to a whole list at once: everyone gets their own copy to sign.",
+    steps: [
+      ["Save a template", "Upload the document, add roles like Client and Manager, and place each role's signature, date and text fields."],
+      ["Send it", "Fill in the names and emails, or paste or upload a list (CSV) to bulk send."],
+      ["Track everything", "See who has opened and signed each copy, send reminders, and download signed PDFs with audit certificates."],
+    ],
+    benefits: [
+      "Roles and fields placed once, reused every time",
+      "Bulk send to up to 500 people at once (Team), each with their own copy",
+      "Fixed signers (such as your manager) filled in automatically",
+      "Signing order, reminders and an audit certificate for every copy",
+      "Signers need no account",
+    ],
+    faq: [
+      ["How many people can I bulk send to?", "Up to 500 per send on Team, 200 on Pro and 100 with a Day Pass. Paste names and emails or upload a CSV; each person gets their own copy."],
+      ["Can a template have more than one signer?", "Yes. Add up to 10 roles, set the signing order, and mark a role as always the same person (for example, you as the countersigner)."],
+      ["How much does it cost?", MEMBER_NOTE],
+      privacyFaq,
+    ],
+    related: ["sign-pdf", "signing-link-with-payment", "fill-pdf-form", "request-documents"],
+    access: "member",
+  },
+  {
+    slug: "signing-link-with-payment",
+    go: "signing-links",
+    name: "Signing Links & Payments",
+    category: "Workflow & integrations",
+    title: "Signing Links – Let Anyone Sign and Pay Online",
+    description: "Publish a link anyone can open to sign your agreement, waiver or registration form, and optionally collect a payment through Stripe at the same time.",
+    h1: "Collect signatures and payments with one link",
+    lead: "Put one link on your website, in an email or in a QR code. Anyone who opens it confirms their email, signs your document and, if you choose, pays a deposit or fee, in one go. You countersign afterwards.",
+    steps: [
+      ["Create a link from a template", "Choose the role the visitor signs as. Optionally limit the number of signatures or set an end date."],
+      ["Turn on payment (optional)", "Connect your Stripe account and set the amount, such as a deposit, a registration fee or a booking fee."],
+      ["Share the link", "Visitors confirm their email with a one-time code, sign, and pay. Everyone else signs in order afterwards."],
+    ],
+    benefits: [
+      "One link for everyone: waivers, registrations, client intake, rental applications",
+      "Email verified with a one-time code before signing",
+      "Payments go straight to your own Stripe account",
+      "No extra pdftek fee on top of Stripe's standard rates",
+      "See signatures and money collected per link",
+    ],
+    faq: [
+      ["How do payments work?", "Payments are processed by Stripe and paid into your own Stripe account. Signers pay by card on Stripe's secure checkout page; pdftek never sees card details."],
+      ["Can I stop a link after a number of signatures?", "Yes. Set a maximum number of signatures or an end date, or turn the link off at any time."],
+      ["Do signers need an account?", "No. They open the link, confirm their email with a code and sign in the browser, on a phone or computer."],
+      ["How much does it cost?", MEMBER_NOTE],
+    ],
+    related: ["esignature-templates", "sign-pdf", "fill-pdf-form", "request-documents"],
+    access: "member",
+  },
+  {
+    slug: "google-drive-dropbox-onedrive-pdf",
+    go: "cloud",
+    name: "Google Drive, Dropbox & OneDrive",
+    category: "Workflow & integrations",
+    title: "PDF Tools for Google Drive, Dropbox & OneDrive – Open & Save",
+    description: "Open PDFs and documents straight from Google Drive, Dropbox or OneDrive, then convert, edit, sign or translate them and save the results back. Works on phones too.",
+    h1: "Work on PDFs from Google Drive, Dropbox and OneDrive",
+    lead: "No more downloading and re-uploading. Pick files from your cloud storage next to any upload button, work on them in pdftek, and save the results back to a pdftek folder in your cloud.",
+    steps: [
+      ["Connect your account", "Google Drive, Dropbox or OneDrive, in one click. Google Drive only shares the files you pick."],
+      ["Choose your files", "PDFs, Word, Excel, PowerPoint and images, plus Google Docs, Sheets and Slides (converted automatically)."],
+      ["Save back", "Download as usual, or choose Save to cloud to put the result back in your storage."],
+    ],
+    benefits: [
+      "From cloud next to every upload button",
+      "Google Docs, Sheets and Slides opened as Word, Excel and PowerPoint",
+      "Results saved to a pdftek folder in your storage",
+      "Sign-in tokens encrypted; disconnect any time",
+      "Works on iPhone, iPad, Android and computers",
+    ],
+    faq: [
+      ["Which cloud services are supported?", "Google Drive (including shared drives), Dropbox and OneDrive (personal and work or school accounts)."],
+      ["Can pdftek see all my files?", "With Google Drive, pdftek only gets access to the files you pick. With Dropbox and OneDrive you browse your folders inside pdftek, and only the files you choose are copied."],
+      ["Is it free?", `Yes, connecting cloud storage is free on every plan. ${FREE_NOTE}`],
+      privacyFaq,
+    ],
+    related: ["email-to-pdf", "pdf-to-word", "merge-pdf", "compress-pdf"],
+    access: "free",
+  },
+  {
+    slug: "email-to-pdf",
+    go: "email-in",
+    name: "Email to PDF",
+    category: "Workflow & integrations",
+    title: "Email to PDF – Forward Emails and Attachments to Your Workspace",
+    description: "Get your own pdftek email address. Forward bank statements, invoices and receipts to it: attachments and emails are saved as PDFs in your library, ready to convert.",
+    h1: "Email documents straight into pdftek",
+    lead: "Your workspace gets its own email address. Forward statements, invoices, receipts and signed forms to it, or ask clients and suppliers to send them there, and they appear in your library as PDFs.",
+    steps: [
+      ["Create your address", "Settings → Integrations → Email to pdftek → Create my address."],
+      ["Forward or share it", "Forward emails yourself, or let clients, suppliers and your bank send to it."],
+      ["Find them in your library", "Attachments (and emails without attachments) are saved as PDFs, ready to convert to Excel, sign or share."],
+    ],
+    benefits: [
+      "Attachments saved as PDFs automatically, Word, Excel and images included",
+      "Emails without attachments saved as a PDF too",
+      "Choose who may send: only your team, or anyone with the address",
+      "A log of recent emails and what was saved",
+      "Change or turn off the address at any time",
+    ],
+    faq: [
+      ["Who can send to my address?", "By default only people in your workspace, from their account email. You can allow anyone who has the address, such as clients, suppliers or your bank."],
+      ["What happens to an email without attachments?", "The email itself is saved as a PDF, for example an order confirmation or a receipt sent in the email body."],
+      ["How much does it cost?", MEMBER_NOTE],
+      privacyFaq,
+    ],
+    related: ["google-drive-dropbox-onedrive-pdf", "bank-statement-to-excel", "invoice-to-excel", "receipt-to-excel"],
+    access: "member",
   },
 ];
 

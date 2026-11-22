@@ -23,7 +23,7 @@ const TAG_IDS = [GA_ID, ADS_ID].filter(Boolean);
 
 const SITE = (process.env.APP_URL || "https://pdftek.com").replace(/\/$/, "");
 const DESCRIPTION =
-  "Free online PDF tools: convert PDF to Word, Excel, PowerPoint and JPG and back, merge, split, compress, protect, edit, e-sign and chat with PDFs. No sign-up needed.";
+  "Free online PDF tools: convert PDF to Word, Excel and JPG and back, merge, compress, edit, e-sign and translate PDFs, with Google Drive, Dropbox and OneDrive. No sign-up needed.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t, info, locale } = await getI18n();

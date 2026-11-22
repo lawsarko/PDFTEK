@@ -15,7 +15,7 @@ export async function generateMetadata() {
   return { alternates: alternatesFor("/", locale), openGraph: { url: lp("/") } };
 }
 
-const POPULAR = ["fill-pdf-form", "bank-statement-to-excel", "invoice-to-excel", "pdf-to-word", "merge-pdf", "compress-pdf", "word-to-pdf", "jpg-to-pdf", "pdf-to-jpg", "split-pdf", "edit-pdf", "sign-pdf", "protect-pdf", "chat-with-pdf"];
+const POPULAR = ["fill-pdf-form", "bank-statement-to-excel", "invoice-to-excel", "pdf-to-word", "merge-pdf", "compress-pdf", "word-to-pdf", "jpg-to-pdf", "pdf-to-jpg", "split-pdf", "edit-pdf", "sign-pdf", "protect-pdf", "chat-with-pdf", "translate-pdf", "esignature-templates"];
 
 const HOME_FAQ: [string, string][] = [
   [
@@ -25,6 +25,8 @@ const HOME_FAQ: [string, string][] = [
           ["Does the AI make things up?", "pdftek answers only from your documents and cites the page for every claim. Click a citation and the passage is highlighted in the viewer, so you can check any answer in seconds."],
           ["Can it read scanned documents and other languages?", "Yes. The assistant reads scans directly, and in-browser OCR adds a searchable text layer in 13 languages. Search, read-aloud and conversions work across 40+ languages."],
           ["Are the e-signatures legally binding?", "pdftek captures consent, signer identity via unique email links, IP addresses and timestamps, and adds a certificate of completion to the signed PDF. That's the standard evidence under ESIGN and eIDAS for simple electronic signatures. Check your jurisdiction's requirements for regulated documents."],
+          ["Can I translate a PDF without losing the layout?", "Yes. Translate PDF rewrites the text in 35+ languages and keeps fonts, colours, tables, logos and images in place, including scanned documents. Numbers, amounts and names stay as they are."],
+          ["Does it work with Google Drive, Dropbox and OneDrive?", "Yes. Choose From cloud next to any upload button to open files from Google Drive, Dropbox or OneDrive, and save results back with Save to cloud. Your workspace can also get its own email address: forwarded attachments land in your library as PDFs."],
           ["What happens when two people edit at once?", "They can't overwrite each other. Editing checks the document out to one person, and teammates see who holds the lock. You can hand it off or check it back in at any time, and admins can release a stale lock."],
           ["Can we host it ourselves?", "Yes. pdftek ships as a single Docker image with a built-in database and file storage. Bring your own Anthropic API key for the AI features and your own SMTP server for email."],
 ];
@@ -51,6 +53,10 @@ const FEATURES: { icon: React.ReactNode; title: string; body: string }[] = [
   { icon: <I.bolt size={18} />, title: "Automations", body: "Risk review on upload, weekday digests, renewal reminders 60 days out, and Slack or Teams webhooks. No-code, and it runs while you sleep." },
   { icon: <I.convert size={18} />, title: "Convert anything", body: "Word, Excel, PowerPoint, text and images (JPG, PNG, multi-page TIFF) to PDF, and PDF back to Word, Excel, PowerPoint, JPG, PNG, WEBP and TIFF, with the formatting intact. Camera scans to PDF. Merge, split, reorder, watermark." },
   { icon: <I.lock size={18} />, title: "Team-grade control", body: "Check-out locks prevent conflicting edits. Hand-offs keep ownership clear. Every version is kept, with a full activity trail." },
+  { icon: <I.globe size={18} />, title: "Translate, layout intact", body: "Translate a contract, manual or statement into 35+ languages. Fonts, colours, tables and logos stay where they were, and scans work too." },
+  { icon: <I.link size={18} />, title: "Templates, bulk send & signing links", body: "Save the documents you send often as templates, bulk send to a whole list, or publish a signing link that can collect a payment through Stripe." },
+  { icon: <I.cloud size={18} />, title: "Google Drive, Dropbox & OneDrive", body: "Open files from your cloud storage next to any upload button, and save results back with one tap, on a computer or a phone." },
+  { icon: <I.mail size={18} />, title: "Email it in", body: "Your workspace gets its own email address. Forward statements, invoices and receipts, and they land in your library as PDFs." },
   { icon: <I.inbox size={18} />, title: "Document requests", body: "Collect NDAs, W-9s and certificates from clients through a secure upload link, with due dates and reminders. No account needed on their side." },
 ];
 
@@ -84,12 +90,17 @@ export default async function Home() {
               url: site,
               applicationCategory: "BusinessApplication",
               operatingSystem: "Any (web browser)",
-              description: t("Online PDF workbench: convert, merge, split, compress, protect, OCR, edit, e-sign and chat with PDFs. Most tools are free without an account."),
+              description: t("Online PDF workbench: convert, merge, split, compress, protect, OCR, edit, e-sign, translate and chat with PDFs, with Google Drive, Dropbox and OneDrive. Most tools are free without an account."),
               featureList: [
                 ...SEO_TOOLS.map((tool) => t(tool.name)),
                 t("PDF to Word and Excel that keeps tables, borders and images"),
                 t("Secure document requests with one-time codes and an audit trail"),
                 t("Team workspaces with shared library, roles and hand-offs"),
+                t("E-signature templates, bulk send and public signing links that can collect Stripe payments"),
+                t("Translate PDFs into 35+ languages while keeping the layout"),
+                t("Open from and save to Google Drive, Dropbox and OneDrive"),
+                t("A workspace email address that saves forwarded attachments as PDFs"),
+                t("Scan documents with the phone camera wherever files are uploaded"),
               ],
               offers: [
                 { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD" },
