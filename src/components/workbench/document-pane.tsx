@@ -17,6 +17,7 @@ import { Editor, type EditorTool } from "./editor";
 import { Ribbon, needsDoc } from "./ribbon";
 import { ToolModal, UnlockModal, type ToolKey } from "../tools/tool-modals";
 import { TranslateModal } from "../tools/translate-modal";
+import { SaveToCloudModal } from "../cloud";
 import { ConvertToPdfModal } from "../convert-to-pdf";
 
 export function DocumentPane() {
@@ -37,6 +38,7 @@ export function DocumentPane() {
   const [toPdf, setToPdf] = useState(false);
   const [unlock, setUnlock] = useState(false);
   const [translateOpen, setTranslateOpen] = useState(false);
+  const [cloudSave, setCloudSave] = useState(false);
   const translated = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [fitDone, setFitDone] = useState(false);
@@ -298,6 +300,7 @@ export function DocumentPane() {
         />
       )}
       {toPdf && <ConvertToPdfModal wid={wid} onClose={() => setToPdf(false)} />}
+      {cloudSave && active && <SaveToCloudModal documentId={active.id} name={active.name} onClose={() => setCloudSave(false)} />}
       {translateOpen && active && (
         <TranslateModal
           doc={active}
@@ -402,6 +405,9 @@ export function DocumentPane() {
               </button>
               <button className="menu-item" onClick={() => { setMoreOpen(false); void toggleLock(); }} disabled={lockedByOther && info.role === "member"}>
                 {lockedByMe ? <I.unlock size={14} /> : <I.lock size={14} />} {lockedByMe ? "Check in" : "Check out (lock editing)"}
+              </button>
+              <button className="menu-item" onClick={() => { setMoreOpen(false); setCloudSave(true); }}>
+                <I.folder size={14} /> Save to cloud
               </button>
               <button className="menu-item" onClick={() => { setMoreOpen(false); print(); }}>
                 <I.file size={14} /> Print

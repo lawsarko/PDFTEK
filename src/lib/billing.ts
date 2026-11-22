@@ -337,6 +337,14 @@ export function chargeAiWorkspace(workspaceId: string, model: string, usage: AiU
   return credits;
 }
 
+/** The workspace has a paid membership right now (Day Pass, Pro, Team or a running trial). */
+export function workspaceHasMembership(workspaceId: string) {
+  const ws = wsBilling(workspaceId);
+  if (ws.plan === "pro" || ws.plan === "business") return true;
+  if (ws.trial_ends_at && ws.trial_ends_at > now()) return true;
+  return Boolean(ws.pass_until && ws.pass_until > now());
+}
+
 export function workspaceCanUseAi(workspaceId: string) {
   const ws = wsBilling(workspaceId);
   const allowance = ws.allowance_expires_at && ws.allowance_expires_at > now() ? ws.allowance_credits : 0;

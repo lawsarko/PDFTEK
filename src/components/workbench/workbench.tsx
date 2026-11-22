@@ -23,14 +23,23 @@ export function Workbench({ wid }: { wid: string }) {
   const [info, setInfo] = useState<WorkspaceInfo | null>(null);
   const [docs, setDocs] = useState<Doc[] | null>(null);
   const [flash, setFlash] = useState<Flash | null>(null);
-  const [uploadOpen, setUploadOpen] = useState<false | "upload" | "images" | "scan">(() => {
+  const [uploadOpen, setUploadOpen] = useState<false | "upload" | "images" | "scan" | "cloud">(() => {
     const add = params.get("add");
-    return add === "images" || add === "scan" || add === "upload" ? add : false;
+    return add === "images" || add === "scan" || add === "upload" || add === "cloud" ? add : false;
   });
   const [mobileView, setMobileView] = useState<"library" | "document" | "assistant">(() => (params.get("do") === "ask" ? "assistant" : "library"));
   const [assistantTab, setAssistantTab] = useState("chat");
   const activeId = params.get("doc");
   const [pending, setPending] = useState<{ action: string; from: string | null } | null>(null);
+
+  // Back from connecting a cloud account.
+  useEffect(() => {
+    const ok = params.get("cloud");
+    const bad = params.get("cloud_error");
+    if (ok) toast(`${ok === "google" ? "Google Drive" : ok === "dropbox" ? "Dropbox" : "OneDrive"} connected. Choose the files to open.`, "success");
+    if (bad) toast(bad, "error");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // A tool picked before any document was open runs as soon as the uploaded document opens.
   useEffect(() => {

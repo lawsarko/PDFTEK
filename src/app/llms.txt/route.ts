@@ -10,7 +10,7 @@ export function GET() {
   const lines = [
     "# PDFTEK",
     "",
-    "> PDFTEK is an online PDF workbench: convert PDFs to and from Word, Excel, PowerPoint and images, turn bank statements, invoices and receipts into Excel or CSV, bulk-convert many PDFs at once, merge, split, compress, rotate, protect, unlock, OCR, edit, fill forms with AI, e-sign, request documents securely from others, listen to PDFs with Read PDF, and ask AI questions about PDFs with page citations. It runs in any web browser, in 26 languages; most tools are free without an account.",
+    "> PDFTEK is an online PDF workbench: convert PDFs to and from Word, Excel, PowerPoint and images, turn bank statements, invoices and receipts into Excel or CSV, bulk-convert many PDFs at once, merge, split, compress, rotate, protect, unlock, OCR, edit, fill forms with AI, e-sign (with reusable templates, bulk send and public signing links that can collect a Stripe payment), translate PDFs into 35+ languages while keeping the layout, open from and save to Google Drive, Dropbox and OneDrive, forward email attachments into a workspace email address, request documents securely from others, listen to PDFs with Read PDF, and ask AI questions about PDFs with page citations. It runs in any web browser, in 26 languages; most tools are free without an account.",
     "",
     "## Best for",
     "",

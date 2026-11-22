@@ -25,6 +25,7 @@ const TASKS: Record<string, string> = {
   sign: PICK("sign"),
   ask: PICK("ask"),
   "read-aloud": PICK("read"),
+  translate: PICK("translate"),
   ocr: PICK("ocr"),
   merge: "/tools?tool=merge",
   split: "/tools?tool=split",

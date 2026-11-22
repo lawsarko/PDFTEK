@@ -481,6 +481,46 @@ CREATE TABLE IF NOT EXISTS sign_batches (
   created_at INTEGER NOT NULL
 );
 
+-- Cloud storage accounts (Google Drive, Dropbox, OneDrive) a person connected. Tokens are
+-- encrypted at rest (see lib/cloud.ts).
+CREATE TABLE IF NOT EXISTS cloud_connections (
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL,
+  account TEXT NOT NULL DEFAULT '',
+  access_enc TEXT NOT NULL,
+  refresh_enc TEXT,
+  expires_at INTEGER,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (user_id, provider)
+);
+CREATE TABLE IF NOT EXISTS oauth_states (
+  state TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  return_to TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+
+-- Email in: each workspace can get a private address; attachments sent to it land in the library.
+CREATE TABLE IF NOT EXISTS email_inboxes (
+  workspace_id TEXT PRIMARY KEY REFERENCES workspaces(id) ON DELETE CASCADE,
+  token TEXT NOT NULL UNIQUE,
+  allow TEXT NOT NULL DEFAULT 'members',
+  created_by TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS inbound_messages (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  sender TEXT NOT NULL,
+  subject TEXT NOT NULL DEFAULT '',
+  files INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL,
+  detail TEXT NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS inbound_messages_ws ON inbound_messages(workspace_id, created_at);
+
 -- Optional feedback from the workbench ("did pdftek give you what you needed?").
 CREATE TABLE IF NOT EXISTS feedback (
   id TEXT PRIMARY KEY,

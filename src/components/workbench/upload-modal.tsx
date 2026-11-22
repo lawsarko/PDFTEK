@@ -4,6 +4,7 @@ import { api, errMsg } from "@/lib/client/api";
 import type { Doc } from "@/lib/client/types";
 import { imagesToPdf, toJpeg, isTiffName, tiffPages } from "@/lib/client/images";
 import { ScanCapture } from "../scan";
+import { CloudImport } from "../cloud";
 import { I } from "../icons";
 import { Modal } from "../modal";
 import { useToast } from "../toast";
@@ -13,7 +14,7 @@ const ACCEPT = ".pdf,.doc,.docx,.odt,.rtf,.txt,.md,.ppt,.pptx,.odp,.xls,.xlsx,.o
 const IMAGE_RE = /\.(webp|heic|gif|bmp)$/i;
 // TIFF is converted on the server (most browsers can't read it), with every page of multi-page files.
 
-type Tab = "upload" | "images" | "scan";
+type Tab = "upload" | "images" | "scan" | "cloud";
 
 export function UploadModal({ onClose, initialTab = "upload" }: { onClose: () => void; initialTab?: Tab }) {
   const [tab, setTab] = useState<Tab>(initialTab);
@@ -23,10 +24,12 @@ export function UploadModal({ onClose, initialTab = "upload" }: { onClose: () =>
         <button className={`tab ${tab === "upload" ? "active" : ""}`} onClick={() => setTab("upload")}>Upload files</button>
         <button className={`tab ${tab === "images" ? "active" : ""}`} onClick={() => setTab("images")}>Images → PDF</button>
         <button className={`tab ${tab === "scan" ? "active" : ""}`} onClick={() => setTab("scan")}>Scan with camera</button>
+        <button className={`tab ${tab === "cloud" ? "active" : ""}`} onClick={() => setTab("cloud")}>From cloud</button>
       </div>
       {tab === "upload" && <UploadFiles onDone={onClose} />}
       {tab === "images" && <ImagesToPdf onDone={onClose} />}
       {tab === "scan" && <Scanner onDone={onClose} />}
+      {tab === "cloud" && <FromCloud onDone={onClose} />}
     </Modal>
   );
 }
@@ -227,6 +230,21 @@ function ImagesToPdf({ onDone }: { onDone: () => void }) {
         </button>
       </div>
     </div>
+  );
+}
+
+function FromCloud({ onDone }: { onDone: () => void }) {
+  const { wid, upsertDoc, openDoc, reloadInfo } = useWB();
+  return (
+    <CloudImport
+      wid={wid}
+      onImported={(docs) => {
+        docs.forEach(upsertDoc);
+        if (docs[0]) openDoc(docs[0].id);
+        void reloadInfo?.();
+        onDone();
+      }}
+    />
   );
 }
 

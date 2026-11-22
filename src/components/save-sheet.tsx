@@ -2,7 +2,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { I } from "./icons";
 import { useToast } from "./toast";
-import { DOWNLOADED, FILE_READY, isHandheld, saveBlob } from "@/lib/client/api";
+import { DOWNLOADED, FILE_READY, api, errMsg, isHandheld, saveBlob } from "@/lib/client/api";
+import { CloudMark, type Connection } from "./cloud";
 
 /**
  * Phones and tablets: instead of a silent download that lands somewhere hard to find, every file
@@ -62,6 +63,9 @@ type State = { status: "loading"; name: string } | { status: "ready"; ready: Rea
 export function SaveSheetHost() {
   const toast = useToast();
   const [state, setState] = useState<State>(null);
+  // Connected cloud accounts (signed-in people only), offered as extra places to save.
+  const [cloud, setCloud] = useState<Connection[] | null>(null);
+  const [savingTo, setSavingTo] = useState<string | null>(null);
   const urlRef = useRef<string | null>(null);
 
   const show = useCallback((blob: Blob, name: string) => {
@@ -129,6 +133,26 @@ export function SaveSheetHost() {
   if (!state) return null;
   const ready = state.status === "ready" ? state.ready : null;
   const canShare = !!ready && typeof navigator !== "undefined" && !!navigator.canShare?.({ files: [ready.file] });
+  if (ready && cloud === null && typeof window !== "undefined" && window.location.pathname.startsWith("/app/")) {
+    setCloud([]);
+    api<{ connections: Connection[] }>("/api/cloud").then((r) => setCloud(r.connections.filter((c) => c.connected)), () => setCloud([]));
+  }
+  const saveToCloud = async (c: Connection) => {
+    if (!ready) return;
+    setSavingTo(c.provider);
+    try {
+      const form = new FormData();
+      form.append("file", ready.file, ready.file.name);
+      const r = await api<{ url: string | null; location: string }>(`/api/cloud/${c.provider}/export`, { method: "POST", body: form });
+      toast(`Saved to ${c.name} (folder “pdftek”).`, "success");
+      if (r.url) window.open(r.url, "_blank", "noopener");
+      close();
+    } catch (e) {
+      toast(errMsg(e), "error");
+    } finally {
+      setSavingTo(null);
+    }
+  };
   const ios = isIOS();
 
   const share = async () => {
@@ -197,6 +221,15 @@ export function SaveSheetHost() {
                   <span className="save-hint">{ios ? "Goes to the Files app → Downloads" : "Goes to your Downloads folder"}</span>
                 </span>
               </button>
+              {(cloud ?? []).map((c) => (
+                <button key={c.provider} className="btn save-btn" disabled={!!savingTo} onClick={() => void saveToCloud(c)}>
+                  {savingTo === c.provider ? <span className="spinner" /> : <CloudMark provider={c.provider} size={22} />}
+                  <span className="grow">
+                    Save to {c.name}
+                    <span className="save-hint">{c.account ? `${c.account} · ` : ""}folder “pdftek”</span>
+                  </span>
+                </button>
+              ))}
               {viewable(ready.file.type) && (
                 <a className="btn save-btn" href={ready.url} target="_blank" rel="noopener" data-direct-download>
                   <I.file size={18} />

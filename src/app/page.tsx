@@ -37,7 +37,7 @@ const MARQUEE_A = [
 ];
 const MARQUEE_B = [
   "✍️ E-signatures", "🔍 OCR in 13 languages", "🤖 AI answers with page citations", "✂️ Split & merge", "🖍️ Edit PDF",
-  "⬛ True redaction", "🔔 Automations", "📥 Document requests", "🔊 Read PDF", "🧾 Extract to Excel", "🔒 Version history", "🧭 Compare & redline",
+  "⬛ True redaction", "🔔 Automations", "📥 Document requests", "🔊 Read PDF", "🧾 Extract to Excel", "🔒 Version history", "🧭 Compare & redline", "🌍 Translate PDF", "🔗 Signing links", "☁️ Google Drive, Dropbox, OneDrive",
 ];
 
 const FEATURES: { icon: React.ReactNode; title: string; body: string }[] = [
