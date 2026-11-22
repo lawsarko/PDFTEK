@@ -69,7 +69,7 @@ export function stripLocale(path: string): string {
  */
 export function isSitePath(path: string): boolean {
   if (path === "/") return true;
-  return !/^\/(app|api|_next|sign|request|invite|go|auth|restore)(\/|$)/.test(path) && !/\.[a-z0-9]+$/i.test(path);
+  return !/^\/(app|api|_next|sign|s|request|invite|go|auth|restore)(\/|$)/.test(path) && !/\.[a-z0-9]+$/i.test(path);
 }
 
 /** Shown while a language is still being translated (the rest of the page falls back to English). */

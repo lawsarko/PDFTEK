@@ -71,7 +71,7 @@ const SYMBOL_FONT = /symbol|wingding|dingbat|webding/i;
 
 const MAX_OCR_PAGES = 40;
 
-export async function analyzePdf(bytes: Uint8Array, opts: { ocr?: boolean; tables?: boolean; images?: boolean } = {}): Promise<PageLayout[]> {
+export async function analyzePdf(bytes: Uint8Array, opts: { ocr?: boolean; tables?: boolean; images?: boolean; /** Also OCR pages that are a single picture (photographed or scanned pages). */ ocrImages?: boolean } = {}): Promise<PageLayout[]> {
   let ocrBudget = opts.ocr === false ? 0 : MAX_OCR_PAGES;
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   const OPS = pdfjs.OPS;
@@ -305,7 +305,7 @@ export async function analyzePdf(bytes: Uint8Array, opts: { ocr?: boolean; table
 
       // No usable text layer (a scan, or text exported as vector outlines): recognize it.
       const visibleChars = runs.reduce((n, r) => n + r.str.trim().length, 0);
-      if (visibleChars < 4 && ocrBudget > 0 && (ops.fnArray.length > 20 || rules.length)) {
+      if (visibleChars < 4 && ocrBudget > 0 && (ops.fnArray.length > 20 || rules.length || (opts.ocrImages && hasImage(ops.fnArray, OPS)))) {
         ocrBudget--;
         try {
           const { ocrPage } = await import("./pdf-ocr");
@@ -418,6 +418,12 @@ function mul(m: number[], n: number[]) {
     m[1] * n[4] + m[3] * n[5] + m[5],
   ];
 }
+/** The page paints at least one picture. */
+function hasImage(fns: ArrayLike<number>, OPS: Record<string, number>) {
+  for (let i = 0; i < fns.length; i++) if (fns[i] === OPS.paintImageXObject || fns[i] === OPS.paintInlineImageXObject || fns[i] === OPS.paintImageMaskXObject) return true;
+  return false;
+}
+
 const apply = (m: number[], x: number, y: number) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]] as const;
 
 function toHex(args: unknown): string {

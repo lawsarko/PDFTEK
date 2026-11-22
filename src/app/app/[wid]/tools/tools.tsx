@@ -10,10 +10,12 @@ import { ConvertToPdfModal } from "@/components/convert-to-pdf";
 import { ToolModal, UnlockModal, UploadButton, type ToolKey } from "@/components/tools/tool-modals";
 
 
-const TOOLS: { key: ToolKey | "unlock" | "topdf" | "images" | "scan" | "convert" | "ocr" | "compare" | "fill" | "statement" | "invoice" | "bulk" | "request"; title: string; desc: string; icon: React.ReactNode }[] = [
+const TOOLS: { key: ToolKey | "unlock" | "topdf" | "images" | "scan" | "convert" | "ocr" | "compare" | "fill" | "statement" | "invoice" | "bulk" | "request" | "translate" | "esign"; title: string; desc: string; icon: React.ReactNode }[] = [
   { key: "fill", title: "Fill a form", desc: "AI finds every field, fills it from your profile, and you sign. Works on scans.", icon: <I.form size={18} /> },
   { key: "statement", title: "Bank statement → Excel", desc: "Clean transaction rows from any bank's PDF statement, checked against the balances.", icon: <I.table size={18} /> },
   { key: "invoice", title: "Invoices → Excel", desc: "Vendor, dates, line items, tax and totals from invoices and receipts.", icon: <I.file size={18} /> },
+  { key: "translate", title: "Translate PDF", desc: "Into 35+ languages, keeping the layout: fonts, colours, tables and images stay in place. Uses AI credits.", icon: <I.globe size={18} /> },
+  { key: "esign", title: "E-sign templates & links", desc: "Reusable templates, bulk send from a spreadsheet, and public signing links that can collect payment.", icon: <I.sign size={18} /> },
   { key: "request", title: "Request documents", desc: "Send a checklist and collect files through a secure, code-protected link. Day Pass, Pro or Team.", icon: <I.inbox size={18} /> },
   { key: "bulk", title: "Bulk convert", desc: "Many PDFs to Word or Excel at once, downloaded as one ZIP. Day Pass, Pro or Team.", icon: <I.layers size={18} /> },
   { key: "topdf", title: "Convert to PDF", desc: "Word, Excel, PowerPoint, text and images to PDF.", icon: <I.file size={18} /> },
@@ -36,7 +38,7 @@ const TOOLS: { key: ToolKey | "unlock" | "topdf" | "images" | "scan" | "convert"
   { key: "compare", title: "Compare", desc: "Redline two documents or versions, with an AI summary.", icon: <I.compare size={18} /> },
 ];
 
-const NON_MODAL = ["unlock", "topdf", "images", "scan", "convert", "ocr", "compare", "pick", "fill", "statement", "invoice", "bulk"];
+const NON_MODAL = ["unlock", "topdf", "images", "scan", "convert", "ocr", "compare", "pick", "fill", "statement", "invoice", "bulk", "translate", "esign"];
 
 const PICK_TASKS: Record<string, { title: string; hint: string }> = {
   fill: { title: "Fill a form", hint: "Pick or upload the form to fill: fillable PDFs, flat PDFs and scans all work." },
@@ -45,6 +47,7 @@ const PICK_TASKS: Record<string, { title: string; hint: string }> = {
   ask: { title: "Ask AI about a document", hint: "Pick a document and ask anything. Every answer cites its page." },
   read: { title: "Read PDF", hint: "Pick a document to listen to. Choose the voice, language and speed in the player." },
   ocr: { title: "Make a scan searchable", hint: "Pick a scanned PDF to run OCR on." },
+  translate: { title: "Translate PDF", hint: "Pick or upload the PDF to translate. The layout is kept, and the original isn't changed." },
   "convert-docx": { title: "PDF to Word", hint: "Pick or upload the PDF to convert to an editable Word document." },
   "convert-xlsx": { title: "PDF to Excel", hint: "Pick or upload the PDF to convert to an Excel workbook." },
   "convert-pptx": { title: "PDF to PowerPoint", hint: "Pick or upload the PDF to turn into slides." },
@@ -110,6 +113,8 @@ export function Tools({ wid }: { wid: string }) {
     else if (k === "images" || k === "scan") router.push(`/app/${wid}?add=${k}`);
     else if (k === "convert" || k === "ocr") router.push(`/app/${wid}${preselect ? `?doc=${preselect}` : ""}`);
     else if (k === "fill") setPick("fill");
+    else if (k === "translate") setPick("translate");
+    else if (k === "esign") router.push(`/app/${wid}/signatures`);
     else if (k === "statement" || k === "invoice" || k === "bulk") router.push(`/app/${wid}/to-excel?kind=${k}${preselect ? `&doc=${preselect}` : ""}`);
     else if (k === "request") router.push(`/app/${wid}/requests?new=1`);
     else if (k === "compare") router.push(`/app/${wid}/compare${preselect ? `?a=${preselect}` : ""}`);

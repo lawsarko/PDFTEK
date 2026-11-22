@@ -15,12 +15,16 @@ function flatten(obj: Record<string, unknown>, prefix = ""): [string, string][] 
   return out;
 }
 
-export async function stripe<T = Record<string, unknown>>(path: string, params: Record<string, unknown> = {}, method = "POST"): Promise<T> {
+/**
+ * Calls the Stripe API. `account` makes the call on behalf of a connected account (Stripe Connect),
+ * e.g. a checkout for a payment collected through a signing link, paid to the workspace owner.
+ */
+export async function stripe<T = Record<string, unknown>>(path: string, params: Record<string, unknown> = {}, method = "POST", account?: string): Promise<T> {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) throw new HttpError(503, "Billing isn't configured on this server.");
   const res = await fetch(`${API}${path}`, {
     method,
-    headers: { authorization: `Bearer ${key}`, "content-type": "application/x-www-form-urlencoded" },
+    headers: { authorization: `Bearer ${key}`, "content-type": "application/x-www-form-urlencoded", ...(account ? { "stripe-account": account } : {}) },
     body: method === "GET" ? undefined : new URLSearchParams(flatten(params)).toString(),
   });
   const data = (await res.json()) as T & { error?: { message: string } };

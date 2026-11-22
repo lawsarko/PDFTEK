@@ -16,6 +16,7 @@ import { ReadAloud } from "./read-aloud";
 import { Editor, type EditorTool } from "./editor";
 import { Ribbon, needsDoc } from "./ribbon";
 import { ToolModal, UnlockModal, type ToolKey } from "../tools/tool-modals";
+import { TranslateModal } from "../tools/translate-modal";
 import { ConvertToPdfModal } from "../convert-to-pdf";
 
 export function DocumentPane() {
@@ -35,6 +36,8 @@ export function DocumentPane() {
   const [toolModal, setToolModal] = useState<ToolKey | null>(null);
   const [toPdf, setToPdf] = useState(false);
   const [unlock, setUnlock] = useState(false);
+  const [translateOpen, setTranslateOpen] = useState(false);
+  const translated = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [fitDone, setFitDone] = useState(false);
 
@@ -200,6 +203,12 @@ export function DocumentPane() {
       case "sign":
         if (requirePro("E-signatures")) router.push(`/app/${wid}/send/${active!.id}`);
         break;
+      case "save-template":
+        if (requirePro("E-signature templates")) router.push(`/app/${wid}/send/${active!.id}?mode=template`);
+        break;
+      case "sign-hub":
+        router.push(`/app/${wid}/signatures`);
+        break;
       case "request":
         if (requirePro("Document requests")) router.push(`/app/${wid}/requests?new=1`);
         break;
@@ -214,6 +223,10 @@ export function DocumentPane() {
         break;
       case "checkout":
         void toggleLock();
+        break;
+      case "translate":
+        translated.current = null;
+        setTranslateOpen(true);
         break;
       case "ask":
         ask("", false);
@@ -285,6 +298,20 @@ export function DocumentPane() {
         />
       )}
       {toPdf && <ConvertToPdfModal wid={wid} onClose={() => setToPdf(false)} />}
+      {translateOpen && active && (
+        <TranslateModal
+          doc={active}
+          billing={info.billing}
+          onCreated={(d) => {
+            upsertDoc(d);
+            translated.current = d.id;
+          }}
+          onClose={() => {
+            setTranslateOpen(false);
+            if (translated.current) openDoc(translated.current);
+          }}
+        />
+      )}
       {unlock && (
         <UnlockModal
           wid={wid}

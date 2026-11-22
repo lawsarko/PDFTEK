@@ -74,6 +74,8 @@ export const RIBBON: { key: string; label: string; acts: Act[] }[] = [
     acts: [
       { key: "fill", label: "Fill form", icon: <I.form size={18} />, hint: "AI finds every field and fills it from your profile", ai: true },
       { key: "sign", label: "Request signatures", icon: <I.sign size={18} />, hint: "Send for e-signature with reminders", pro: true },
+      { key: "save-template", label: "Save as template", icon: <I.copy size={18} />, hint: "Reuse this document's signer roles and fields", pro: true },
+      { key: "sign-hub", label: "Templates & links", icon: <I.link size={18} />, hint: "Sign templates, bulk send, public signing links and payments", pro: true, noDoc: true },
       { key: "request", label: "Request documents", icon: <I.inbox size={18} />, hint: "Collect files with a secure link", pro: true, noDoc: true },
       { key: "handoff", label: "Hand off", icon: <I.swap size={18} />, hint: "Assign the document to a teammate" },
     ],
@@ -93,6 +95,7 @@ export const RIBBON: { key: string; label: string; acts: Act[] }[] = [
     key: "ai",
     label: "AI tools",
     acts: [
+      { key: "translate", label: "Translate", icon: <I.globe size={18} />, hint: "Translate the PDF into 35+ languages and keep its layout", ai: true },
       { key: "ask", label: "Ask a question", icon: <I.chat size={18} />, hint: "Answers cite the page they came from", ai: true },
       { key: "summarize", label: "Summarize", icon: <I.sparkle size={18} />, hint: "Key points in a few lines", ai: true },
       { key: "extract-data", label: "Extract data", icon: <I.table size={18} />, hint: "Pull tables and key terms into a sheet", ai: true },

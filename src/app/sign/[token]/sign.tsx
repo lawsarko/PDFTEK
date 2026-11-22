@@ -19,6 +19,8 @@ type Info = {
   waitingFor: string | null;
   signers: { name: string; status: string }[];
   fields: Field[];
+  /** A payment collected after signing (signing links that charge a fee). */
+  payment: { status: string; amount: string; description: string } | null;
 };
 
 export function SignPage({ token }: { token: string }) {
@@ -35,6 +37,8 @@ export function SignPage({ token }: { token: string }) {
   const [scale, setScale] = useState(1.2);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
   const load = useCallback(async () => {
     try {
       setInfo(await api<Info>(`/api/public/sign/${token}`));
@@ -43,6 +47,17 @@ export function SignPage({ token }: { token: string }) {
     }
   }, [token]);
   useEffect(() => {
+    // Back from Stripe Checkout: confirm the payment, then tidy the address.
+    const session = new URLSearchParams(window.location.search).get("paid");
+    if (session) {
+      api<{ paid: boolean }>(`/api/public/sign/${token}/pay`, { method: "POST", json: { action: "confirm", session } })
+        .then((r) => !r.paid && setPayError("We couldn't confirm the payment yet. If you completed it, refresh this page in a minute."))
+        .catch((e) => setPayError(errMsg(e)))
+        .finally(() => {
+          window.history.replaceState(null, "", window.location.pathname);
+          void load();
+        });
+    }
     void load();
     const fit = () => setScale(Math.max(0.5, Math.min(1.4, (window.innerWidth - (window.innerWidth > 960 ? 380 : 32)) / 640)));
     fit();
@@ -71,9 +86,43 @@ export function SignPage({ token }: { token: string }) {
 
   const today = new Date().toISOString().slice(0, 10);
 
+  const pay = async () => {
+    setPaying(true);
+    setPayError(null);
+    try {
+      const r = await api<{ url: string }>(`/api/public/sign/${token}/pay`, { method: "POST", json: { action: "checkout" } });
+      window.location.href = r.url;
+    } catch (e) {
+      setPayError(errMsg(e));
+      setPaying(false);
+    }
+  };
+  const paymentBox =
+    info.payment && (done || info.requestStatus === "completed") ? (
+      info.payment.status === "paid" ? (
+        <div className="notice" style={{ borderColor: "rgba(111,179,122,.5)", background: "var(--good-soft)" }}>
+          <b>Payment received: {info.payment.amount}.</b> Thank you. A receipt is on its way from Stripe.
+        </div>
+      ) : (
+        <div className="sign-pay">
+          <div className="small">
+            <b>One last step: payment</b>
+            <div className="muted">
+              {info.payment.description ? `${info.payment.description}: ` : ""}
+              {info.payment.amount}, paid securely with Stripe.
+            </div>
+          </div>
+          <button className="btn btn-primary btn-lg" style={{ width: "100%", justifyContent: "center" }} disabled={paying} onClick={() => void pay()}>
+            {paying ? <span className="spinner" /> : <I.lock size={14} />} Pay {info.payment.amount}
+          </button>
+          {payError && <div className="error-text small">{payError}</div>}
+        </div>
+      )
+    ) : null;
+
   return (
     <Shell>
-      <div className="main" style={{ height: "calc(100vh - 56px)" }}>
+      <div className="main sign-main">
         <section className="viewer">
           <div className="page-scroll" ref={scrollRef}>
             <PdfViewer
@@ -118,7 +167,7 @@ export function SignPage({ token }: { token: string }) {
             />
           </div>
         </section>
-        <aside className="assistant" style={{ width: 360 }}>
+        <aside className="assistant sign-panel">
           <div className="panel-body">
             <div className="eyebrow">{info.workspaceName}</div>
             <h2 style={{ fontSize: 20 }}>{info.title}</h2>
@@ -135,6 +184,7 @@ export function SignPage({ token }: { token: string }) {
               ))}
             </div>
             <hr className="divider" />
+            {paymentBox}
             {info.requestStatus === "completed" ? (
               <div className="col gap-12">
                 <div className="notice" style={{ borderColor: "rgba(111,179,122,.5)", background: "var(--good-soft)" }}>

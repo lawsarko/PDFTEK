@@ -416,6 +416,71 @@ CREATE TABLE IF NOT EXISTS contact_messages (
   created_at INTEGER NOT NULL
 );
 
+-- E-signature templates: a document with signer roles and their fields, reused to send envelopes.
+CREATE TABLE IF NOT EXISTS sign_templates (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  document_id TEXT NOT NULL,
+  version_id TEXT NOT NULL,
+  page_count INTEGER NOT NULL DEFAULT 1,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL DEFAULT '',
+  sequential INTEGER NOT NULL DEFAULT 0,
+  roles_json TEXT NOT NULL,
+  fields_json TEXT NOT NULL,
+  created_by TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS sign_templates_ws ON sign_templates(workspace_id, updated_at);
+
+-- Public signing links: anyone with the link signs their own copy of a template.
+CREATE TABLE IF NOT EXISTS sign_links (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  template_id TEXT NOT NULL REFERENCES sign_templates(id) ON DELETE CASCADE,
+  slug TEXT NOT NULL UNIQUE,
+  title TEXT NOT NULL,
+  role_key TEXT NOT NULL,
+  fixed_json TEXT NOT NULL DEFAULT '{}',
+  verify_email INTEGER NOT NULL DEFAULT 1,
+  payment_cents INTEGER,
+  payment_currency TEXT,
+  payment_desc TEXT,
+  max_uses INTEGER,
+  uses INTEGER NOT NULL DEFAULT 0,
+  expires_at INTEGER,
+  active INTEGER NOT NULL DEFAULT 1,
+  created_by TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS sign_links_ws ON sign_links(workspace_id, created_at);
+
+-- One-time codes that confirm a signing-link visitor's email address.
+CREATE TABLE IF NOT EXISTS sign_link_codes (
+  id TEXT PRIMARY KEY,
+  link_id TEXT NOT NULL REFERENCES sign_links(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  code_hash TEXT NOT NULL,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  expires_at INTEGER NOT NULL,
+  created_at INTEGER NOT NULL
+);
+
+-- Bulk sends: one envelope per spreadsheet row.
+CREATE TABLE IF NOT EXISTS sign_batches (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  template_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  total INTEGER NOT NULL,
+  sent INTEGER NOT NULL DEFAULT 0,
+  created_by TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+
 -- Optional feedback from the workbench ("did pdftek give you what you needed?").
 CREATE TABLE IF NOT EXISTS feedback (
   id TEXT PRIMARY KEY,
@@ -462,6 +527,20 @@ const ADDED_COLUMNS: [table: string, column: string, ddl: string, backfill?: str
   // Free trial: once per account; which reminder emails went out (1 = ending soon, 2 = ended).
   ["users", "trial_used_at", "INTEGER"],
   ["workspaces", "trial_notice", "INTEGER NOT NULL DEFAULT 0"],
+  // E-signature templates, bulk sends and public signing links (with optional payment).
+  ["signature_requests", "template_id", "TEXT"],
+  ["signature_requests", "link_id", "TEXT"],
+  ["signature_requests", "batch_id", "TEXT"],
+  ["signers", "auth", "TEXT NOT NULL DEFAULT 'email_link'"],
+  ["signers", "payment_status", "TEXT"],
+  ["signers", "payment_cents", "INTEGER"],
+  ["signers", "payment_currency", "TEXT"],
+  ["signers", "payment_desc", "TEXT"],
+  ["signers", "payment_session", "TEXT"],
+  ["signers", "paid_at", "INTEGER"],
+  // Stripe Connect account that receives payments collected through signing links.
+  ["workspaces", "stripe_account_id", "TEXT"],
+  ["workspaces", "stripe_account_ready", "INTEGER NOT NULL DEFAULT 0"],
 ];
 
 type GlobalWithDb = typeof globalThis & { __pdftekDb?: DatabaseSync };

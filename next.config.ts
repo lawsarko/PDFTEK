@@ -5,6 +5,15 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["pdfjs-dist", "nodemailer", "tesseract.js", "@napi-rs/canvas", "sharp"],
   // OCR (for scans and outlined-text PDFs) loads its engine and English model at runtime.
   outputFileTracingIncludes: {
+    // Translate PDF: OCR for scans, and HarfBuzz for font subsetting.
+    "/api/documents/[id]/translate": [
+      "./node_modules/harfbuzzjs/hb-subset.wasm",
+      "./node_modules/@tesseract.js-data/eng/4.0.0_best_int/**",
+      "./node_modules/tesseract.js/**",
+      "./node_modules/tesseract.js-core/**",
+      "./node_modules/@napi-rs/**",
+      "./node_modules/pdfjs-dist/standard_fonts/**",
+    ],
     "/api/documents/[id]/convert": [
       "./node_modules/@tesseract.js-data/eng/4.0.0_best_int/**",
       "./node_modules/tesseract.js/**",

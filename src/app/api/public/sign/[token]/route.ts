@@ -5,6 +5,7 @@ import { body, clientIp, json, route, notFound, badRequest, conflict } from "@/l
 import { rateLimit } from "@/lib/auth";
 import { finalizeSignature, inviteSigner, type FieldRow, type SignatureRequestRow, type SignerRow } from "@/lib/signing";
 import { logActivity, notify } from "@/lib/activity";
+import { formatMoney } from "@/lib/esign";
 
 type P = { params: Promise<{ token: string }> };
 
@@ -50,6 +51,10 @@ export const GET = route<P>(async (_req, { params }) => {
     waitingFor: blockedBy(req, signer),
     signers: others,
     fields: fields.map((f) => ({ id: f.id, page: f.page, x: f.x, y: f.y, w: f.w, h: f.h, kind: f.kind })),
+    // A fee collected through a signing link (paid after signing).
+    payment: signer.payment_status
+      ? { status: signer.payment_status, amount: formatMoney(signer.payment_cents ?? 0, signer.payment_currency ?? "usd"), description: signer.payment_desc ?? "" }
+      : null,
   });
 });
 

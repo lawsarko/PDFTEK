@@ -38,6 +38,18 @@ export type SignerRow = {
   signature_png: string | null;
   decline_reason: string | null;
   last_reminded_at: number | null;
+  /** How the signer was identified: email_link, public_link or public_link_verified. */
+  auth?: string;
+  payment_status?: string | null;
+  payment_cents?: number | null;
+  payment_currency?: string | null;
+  payment_desc?: string | null;
+};
+
+const AUTH_LABEL: Record<string, string> = {
+  email_link: "Unique link sent to their email",
+  public_link_verified: "Public signing link; email confirmed with a one-time code",
+  public_link: "Public signing link; email not verified",
 };
 
 export type FieldRow = {
@@ -114,11 +126,12 @@ export async function finalizeSignature(req: SignatureRequestRow) {
   line("Completed", fmtTime(now()));
   cy -= 14;
   for (const s of signers) {
-    cert.drawRectangle({ x: 48, y: cy - 86, width: 516, height: 100, color: rgb(0.97, 0.96, 0.93) });
+    cert.drawRectangle({ x: 48, y: cy - 102, width: 516, height: 116, color: rgb(0.97, 0.96, 0.93) });
     cy -= 2;
     line("Signer", `${s.name} <${s.email}>`, { b: true });
     line("Viewed", fmtTime(s.viewed_at));
     line("Signed", fmtTime(s.signed_at));
+    line("Identified by", AUTH_LABEL[s.auth ?? "email_link"] ?? AUTH_LABEL.email_link, { size: 8 });
     line("IP address", s.ip ?? "—");
     line("User agent", (s.user_agent ?? "—").slice(0, 90), { size: 7 });
     if (s.signature_png) {
@@ -129,7 +142,9 @@ export async function finalizeSignature(req: SignatureRequestRow) {
     cy -= 26;
   }
   cert.drawText(
-    "Each signer authenticated via a unique link sent to their email address and agreed to sign electronically.",
+    signers.some((s) => s.auth && s.auth !== "email_link")
+      ? "Each signer agreed to sign electronically. How each signer was identified is shown above."
+      : "Each signer authenticated via a unique link sent to their email address and agreed to sign electronically.",
     { x: 56, y: 60, size: 8, font, color: rgb(0.45, 0.45, 0.45), maxWidth: 500 },
   );
 

@@ -34,6 +34,9 @@ export const GET = route<P>(async (req, { params }) => {
       createdAt: r.created_at,
       completedAt: r.completed_at,
       signedVersionId: r.signed_version_id,
+      templateId: (r as { template_id?: string | null }).template_id ?? null,
+      linkId: (r as { link_id?: string | null }).link_id ?? null,
+      batchId: (r as { batch_id?: string | null }).batch_id ?? null,
       signers: signers.map((s) => ({
         id: s.id,
         name: s.name,
@@ -42,6 +45,8 @@ export const GET = route<P>(async (req, { params }) => {
         signedAt: s.signed_at,
         viewedAt: s.viewed_at,
         declineReason: s.decline_reason,
+        auth: s.auth ?? "email_link",
+        payment: s.payment_status ? { status: s.payment_status, cents: s.payment_cents ?? 0, currency: s.payment_currency ?? "usd" } : null,
         link: appUrl(`/sign/${s.token}`),
       })),
     };

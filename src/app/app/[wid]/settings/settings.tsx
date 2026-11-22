@@ -8,6 +8,7 @@ import { I } from "@/components/icons";
 import { useToast } from "@/components/toast";
 import { CreditPacks, PlanCards, type TrialState } from "@/components/pricing";
 import type { Entitlements } from "@/lib/plans";
+import { IntegrationsTab } from "@/components/integrations";
 
 type Invite = { id: string; email: string; role: string; token: string; created_at: number };
 const TABS = [
@@ -15,6 +16,7 @@ const TABS = [
   ["members", "Members"],
   ["playbook", "Review playbook"],
   ["billing", "Plan & billing"],
+  ["integrations", "Integrations"],
   ["profile", "Profile"],
 ] as const;
 
@@ -61,6 +63,8 @@ export function Settings({ wid }: { wid: string }) {
               <Playbook wid={wid} info={info} />
             ) : tab === "billing" ? (
               <Billing wid={wid} info={info} reload={load} />
+            ) : tab === "integrations" ? (
+              <IntegrationsTab wid={wid} info={info} />
             ) : tab === "profile" ? (
               <Profile info={info} />
             ) : (

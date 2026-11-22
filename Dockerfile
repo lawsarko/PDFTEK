@@ -33,6 +33,8 @@ COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
 # pdf.js standard fonts are read from node_modules at runtime for server-side text extraction.
 COPY --from=build /app/node_modules/pdfjs-dist ./node_modules/pdfjs-dist
+# HarfBuzz font subsetter (Translate PDF), read from node_modules at runtime.
+COPY --from=build /app/node_modules/harfbuzzjs/hb-subset.wasm ./node_modules/harfbuzzjs/hb-subset.wasm
 COPY --chmod=755 scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN mkdir -p /data && chown -R node:node /data /app
 # Starts as root only to make the data disk writable, then runs the app as "node".

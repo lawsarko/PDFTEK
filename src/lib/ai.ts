@@ -300,9 +300,12 @@ export async function structured<T>(opts: {
   onUsage?: UsageHook;
   /** Message when the answer doesn't fit in maxTokens. */
   tooLong?: string;
+  /** A different model for this request (defaults to AI_MODEL). */
+  model?: string;
 }): Promise<T> {
+  const model = opts.model ?? AI_MODEL;
   const stream = ai().beta.messages.stream({
-    model: AI_MODEL,
+    model,
     max_tokens: opts.maxTokens ?? 32000,
     betas: [FALLBACK_BETA],
     fallbacks: "default",
@@ -311,7 +314,7 @@ export async function structured<T>(opts: {
     messages: [{ role: "user", content: opts.content }],
   });
   const msg = await stream.finalMessage();
-  opts.onUsage?.(AI_MODEL, msg.usage);
+  opts.onUsage?.(model, msg.usage);
   if (msg.stop_reason === "refusal") throw new HttpError(422, "The assistant declined to process this document.");
   if (msg.stop_reason === "max_tokens") throw new HttpError(422, opts.tooLong ?? "This form is too large to read in one pass. Try fewer pages.");
   const text = msg.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("");
