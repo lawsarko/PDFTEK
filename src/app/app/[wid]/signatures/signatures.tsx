@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { CloudButton } from "@/components/cloud";
 import { api, errMsg, timeAgo } from "@/lib/client/api";
 import type { Doc, WorkspaceInfo } from "@/lib/client/types";
 import { AppShell } from "@/components/app-shell";
@@ -658,6 +659,7 @@ function parseRows(text: string): { rows: Person[]; bad: number } {
 
 function BulkSendModal({ t, onClose, onSent }: { t: Template; onClose: () => void; onSent: () => void }) {
   const toast = useToast();
+  const wid = (useParams() as { wid?: string }).wid;
   const fileRef = useRef<HTMLInputElement>(null);
   const [roleKey, setRoleKey] = useState(() => (t.roles.find((r) => !r.email) ?? t.roles[0]).key);
   const [others, setOthers] = useState<Record<string, Person>>(() => defaults(t.roles));
@@ -742,9 +744,12 @@ function BulkSendModal({ t, onClose, onSent }: { t: Template; onClose: () => voi
         <div className="field">
           <div className="row between">
             <label htmlFor="bk-rows">People who sign as {role.label}</label>
-            <button className="btn btn-sm" onClick={() => fileRef.current?.click()}>
-              <I.upload size={12} /> Upload CSV
-            </button>
+            <span className="row gap-6 wrap">
+              <button className="btn btn-sm" onClick={() => fileRef.current?.click()}>
+                <I.upload size={12} /> Upload CSV
+              </button>
+              {wid && <CloudButton wid={wid} kind="csv" multiple={false} reopenKey="bulksend" onFiles={async (f) => f[0] && setText(await f[0].text())} />}
+            </span>
           </div>
           <input
             ref={fileRef}

@@ -10,6 +10,7 @@ import { AppShell } from "@/components/app-shell";
 import { I } from "@/components/icons";
 import { Modal } from "@/components/modal";
 import { ScanButton } from "@/components/scan";
+import { CloudButton } from "@/components/cloud";
 import { imagesToPdf, toJpeg } from "@/lib/client/images";
 import { notifyPaywall } from "@/components/paywall";
 import { useToast } from "@/components/toast";
@@ -319,7 +320,7 @@ export function ToExcel({ wid }: { wid: string }) {
           </div>
           <input ref={input} type="file" accept={mode === "bulk" ? ".pdf,application/pdf" : ".pdf,application/pdf,image/*,.heic"} multiple={member} hidden onChange={(e) => void upload([...(e.target.files ?? [])])} />
         </div>
-        {(copy.scan || pdfLibrary.length > 0) && (
+        {(
           <div className="row wrap gap-8" style={{ marginTop: 10 }}>
             {copy.scan && (
               <ScanButton
@@ -332,6 +333,15 @@ export function ToExcel({ wid }: { wid: string }) {
                 onScanned={(file) => upload([file])}
               />
             )}
+            <CloudButton
+              wid={wid}
+              className="btn"
+              label="From cloud storage"
+              reopenKey="excel"
+              kind={mode === "bulk" ? "pdf" : "pdfOrImage"}
+              multiple={member}
+              onFiles={(files) => upload(files)}
+            />
             {pdfLibrary.length > 0 && (
               <button className="btn btn-sm btn-ghost" onClick={() => setPicking(true)}>
                 <I.folder size={13} /> Choose from your library

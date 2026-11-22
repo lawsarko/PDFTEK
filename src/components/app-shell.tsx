@@ -12,13 +12,13 @@ export function AppShell({ wid, title, children, actions }: { wid: string; title
           <Logo />
           <span className="hide-mobile"><Wordmark /></span>
         </Link>
-        <Link href={`/app/${wid}`} className="btn btn-ghost btn-sm">
-          <I.left size={14} /> Workbench
+        <Link href={`/app/${wid}`} className="btn btn-ghost btn-sm" aria-label="Back to the workbench">
+          <I.left size={14} /> <span className="shell-back-label">Workbench</span>
         </Link>
         <span className="viewer-title ellipsis">{title}</span>
         <span className="grow" />
         <UsageMeter wid={wid} />
-        {actions}
+        {actions && <span className="topbar-actions row gap-6">{actions}</span>}
         <Link href={`/app/${wid}/tools`} className="tool-btn hide-mobile">
           <I.tools size={13} /> Tools
         </Link>

@@ -185,6 +185,9 @@ button.chip:hover { border-color: var(--steel); color: var(--text-hi); }
   .topbar { gap: 6px; padding: 0 10px; }
   .topbar > * { flex-shrink: 0; }
   .topbar > .ws-wrap { flex-shrink: 1; min-width: 0; }
+  /* Inner pages (Tools, E-signatures, Settings…): the page title shortens, and on the narrowest
+     phones the back button keeps only its arrow. */
+  .topbar > .viewer-title { flex-shrink: 1; }
   .ws-btn { max-width: 100%; min-width: 0; padding-left: 6px; padding-right: 6px; }
   .ws-name { max-width: 120px; min-width: 0; }
 }
@@ -1200,3 +1203,13 @@ body:has(.save-backdrop) .toasts { bottom: auto; top: calc(14px + env(safe-area-
   .modal .tabs { flex-wrap: wrap; overflow: visible; }
   .modal .tabs .tab { flex: 1 1 50%; padding: 11px 6px; }
 }
+
+@media (max-width: 400px) {
+  .shell-back-label { display: none; }
+  /* A page with its own top-bar button (e.g. New request): the credits meter makes room for it
+     (it's still on the workbench). */
+  .topbar:has(> .topbar-actions) .usage-meter { display: none; }
+}
+
+/* Upload, Scan and From cloud: centred when they're the only thing in an empty window. */
+.empty .upload-actions { justify-content: center; }

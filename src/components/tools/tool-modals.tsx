@@ -8,6 +8,7 @@ import { loadPdf, pageToCanvas } from "@/lib/client/pdf";
 import { I } from "@/components/icons";
 import { Modal } from "@/components/modal";
 import { ScanButton } from "../scan";
+import { CloudButton } from "../cloud";
 import { useToast } from "@/components/toast";
 
 /**
@@ -53,12 +54,13 @@ export function UploadButton({ wid, onDone, multiple = false, label = "Upload a 
     }
   };
   return (
-    <span className="row gap-6" style={{ flexWrap: "wrap" }}>
+    <span className="row gap-6 upload-actions" style={{ flexWrap: "wrap" }}>
       <button className="btn btn-sm" disabled={busy} onClick={() => input.current?.click()}>
         {busy ? <span className="spinner" /> : <I.upload size={13} />} {busy ? "Uploading…" : label}
       </button>
       <input ref={input} type="file" hidden multiple={multiple} accept={accept} onChange={(e) => void upload(e.target.files)} />
       {scan && <ScanButton label="Scan" title="Scan a document" onScanned={(file) => upload([file])} />}
+      <CloudButton wid={wid} multiple={multiple} reopenKey="tool" onImported={onDone} />
     </span>
   );
 }
@@ -130,6 +132,9 @@ export function UnlockModal({ wid, onUploaded, onClose }: { wid: string; onUploa
           <I.lock size={24} />
           <div style={{ marginTop: 8, fontWeight: 500 }}>{file ? file.name : <>Drop a password-protected PDF, or <span style={{ color: "var(--amber)" }}>browse</span></>}</div>
           <input ref={input} type="file" accept=".pdf,application/pdf" hidden onChange={(e) => { setFile(e.target.files?.[0] ?? null); setError(null); }} />
+        </div>
+        <div className="row wrap gap-8">
+          <CloudButton wid={wid} kind="pdf" multiple={false} reopenKey="unlock" label="Choose from cloud storage" onFiles={(f) => { setFile(f[0] ?? null); setError(null); }} />
         </div>
         <div className="field">
           <label>Password</label>
@@ -294,7 +299,7 @@ export function ToolModal({
     </div>
   ) : (
     <div className="field">
-      <div className="row between">
+      <div className="row between wrap gap-8">
         <label>Document</label>
         <UploadButton wid={wid} label="Upload" onDone={(d) => { onUploaded(d); setDocId(d[0].id); }} />
       </div>
@@ -349,8 +354,8 @@ export function ToolModal({
             <label>New document name</label>
             <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
-          <div className="row between">
-            <div className="label">Select documents in the order they should appear</div>
+          <div className="row between wrap gap-8">
+            <div className="label" style={{ flex: "1 1 240px" }}>Select documents in the order they should appear</div>
             <UploadButton wid={wid} multiple label="Upload more" onDone={(d) => { onUploaded(d); setMergeIds((m) => [...m, ...d.map((x) => x.id)]); }} />
           </div>
           <div className="col gap-4" style={{ maxHeight: 360, overflowY: "auto" }}>

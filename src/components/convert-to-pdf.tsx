@@ -7,6 +7,7 @@ import { toJpeg } from "@/lib/client/images";
 import { I } from "./icons";
 import { Modal } from "./modal";
 import { ScanButton } from "./scan";
+import { CloudButton } from "./cloud";
 import { useToast } from "./toast";
 
 const OFFICE_RE = /\.(docx?|odt|rtf|pptx?|odp|xlsx?|ods|html?)$/i;
@@ -160,7 +161,8 @@ export function ConvertToPdfModal({ wid, onClose }: { wid: string; onClose: () =
               setMerged(null);
             }}
           />
-          <span className="tiny faint">Use your camera to turn paper pages into a PDF.</span>
+          <CloudButton wid={wid} reopenKey="topdf" label="From cloud storage" onFiles={(files) => add(files)} />
+          <span className="tiny faint">Use your camera to turn paper pages into a PDF, or pick files from Google Drive, Dropbox or OneDrive.</span>
         </div>
 
         {officeBlocked && (

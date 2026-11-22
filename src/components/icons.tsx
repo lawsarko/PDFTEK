@@ -68,6 +68,7 @@ export const I = {
   shield: svg(<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z" />),
   globe: svg(<><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></>),
   folder: svg(<path d="M3 6h6l2 2h10v11H3z" />),
+  cloud: svg(<path d="M7 18h10.5a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.6 9.1 4.5 4.5 0 0 0 7 18z" />),
   clock: svg(<><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>),
   menu: svg(<path d="M4 6h16M4 12h16M4 18h16" />),
   form: svg(<><rect x="5" y="3.5" width="14" height="18" rx="2" /><path d="M9 3.5h6v3H9z" /><path d="M8.5 11h7M8.5 14.5h7M8.5 18h4" /></>),

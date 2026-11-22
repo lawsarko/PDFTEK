@@ -107,6 +107,25 @@ export function Tools({ wid }: { wid: string }) {
     api<{ documents: Doc[] }>(`/api/workspaces/${wid}/documents`).then((r) => setDocs(r.documents));
   }, [wid]);
 
+  // The open window is kept in the address (?tool=…), so coming back from connecting a cloud
+  // account (or reloading) returns to it.
+  const remember = (tool: string | null, extra?: string) => {
+    const p = new URLSearchParams(window.location.search);
+    if (tool) p.set("tool", tool);
+    else p.delete("tool");
+    if (extra) p.set("do", extra);
+    else p.delete("do");
+    const q = p.toString();
+    window.history.replaceState(window.history.state, "", window.location.pathname + (q ? `?${q}` : ""));
+  };
+  useEffect(() => {
+    if (open) remember(open);
+    else if (pick) remember("pick", pick);
+    else if (unlock) remember("unlock");
+    else if (toPdf) remember("topdf");
+    else remember(null);
+  }, [open, pick, unlock, toPdf]);
+
   const click = (k: (typeof TOOLS)[number]["key"]) => {
     if (k === "topdf") setToPdf(true);
     else if (k === "unlock") setUnlock(true);

@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { Modal } from "@/components/modal";
 import { SignaturePad } from "@/components/signature-pad";
 import { I } from "@/components/icons";
+import { CloudButton } from "@/components/cloud";
+import { useParams } from "next/navigation";
 import { api, download, errMsg } from "@/lib/client/api";
 import type { Doc } from "@/lib/client/types";
 import { PROFILE_FIELDS, profileValue, slug, toIsoDate, type FormField, type FormValues, type Profile } from "@/lib/forms";
@@ -240,6 +242,7 @@ export function LearnModal({ items, profileName, onSave, onClose }: { items: Lea
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 
 export function BulkModal({ docId, docName, fields, values, signatures, onClose }: { docId: string; docName: string; fields: FormField[]; values: FormValues; signatures: Record<string, string>; onClose: () => void }) {
+  const wid = (useParams() as { wid?: string }).wid;
   const fillable = fields.filter((f) => !["signature", "initials"].includes(f.type) && !f.readOnly);
   const [rows, setRows] = useState<Record<string, string>[] | null>(null);
   const [columns, setColumns] = useState<string[]>([]);
@@ -333,6 +336,7 @@ export function BulkModal({ docId, docName, fields, values, signatures, onClose 
             <I.upload size={14} /> Choose CSV or Excel file
             <input type="file" accept=".csv,.xlsx,.xls,.ods" hidden onChange={(e) => e.target.files?.[0] && load(e.target.files[0])} />
           </label>
+          {wid && <CloudButton wid={wid} className="btn" kind="spreadsheet" multiple={false} reopenKey="bulkfill" label="From cloud storage" onFiles={(f) => f[0] && load(f[0])} />}
           <button className="btn btn-ghost" onClick={template}>
             <I.table size={14} /> Download a template with this form&apos;s fields
           </button>
