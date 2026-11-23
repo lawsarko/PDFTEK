@@ -1412,5 +1412,15 @@
  "How to email documents straight into pdftek": "Cómo enviar documentos por correo directamente a pdftek",
  "How to translate a PDF and keep its layout": "Cómo traducir un PDF sin perder su diseño",
  "It uses AI credits based on the length of the document, about 2 to 4 credits per page. Uses AI credits: 250 credits cost $2.99 and never expire, and Pro includes 400 a month.": "Usa créditos de IA según la longitud del documento, unos 2 a 4 créditos por página. 250 créditos cuestan $2.99 y no caducan, y Pro incluye 400 al mes.",
- "Yes, connecting cloud storage is free on every plan. Free without an account: 3 tasks a day (6 with a free account), files up to 20 MB.": "Sí, conectar tu almacenamiento en la nube es gratis en todos los planes. Gratis sin cuenta: 3 tareas al día (6 con una cuenta gratuita) y archivos de hasta 20 MB."
+ "Yes, connecting cloud storage is free on every plan. Free without an account: 3 tasks a day (6 with a free account), files up to 20 MB.": "Sí, conectar tu almacenamiento en la nube es gratis en todos los planes. Gratis sin cuenta: 3 tareas al día (6 con una cuenta gratuita) y archivos de hasta 20 MB.",
+ "Translate PDFs into 35+ languages, keeping the layout (uses AI credits)": "Traduce PDF a más de 35 idiomas sin perder el diseño (usa créditos de IA)",
+ "E-sign templates, bulk send to 100 people and signing links": "Plantillas de firma, envío masivo a 100 personas y enlaces de firma",
+ "E-sign templates, bulk send to 200 people and signing links that can collect payments": "Plantillas de firma, envío masivo a 200 personas y enlaces de firma que pueden cobrar pagos",
+ "400 AI credits a month: chat with PDFs, translate PDFs, AI form filling, statements and invoices to Excel": "400 créditos de IA al mes: chatea con tus PDF, tradúcelos, rellena formularios con IA y pasa estados de cuenta y facturas a Excel",
+ "Bulk send for signature to 500 people at once": "Envío masivo para firmar a 500 personas a la vez",
+ "People per bulk send": "Personas por envío masivo",
+ "How much does it cost to translate a PDF?": "¿Cuánto cuesta traducir un PDF?",
+ "Translate PDF works on every plan, including Free, and uses AI credits based on the length of the document: about 2 to 4 credits per page. Pro includes 400 credits a month, Team 1,500, and a Day Pass 50. You can also buy credits that never expire.": "Traducir PDF funciona en todos los planes, incluido el Gratis, y usa créditos de IA según la longitud del documento: unos 2 a 4 créditos por página. Pro incluye 400 créditos al mes, Team 1,500 y el Pase de un día 50. También puedes comprar créditos que no caducan.",
+ "Which plans include e-signature templates and signing links?": "¿Qué planes incluyen plantillas de firma y enlaces de firma?",
+ "Day Pass, Pro and Team. They include reusable e-signature templates, bulk send (up to 100 people at a time with a Day Pass, 200 with Pro and 500 with Team) and public signing links. Signing links can collect payments through your own Stripe account, with no extra pdftek fee.": "El Pase de un día, Pro y Team. Incluyen plantillas de firma electrónica reutilizables, envío masivo (hasta 100 personas a la vez con el Pase de un día, 200 con Pro y 500 con Team) y enlaces de firma públicos. Los enlaces de firma pueden cobrar pagos a través de tu propia cuenta de Stripe, sin comisión extra de pdftek."
 }

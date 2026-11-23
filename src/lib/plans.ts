@@ -111,6 +111,14 @@ export const PRICING_FAQ: [string, string][] = [
     "How much do bank statement and invoice conversions cost?",
     "Your first statement or invoice document each month (up to 10 pages) is free. After that they use AI credits, about 6 credits per page. Converting many files at once and combining them into one spreadsheet needs a Day Pass or Pro.",
   ],
+  [
+    "How much does it cost to translate a PDF?",
+    "Translate PDF works on every plan, including Free, and uses AI credits based on the length of the document: about 2 to 4 credits per page. Pro includes 400 credits a month, Team 1,500, and a Day Pass 50. You can also buy credits that never expire.",
+  ],
+  [
+    "Which plans include e-signature templates and signing links?",
+    "Day Pass, Pro and Team. They include reusable e-signature templates, bulk send (up to 100 people at a time with a Day Pass, 200 with Pro and 500 with Team) and public signing links. Signing links can collect payments through your own Stripe account, with no extra pdftek fee.",
+  ],
   ["What does the Day Pass include?", `24 hours of everything in Pro: unlimited tasks, files up to ${PAID_LIMITS.maxFileMb} MB, Edit PDF, Read PDF and e-signatures, plus 50 AI credits. It doesn't renew.`],
   ["Can I cancel Pro anytime?", "Yes. Cancel from Settings → Billing in one click; Pro stays active until the end of the period you paid for."],
   ["Is my data safe?", "Files are encrypted in transit, never sold or used to train AI, and files from visitors without an account are deleted after 24 hours."],

@@ -75,6 +75,7 @@ function compareGroups(t: (s: string, v?: Record<string, string | number>) => st
         [t("Fill many forms from a spreadsheet"), false, true, true, true],
         [t("E-signature requests with audit certificates"), false, true, true, true],
         [t("Signing templates, bulk send and signing links"), false, true, true, true],
+        [t("People per bulk send"), false, "100", "200", "500"],
         [t("Collect payments when people sign (Stripe)"), false, true, true, true],
         [t("Document requests (collect files from others)"), false, true, true, true],
       ],
