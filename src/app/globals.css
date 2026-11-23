@@ -1213,3 +1213,15 @@ body:has(.save-backdrop) .toasts { bottom: auto; top: calc(14px + env(safe-area-
 
 /* Upload, Scan and From cloud: centred when they're the only thing in an empty window. */
 .empty .upload-actions { justify-content: center; }
+
+/* "New" marker on menu items (Translate PDF, signing templates…). */
+.mega-tag { display: inline-block; margin-left: 7px; padding: 1px 6px; border-radius: 999px; background: var(--amber-dim, rgba(230,150,40,.16)); color: var(--amber); font: 600 9.5px/1.5 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; vertical-align: 1px; }
+
+/* Tight fit (longer languages): a little less space between menu items. */
+.mk-nav-inner.mk-dense { gap: 12px; }
+.mk-nav-inner.mk-dense .mk-link { padding-left: 8px; padding-right: 8px; }
+/* The full menu doesn't fit in this language at this width: the menu button takes over. */
+.mk-nav-inner.mk-compact .mk-links { display: none; }
+.mk-nav-inner.mk-compact .mk-burger { display: inline-flex; }
+/* Menus with longer item names (Sign, Ask AI): a little wider, so names stay on one line. */
+.mega-cols.roomy { grid-auto-columns: minmax(264px, 1fr); }

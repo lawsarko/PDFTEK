@@ -1422,5 +1422,20 @@
  "How much does it cost to translate a PDF?": "¿Cuánto cuesta traducir un PDF?",
  "Translate PDF works on every plan, including Free, and uses AI credits based on the length of the document: about 2 to 4 credits per page. Pro includes 400 credits a month, Team 1,500, and a Day Pass 50. You can also buy credits that never expire.": "Traducir PDF funciona en todos los planes, incluido el Gratis, y usa créditos de IA según la longitud del documento: unos 2 a 4 créditos por página. Pro incluye 400 créditos al mes, Team 1,500 y el Pase de un día 50. También puedes comprar créditos que no caducan.",
  "Which plans include e-signature templates and signing links?": "¿Qué planes incluyen plantillas de firma y enlaces de firma?",
- "Day Pass, Pro and Team. They include reusable e-signature templates, bulk send (up to 100 people at a time with a Day Pass, 200 with Pro and 500 with Team) and public signing links. Signing links can collect payments through your own Stripe account, with no extra pdftek fee.": "El Pase de un día, Pro y Team. Incluyen plantillas de firma electrónica reutilizables, envío masivo (hasta 100 personas a la vez con el Pase de un día, 200 con Pro y 500 con Team) y enlaces de firma públicos. Los enlaces de firma pueden cobrar pagos a través de tu propia cuenta de Stripe, sin comisión extra de pdftek."
+ "Day Pass, Pro and Team. They include reusable e-signature templates, bulk send (up to 100 people at a time with a Day Pass, 200 with Pro and 500 with Team) and public signing links. Signing links can collect payments through your own Stripe account, with no extra pdftek fee.": "El Pase de un día, Pro y Team. Incluyen plantillas de firma electrónica reutilizables, envío masivo (hasta 100 personas a la vez con el Pase de un día, 200 con Pro y 500 con Team) y enlaces de firma públicos. Los enlaces de firma pueden cobrar pagos a través de tu propia cuenta de Stripe, sin comisión extra de pdftek.",
+ "Forms": "Formularios",
+ "Send a PDF to be signed": "Envía un PDF para que lo firmen",
+ "Templates & bulk send": "Plantillas y envío masivo",
+ "Reuse a document, send to many": "Reutiliza un documento y envíalo a muchos",
+ "Signing links": "Enlaces de firma",
+ "Anyone can sign, and pay": "Cualquiera puede firmar y pagar",
+ "AI fills it, you sign": "La IA lo rellena y tú firmas",
+ "AI tools": "Herramientas de IA",
+ "35+ languages, layout kept": "Más de 35 idiomas, sin perder el diseño",
+ "Listen in 11 languages": "Escúchalo en 11 idiomas",
+ "Answers cite the page": "Las respuestas citan la página",
+ "Even scanned forms": "Incluso formularios escaneados",
+ "Compare documents": "Comparar documentos",
+ "Redline with an AI summary": "Cambios marcados con un resumen de IA",
+ "New": "Nuevo"
 }
