@@ -1252,3 +1252,45 @@ body:has(.save-backdrop) .toasts { bottom: auto; top: calc(14px + env(safe-area-
 @media (max-width: 380px) { .mk-wordmark { display: none; } }
 /* …and in longer languages, "Sign in" moves into the menu (☰) so "Start free" reads in full. */
 @media (max-width: 380px) { html:not([lang^="en"]) .mk-signin { display: none; } }
+
+/* ---------- Tool cards with illustrated icons (homepage, Tools page, related tools) ---------- */
+.tool-grid-x { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin-top: 22px; }
+.tool-tile { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 18px 18px 20px; border-radius: 18px; background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 92%, var(--tc) 8%), var(--ink-2)); border: 1px solid var(--line); color: var(--text-hi); overflow: hidden; isolation: isolate; transition: transform .22s cubic-bezier(.2,.8,.2,1), border-color .22s, box-shadow .22s; }
+.tool-tile:hover, .tool-tile:focus-visible { text-decoration: none; transform: translateY(-4px); border-color: color-mix(in srgb, var(--tc) 55%, var(--line)); box-shadow: 0 22px 44px -22px color-mix(in srgb, var(--tc) 70%, transparent), 0 0 0 1px color-mix(in srgb, var(--tc) 25%, transparent); }
+.tool-tile:focus-visible { outline: 2px solid var(--tc); outline-offset: 2px; }
+/* A soft glow of the tool's colour behind the icon, and a light sweep on hover. */
+.tool-tile::before { content: ""; position: absolute; z-index: -1; left: -30px; top: -40px; width: 160px; height: 140px; background: radial-gradient(closest-side, color-mix(in srgb, var(--tc) 26%, transparent), transparent); opacity: .55; transition: opacity .25s; }
+.tool-tile:hover::before { opacity: 1; }
+.tool-tile::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,.07) 50%, transparent 65%); transform: translateX(-100%); transition: transform .7s ease; }
+.tool-tile:hover::after { transform: translateX(100%); }
+.tool-tile-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
+.tool-icon { display: block; flex-shrink: 0; filter: drop-shadow(0 8px 14px color-mix(in srgb, var(--tc, #000) 35%, transparent)); transition: transform .3s cubic-bezier(.2,.8,.2,1); }
+.tool-icon .tool-icon-badge { transform-box: fill-box; transform-origin: center; transition: transform .35s cubic-bezier(.34,1.56,.64,1); }
+.tool-icon .tool-icon-paper { transition: transform .3s cubic-bezier(.2,.8,.2,1); }
+.tool-tile:hover .tool-icon { transform: rotate(-5deg) scale(1.06); }
+.tool-tile:hover .tool-icon-badge { transform: scale(1.14); }
+.tool-tile:hover .tool-icon-paper { transform: translateY(-1.5px); }
+.tool-tile-name { font-family: var(--font-display); font-size: 16px; font-weight: 600; line-height: 1.25; }
+.tool-tile-desc { font-size: 13.5px; line-height: 1.5; color: var(--text-lo); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.tool-tile-badge { font: 600 10.5px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; padding: 5px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-lo); background: var(--ink-2); white-space: nowrap; }
+.tool-tile-badge.free { color: var(--good); border-color: color-mix(in srgb, var(--good) 40%, transparent); }
+.tool-tile-badge.ai { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 40%, transparent); }
+.tool-tile-go { position: absolute; right: 16px; bottom: 16px; width: 28px; height: 28px; border-radius: 999px; display: grid; place-items: center; background: var(--tc); color: #fff; opacity: 0; transform: translateX(-6px); transition: opacity .2s, transform .25s; }
+.tool-tile:hover .tool-tile-go, .tool-tile:focus-visible .tool-tile-go { opacity: 1; transform: none; }
+.tool-tile .tool-tile-desc { padding-right: 18px; }
+@media (hover: none) { .tool-tile-go { opacity: .9; transform: none; } }
+@media (max-width: 560px) {
+  .tool-grid-x { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tool-tile { padding: 14px 14px 16px; }
+  .tool-tile .tool-icon { width: 46px; height: 46px; }
+  .tool-tile-name { font-size: 14.5px; }
+  .tool-tile-desc { font-size: 12.5px; -webkit-line-clamp: 3; }
+  .tool-tile-badge { font-size: 9.5px; padding: 4px 6px; }
+  .tool-tile-go { display: none; }
+}
+@media (max-width: 340px) { .tool-grid-x { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) {
+  .tool-tile, .tool-icon, .tool-icon .tool-icon-badge, .tool-icon .tool-icon-paper, .tool-tile::after, .tool-tile-go { transition: none; }
+  .tool-tile:hover { transform: none; }
+  .tool-tile:hover .tool-icon, .tool-tile:hover .tool-icon-badge, .tool-tile:hover .tool-icon-paper { transform: none; }
+}

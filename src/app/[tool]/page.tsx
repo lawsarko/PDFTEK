@@ -9,6 +9,7 @@ import { PRODUCTS } from "@/lib/plans";
 import { alternatesFor, getI18n } from "@/lib/i18n/server";
 import { hasToolStart } from "@/lib/tool-start";
 import { ToolStart } from "@/components/tool-start";
+import { ToolTile } from "@/components/tool-tile";
 
 type P = { params: Promise<{ tool: string }> };
 
@@ -167,12 +168,9 @@ export default async function ToolPage({ params }: P) {
 
       <section className="mk-section" style={{ paddingTop: 20 }}>
         <h2 className="mk-h2" style={{ fontSize: 24 }}>{t("Related PDF tools")}</h2>
-        <div className="seo-grid">
+        <div className="tool-grid-x">
           {related.map((r) => (
-            <Link key={r.slug} href={lp(`/${r.slug}`)} className="seo-tile">
-              <b>{t(r.name)}</b>
-              <span>{t(`${r.description.split(". ")[0].replace(/\.$/, "")}.`)}</span>
-            </Link>
+            <ToolTile key={r.slug} href={lp(`/${r.slug}`)} slug={r.slug} name={t(r.name)} desc={t(`${r.description.split(". ")[0].replace(/\.$/, "")}.`)} badge={r.access === "free" ? t("Free") : r.access === "member" ? t("Pro") : t("AI credits")} badgeKind={r.access} />
           ))}
         </div>
         <p style={{ marginTop: 18 }}>

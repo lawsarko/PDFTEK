@@ -1484,5 +1484,6 @@
  "Remove password": "Quitar la contraseña",
  "Choose another file": "Elegir otro archivo",
  "Removing the password…": "Quitando la contraseña…",
- "Leave it empty if the PDF opens without a password but blocks printing or copying.": "Déjala en blanco si el PDF se abre sin contraseña pero no deja imprimir ni copiar."
+ "Leave it empty if the PDF opens without a password but blocks printing or copying.": "Déjala en blanco si el PDF se abre sin contraseña pero no deja imprimir ni copiar.",
+ "AI credits": "Créditos de IA"
 }

@@ -5,6 +5,7 @@ import { MarketingNav, MarketingFooter } from "@/components/marketing";
 import { JsonLd } from "@/components/json-ld";
 import { SEO_CATEGORIES, SEO_TOOLS, siteUrl } from "@/lib/seo-tools";
 import { getI18n } from "@/lib/i18n/server";
+import { ToolTile } from "@/components/tool-tile";
 
 export async function generateMetadata(): Promise<Metadata> {
   return pageMeta("/tools", {
@@ -39,12 +40,9 @@ export default async function ToolsHub() {
       {SEO_CATEGORIES.map((c) => (
         <section key={c} className="mk-section" style={{ paddingTop: 24, paddingBottom: 24 }}>
           <h2 className="mk-h2" style={{ fontSize: 24 }}>{t(c)}</h2>
-          <div className="seo-grid">
+          <div className="tool-grid-x">
             {SEO_TOOLS.filter((tool) => tool.category === c).map((tool) => (
-              <Link key={tool.slug} href={lp(`/${tool.slug}`)} className="seo-tile">
-                <b>{t(tool.name)}</b>
-                <span>{t(`${tool.description.split(". ")[0].replace(/\.$/, "")}.`)}</span>
-              </Link>
+              <ToolTile key={tool.slug} href={lp(`/${tool.slug}`)} slug={tool.slug} name={t(tool.name)} desc={t(`${tool.description.split(". ")[0].replace(/\.$/, "")}.`)} badge={tool.access === "free" ? t("Free") : tool.access === "member" ? t("Pro") : t("AI credits")} badgeKind={tool.access} />
             ))}
           </div>
         </section>

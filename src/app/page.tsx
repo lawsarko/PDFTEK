@@ -8,6 +8,7 @@ import { TRIAL_DAYS, PRODUCTS } from "@/lib/plans";
 import { alternatesFor, getI18n } from "@/lib/i18n/server";
 import { LOCALES } from "@/lib/i18n/locales";
 import { ConvertDemo, CountUp, FlowSequence, LiveChat, Reveal, ScrollProgress, Spotlight, TiltOnScroll, Typewriter } from "@/components/motion";
+import { ToolTile } from "@/components/tool-tile";
 
 export const dynamic = "force-dynamic";
 export async function generateMetadata() {
@@ -214,12 +215,9 @@ export default async function Home() {
         <Reveal>
           <div className="eyebrow">{t("PDF tools")}</div>
           <h2 className="mk-h2" style={{ marginTop: 10 }}>{t("Popular PDF tools, free online.")}</h2>
-          <div className="seo-grid">
+          <div className="tool-grid-x">
             {POPULAR.map((slug) => SEO_TOOLS.find((x) => x.slug === slug)!).map((tool) => (
-              <Link key={tool.slug} href={lp(`/${tool.slug}`)} className="seo-tile">
-                <b>{t(tool.name)}</b>
-                <span>{t(`${tool.description.split(". ")[0]}.`)}</span>
-              </Link>
+              <ToolTile key={tool.slug} href={lp(`/${tool.slug}`)} slug={tool.slug} name={t(tool.name)} desc={t(`${tool.description.split(". ")[0]}.`)} badge={tool.access === "free" ? t("Free") : tool.access === "member" ? t("Pro") : t("AI credits")} badgeKind={tool.access} />
             ))}
           </div>
           <p style={{ marginTop: 18 }}>
