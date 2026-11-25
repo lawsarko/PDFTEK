@@ -1294,3 +1294,8 @@ body:has(.save-backdrop) .toasts { bottom: auto; top: calc(14px + env(safe-area-
   .tool-tile:hover { transform: none; }
   .tool-tile:hover .tool-icon, .tool-tile:hover .tool-icon-badge, .tool-tile:hover .tool-icon-paper { transform: none; }
 }
+/* Right-to-left languages: the card's arrow sits in the left corner and points left. */
+[dir="rtl"] .tool-tile-go { right: auto; left: 16px; transform: translateX(6px) scaleX(-1); }
+[dir="rtl"] .tool-tile:hover .tool-tile-go, [dir="rtl"] .tool-tile:focus-visible .tool-tile-go { transform: scaleX(-1); }
+[dir="rtl"] .tool-tile .tool-tile-desc { padding-right: 0; padding-left: 18px; }
+@media (hover: none) { [dir="rtl"] .tool-tile-go { transform: scaleX(-1); } }
