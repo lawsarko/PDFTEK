@@ -819,10 +819,8 @@
  "Put the pages in the order you want.": "Pon las páginas en el orden que quieras.",
  "Put them in order": "Ordénalos",
  "Q3 report": "Informe del 3.er trimestre",
- "Questions about pdftek, billing, a problem with a PDF tool, or an idea for a feature? Send us a message and we'll get back to you by email.": "¿Tienes preguntas sobre pdftek o la facturación, un problema con una herramienta PDF o una idea para una función? Escríbenos y te responderemos por correo.",
  "Questions or data requests: use the contact form at pdftek.com/contact and choose \"Privacy & data request\".": "Para preguntas o solicitudes sobre tus datos, usa el formulario de contacto en pdftek.com/contact y elige «Privacidad y solicitud de datos».",
  "Questions, answered": "Preguntas y respuestas",
- "Questions, billing, a file that won't convert, or an idea for pdftek? Send a message and a real person will reply by email.": "¿Preguntas, facturación, un archivo que no se convierte o una idea para pdftek? Escríbenos y una persona real te responderá por correo.",
  "QuickBooks, Xero, Sage, Wave, FreshBooks, Zoho Books and most others accept a CSV with date, description and amount columns, which is exactly what PDFTEK produces.": "QuickBooks, Xero, Sage, Wave, FreshBooks, Zoho Books y la mayoría de los demás aceptan un CSV con columnas de fecha, concepto e importe, que es justo lo que genera PDFTEK.",
  "Read a PDF aloud": "Leer un PDF en voz alta",
  "Read PDF": "Leer PDF",
@@ -1485,5 +1483,7 @@
  "Choose another file": "Elegir otro archivo",
  "Removing the password…": "Quitando la contraseña…",
  "Leave it empty if the PDF opens without a password but blocks printing or copying.": "Déjala en blanco si el PDF se abre sin contraseña pero no deja imprimir ni copiar.",
- "AI credits": "Créditos de IA"
+ "AI credits": "Créditos de IA",
+ "Questions, billing, or a file that won't convert? Send a message and a real person will reply by email.": "¿Preguntas, facturación o un archivo que no se convierte? Escríbenos y una persona real te responderá por correo.",
+ "Questions about pdftek, billing, or a problem with a PDF tool? Send us a message and we'll get back to you by email.": "¿Preguntas sobre pdftek, facturación o un problema con una herramienta PDF? Escríbenos y te responderemos por correo."
 }
