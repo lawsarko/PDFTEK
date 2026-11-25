@@ -11,7 +11,7 @@ import { getI18n } from "@/lib/i18n/server";
 export async function generateMetadata() {
   return pageMeta("/contact", {
     title: "Contact us",
-    description: "Questions about pdftek, billing, or a problem with a PDF tool? Send us a message and we'll get back to you by email.",
+    description: "Questions about pdftek or billing? Send us a message and we'll get back to you by email.",
   });
 }
 export const dynamic = "force-dynamic";
@@ -47,7 +47,7 @@ export default async function Contact() {
         <div className="contact-intro">
           <h1 className="mk-h2">{t("Contact us")}</h1>
           <p className="muted" style={{ lineHeight: 1.7 }}>
-            {t("Questions, billing, or a file that won't convert? Send a message and a real person will reply by email.")}
+            {t("Questions or billing? Send a message and a real person will reply by email.")}
           </p>
           <p className="contact-hours">
             <I.clock size={15} /> {t("We respond within 24 hours, Monday to Friday, 9am to 5pm Central Time (CT).")}
