@@ -20,6 +20,7 @@ const OUT_SITE = path.join(SRC, "i18n", "catalog-site.json");
 // it arrives translated instead of switching after load.
 const SITE_FILES = [
   "src/components/marketing-menu.tsx",
+  "src/components/tool-start.tsx",
   "src/components/pricing.tsx",
   "src/components/auth-form.tsx",
   "src/components/paywall.tsx",

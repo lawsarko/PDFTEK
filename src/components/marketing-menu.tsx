@@ -386,6 +386,7 @@ export function MarketingMenu() {
             <Panel groups={[...SIGN, ...AI, ...CONVERT, ...ORGANIZE]} onPick={() => setSheet(false)} />
             <div className="row gap-16 wrap small" style={{ marginTop: 16 }}>
               <Link href={lp("/pricing")} onClick={() => setSheet(false)}>{t("Pricing")}</Link>
+              <Link href={lp("/login")} onClick={() => setSheet(false)}>{t("Sign in")}</Link>
             </div>
           </div>,
           document.body,

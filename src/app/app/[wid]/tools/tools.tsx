@@ -98,6 +98,7 @@ export function Tools({ wid }: { wid: string }) {
   const initial = params.get("tool");
   const [open, setOpen] = useState<ToolKey | null>(() => (TOOLS.some((t) => t.key === initial) && !NON_MODAL.includes(initial!) ? (initial as ToolKey) : null));
   const preselect = params.get("doc");
+  const preselectMany = (params.get("docs") ?? "").split(",").filter(Boolean);
   const [toPdf, setToPdf] = useState(initial === "topdf");
   const [unlock, setUnlock] = useState(initial === "unlock");
   const [pick, setPick] = useState<string | null>(initial === "pick" ? params.get("do") : null);
@@ -158,7 +159,7 @@ export function Tools({ wid }: { wid: string }) {
       {pick && <PickDocModal wid={wid} task={pick} docs={docs} onUploaded={addDocs} onClose={() => setPick(null)} />}
       {unlock && <UnlockModal wid={wid} onUploaded={addDocs} onClose={() => setUnlock(false)} />}
       {toPdf && <ConvertToPdfModal wid={wid} onClose={() => setToPdf(false)} />}
-      {open && <ToolModal wid={wid} tool={open} docs={docs} onUploaded={addDocs} preselect={preselect} onClose={() => setOpen(null)} />}
+      {open && <ToolModal wid={wid} tool={open} docs={docs} onUploaded={addDocs} preselect={preselect ?? preselectMany[0] ?? null} preselectMany={preselectMany} onClose={() => setOpen(null)} />}
     </AppShell>
   );
 }

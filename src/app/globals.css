@@ -1225,3 +1225,30 @@ body:has(.save-backdrop) .toasts { bottom: auto; top: calc(14px + env(safe-area-
 .mk-nav-inner.mk-compact .mk-burger { display: inline-flex; }
 /* Menus with longer item names (Sign, Ask AI): a little wider, so names stay on one line. */
 .mega-cols.roomy { grid-auto-columns: minmax(264px, 1fr); }
+
+/* ---------- Upload area on the public tool pages ---------- */
+.ts-wrap { max-width: 680px; margin: 30px auto 0; }
+.ts-drop { position: relative; border: 1.5px dashed var(--line-hi, var(--line)); border-radius: 18px; background: color-mix(in srgb, var(--ink-2) 82%, transparent); padding: 30px 24px 22px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; transition: border-color .15s, background .15s; backdrop-filter: blur(6px); }
+.ts-drop.over { border-color: var(--amber); background: color-mix(in srgb, var(--amber) 8%, var(--ink-2)); }
+.ts-ico { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: var(--panel); color: var(--amber); }
+.ts-title { font-family: var(--font-display); font-weight: 600; font-size: 18px; color: var(--text-hi); }
+.ts-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 4px; }
+.ts-note { font-size: 13px; color: var(--slate); }
+.ts-busy { display: flex; align-items: center; gap: 10px; min-height: 120px; font-weight: 500; color: var(--text-hi); }
+.ts-error { margin-top: 12px; padding: 10px 14px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--bad, #e5484d) 45%, transparent); background: color-mix(in srgb, var(--bad, #e5484d) 10%, transparent); color: var(--text-hi); font-size: 14px; text-align: left; }
+@media (max-width: 560px) {
+  .ts-drop { padding: 22px 16px 18px; }
+  .ts-title { font-size: 16px; }
+  .ts-actions { flex-direction: column; align-self: stretch; }
+  .ts-actions .btn { width: 100%; justify-content: center; }
+}
+.ts-unlock { display: flex; flex-direction: column; align-items: stretch; gap: 8px; width: 100%; max-width: 420px; text-align: left; }
+.ts-file { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; background: var(--panel); color: var(--text-hi); font-weight: 500; min-width: 0; }
+.ts-label { font-size: 13px; color: var(--text-lo); margin-top: 4px; }
+.ts-hint { font-size: 12.5px; color: var(--slate); }
+.ts-unlock .ts-actions { justify-content: flex-start; }
+
+/* Narrowest phones: the logo icon alone, so "Sign in" and "Start free" stay readable. */
+@media (max-width: 380px) { .mk-wordmark { display: none; } }
+/* …and in longer languages, "Sign in" moves into the menu (☰) so "Start free" reads in full. */
+@media (max-width: 380px) { html:not([lang^="en"]) .mk-signin { display: none; } }

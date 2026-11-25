@@ -158,6 +158,7 @@ export function ToolModal({
   docs,
   onUploaded,
   preselect,
+  preselectMany,
   onClose,
   fixedDoc = false,
   onOpen,
@@ -167,6 +168,8 @@ export function ToolModal({
   docs: Doc[];
   onUploaded: (d: Doc[]) => void;
   preselect: string | null;
+  /** Merge: documents to start with, in order (from the upload area on the Merge PDF page). */
+  preselectMany?: string[];
   onClose: () => void;
   /** Opened from the workbench: work on `preselect` without offering other documents or uploads. */
   fixedDoc?: boolean;
@@ -175,7 +178,7 @@ export function ToolModal({
 }) {
   const toast = useToast();
   const [docId, setDocId] = useState(preselect && docs.some((d) => d.id === preselect) ? preselect : (docs[0]?.id ?? ""));
-  const [mergeIds, setMergeIds] = useState<string[]>(preselect ? [preselect] : []);
+  const [mergeIds, setMergeIds] = useState<string[]>(preselectMany?.length ? preselectMany : preselect ? [preselect] : []);
   const [name, setName] = useState("Merged document");
   const [ranges, setRanges] = useState("1");
   const [parts, setParts] = useState("1-2, 3-");

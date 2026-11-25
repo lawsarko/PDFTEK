@@ -10,8 +10,8 @@ export async function MarketingNav({ signedIn }: { signedIn: boolean }) {
   return (
     <nav className="mk-nav">
       <div className="mk-nav-inner">
-        <Link href={lp("/")} className="brand">
-          <Logo /> <Wordmark />
+        <Link href={lp("/")} className="brand" aria-label="PDFTEK">
+          <Logo /> <span className="mk-wordmark"><Wordmark /></span>
         </Link>
         <MarketingMenu />
         <span className="grow" />
@@ -24,7 +24,7 @@ export async function MarketingNav({ signedIn }: { signedIn: boolean }) {
           </Link>
         ) : (
           <>
-            <Link className="btn btn-ghost btn-sm" href={lp("/login")}>
+            <Link className="btn btn-ghost btn-sm mk-signin" href={lp("/login")}>
               {t("Sign in")}
             </Link>
             <Link prefetch={false} className="btn btn-primary btn-sm" href="/go/start">

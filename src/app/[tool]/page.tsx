@@ -7,6 +7,8 @@ import { I } from "@/components/icons";
 import { ACCESS_NOTE, SEO_TOOLS, SEO_TOOL_BY_SLUG, siteUrl } from "@/lib/seo-tools";
 import { PRODUCTS } from "@/lib/plans";
 import { alternatesFor, getI18n } from "@/lib/i18n/server";
+import { hasToolStart } from "@/lib/tool-start";
+import { ToolStart } from "@/components/tool-start";
 
 type P = { params: Promise<{ tool: string }> };
 
@@ -44,6 +46,7 @@ export default async function ToolPage({ params }: P) {
   const steps = tool.steps.map(([a, b]) => [t(a), t(b)] as const);
   const faq = tool.faq.map(([q, a]) => [t(q), t(a)] as const);
   const benefits = tool.benefits.map((b) => t(b));
+  const access = free ? t("Free · no sign-up · no watermark") : tool.access === "member" ? t("Day Pass, Pro or Team") : t("Pay as you go with AI credits");
 
   return (
     <div className="mk">
@@ -99,14 +102,21 @@ export default async function ToolPage({ params }: P) {
           </nav>
           <h1 style={{ fontSize: "clamp(36px, 6vw, 64px)" }}>{t(tool.h1)}</h1>
           <p className="lead">{t(tool.lead)}</p>
-          <div className="mk-cta">
-            <Link prefetch={false} className="btn btn-primary btn-lg btn-glow" href={`/go/${tool.go}`}>
-              <I.upload size={16} /> {tool.go === "scan-to-pdf" ? t("Start scanning") : t("Start: {name}", { name })}
-            </Link>
-          </div>
-          <p className="small muted" style={{ marginTop: 14 }}>
-            {free ? t("Free · no sign-up · no watermark") : tool.access === "member" ? t("Day Pass, Pro or Team") : t("Pay as you go with AI credits")}
-          </p>
+          {hasToolStart(tool.go) ? (
+            // Upload right here and land in the tool with the file open.
+            <ToolStart go={tool.go} note={access} />
+          ) : (
+            <>
+              <div className="mk-cta">
+                <Link prefetch={false} className="btn btn-primary btn-lg btn-glow" href={`/go/${tool.go}`}>
+                  <I.upload size={16} /> {tool.go === "scan-to-pdf" ? t("Start scanning") : t("Start: {name}", { name })}
+                </Link>
+              </div>
+              <p className="small muted" style={{ marginTop: 14 }}>
+                {access}
+              </p>
+            </>
+          )}
         </div>
       </section>
 
