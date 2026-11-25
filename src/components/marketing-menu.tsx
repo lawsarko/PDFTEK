@@ -25,32 +25,32 @@ const CONVERT: Group[] = [
     title: "Convert to PDF",
     items: [
       {
-        href: "/go/word-to-pdf",
+        href: "/word-to-pdf",
         label: "Word to PDF",
         icon: FMT("DOC", "#2f6fd6"),
       },
       {
-        href: "/go/excel-to-pdf",
+        href: "/excel-to-pdf",
         label: "Excel to PDF",
         icon: FMT("XLS", "#2a8a4f"),
       },
       {
-        href: "/go/powerpoint-to-pdf",
+        href: "/powerpoint-to-pdf",
         label: "PowerPoint to PDF",
         icon: FMT("PPT", "#d0642b"),
       },
       {
-        href: "/go/jpg-to-pdf",
+        href: "/jpg-to-pdf",
         label: "JPG to PDF",
         icon: FMT("JPG", "#8a5cd6"),
       },
       {
-        href: "/go/to-pdf",
+        href: "/tiff-to-pdf",
         label: "TIFF to PDF",
         icon: FMT("TIF", "#5c7cd6"),
       },
       {
-        href: "/go/scan-to-pdf",
+        href: "/scan-to-pdf",
         label: "Scan to PDF",
         sub: "Use your camera",
         icon: <I.camera size={15} />,
@@ -61,43 +61,43 @@ const CONVERT: Group[] = [
     title: "Convert from PDF",
     items: [
       {
-        href: "/go/pdf-to-word",
+        href: "/pdf-to-word",
         label: "PDF to Word",
         icon: FMT("DOC", "#2f6fd6"),
       },
       {
-        href: "/go/pdf-to-excel",
+        href: "/pdf-to-excel",
         label: "PDF to Excel",
         icon: FMT("XLS", "#2a8a4f"),
       },
       {
-        href: "/go/bank-statement-to-excel",
+        href: "/bank-statement-to-excel",
         label: "Bank statement to Excel",
         icon: FMT("XLS", "#2a8a4f"),
       },
       {
-        href: "/go/invoice-to-excel",
+        href: "/invoice-to-excel",
         label: "Invoice to Excel",
         icon: FMT("XLS", "#2a8a4f"),
       },
       {
-        href: "/go/bulk-convert",
+        href: "/bulk-pdf-converter",
         label: "Bulk convert",
         sub: "Many PDFs at once",
         icon: <I.layers size={15} />,
       },
       {
-        href: "/go/pdf-to-powerpoint",
+        href: "/pdf-to-powerpoint",
         label: "PDF to PowerPoint",
         icon: FMT("PPT", "#d0642b"),
       },
       {
-        href: "/go/pdf-to-jpg",
+        href: "/pdf-to-jpg",
         label: "PDF to JPG",
         icon: FMT("JPG", "#8a5cd6"),
       },
       {
-        href: "/go/ocr",
+        href: "/ocr-pdf",
         label: "OCR",
         sub: "Make scans searchable",
         icon: <I.scan size={15} />,
@@ -110,33 +110,33 @@ const ORGANIZE: Group[] = [
   {
     title: "Pages",
     items: [
-      { href: "/go/merge", label: "Merge PDFs", icon: <I.merge size={15} /> },
-      { href: "/go/split", label: "Split PDF", icon: <I.split size={15} /> },
+      { href: "/merge-pdf", label: "Merge PDFs", icon: <I.merge size={15} /> },
+      { href: "/split-pdf", label: "Split PDF", icon: <I.split size={15} /> },
       {
-        href: "/go/organize",
+        href: "/organize-pdf",
         label: "Organize pages",
         sub: "Reorder, rotate, delete",
         icon: <I.layers size={15} />,
       },
-      { href: "/go/rotate", label: "Rotate", icon: <I.rotate size={15} /> },
+      { href: "/rotate-pdf", label: "Rotate", icon: <I.rotate size={15} /> },
     ],
   },
   {
     title: "Finish",
     items: [
       {
-        href: "/go/compress",
+        href: "/compress-pdf",
         label: "Compress",
         icon: <I.zoomOut size={15} />,
       },
-      { href: "/go/watermark", label: "Watermark", icon: <I.drop size={15} /> },
+      { href: "/watermark-pdf", label: "Watermark", icon: <I.drop size={15} /> },
       {
-        href: "/go/page-numbers",
+        href: "/add-page-numbers-to-pdf",
         label: "Page numbers",
         icon: <I.hash size={15} />,
       },
       {
-        href: "/go/compare",
+        href: "/compare-pdf",
         label: "Compare",
         sub: "Redline two versions",
         icon: <I.compare size={15} />,
@@ -146,8 +146,8 @@ const ORGANIZE: Group[] = [
   {
     title: "Secure",
     items: [
-      { href: "/go/protect", label: "Protect PDF", sub: "Add a password", icon: <I.lock size={15} /> },
-      { href: "/go/unlock", label: "Unlock PDF", sub: "Remove a password", icon: <I.unlock size={15} /> },
+      { href: "/protect-pdf", label: "Protect PDF", sub: "Add a password", icon: <I.lock size={15} /> },
+      { href: "/unlock-pdf", label: "Unlock PDF", sub: "Remove a password", icon: <I.unlock size={15} /> },
       { href: "/request-documents", label: "Request documents", sub: "Collect files with a protected link", icon: <I.inbox size={15} /> },
     ],
   },
@@ -157,15 +157,15 @@ const SIGN: Group[] = [
   {
     title: "E-signatures",
     items: [
-      { href: "/go/sign", label: "Request signatures", sub: "Send a PDF to be signed", icon: <I.sign size={15} /> },
-      { href: "/go/esign-templates", label: "Templates & bulk send", sub: "Reuse a document, send to many", icon: <I.copy size={15} />, tag: "New" },
-      { href: "/go/signing-links", label: "Signing links", sub: "Anyone can sign, and pay", icon: <I.link size={15} />, tag: "New" },
+      { href: "/sign-pdf", label: "Request signatures", sub: "Send a PDF to be signed", icon: <I.sign size={15} /> },
+      { href: "/esignature-templates", label: "Templates & bulk send", sub: "Reuse a document, send to many", icon: <I.copy size={15} />, tag: "New" },
+      { href: "/signing-link-with-payment", label: "Signing links", sub: "Anyone can sign, and pay", icon: <I.link size={15} />, tag: "New" },
     ],
   },
   {
     title: "Forms",
     items: [
-      { href: "/go/fill-form", label: "Fill a form", sub: "AI fills it, you sign", icon: <I.form size={15} /> },
+      { href: "/fill-pdf-form", label: "Fill a form", sub: "AI fills it, you sign", icon: <I.form size={15} /> },
       { href: "/request-documents", label: "Request documents", sub: "Collect files with a protected link", icon: <I.inbox size={15} /> },
     ],
   },
@@ -175,11 +175,11 @@ const AI: Group[] = [
   {
     title: "AI tools",
     items: [
-      { href: "/go/translate", label: "Translate PDF", sub: "35+ languages, layout kept", icon: <I.globe size={15} />, tag: "New" },
-      { href: "/go/read-aloud", label: "Read PDF", sub: "Listen in 11 languages", icon: <I.speaker size={15} /> },
-      { href: "/go/ask", label: "Ask AI about a PDF", sub: "Answers cite the page", icon: <I.chat size={15} /> },
-      { href: "/go/fill-form", label: "Fill forms with AI", sub: "Even scanned forms", icon: <I.form size={15} /> },
-      { href: "/go/compare", label: "Compare documents", sub: "Redline with an AI summary", icon: <I.compare size={15} /> },
+      { href: "/translate-pdf", label: "Translate PDF", sub: "35+ languages, layout kept", icon: <I.globe size={15} />, tag: "New" },
+      { href: "/read-pdf-aloud", label: "Read PDF", sub: "Listen in 11 languages", icon: <I.speaker size={15} /> },
+      { href: "/chat-with-pdf", label: "Ask AI about a PDF", sub: "Answers cite the page", icon: <I.chat size={15} /> },
+      { href: "/fill-pdf-form", label: "Fill forms with AI", sub: "Even scanned forms", icon: <I.form size={15} /> },
+      { href: "/compare-pdf", label: "Compare documents", sub: "Redline with an AI summary", icon: <I.compare size={15} /> },
     ],
   },
 ];
@@ -196,14 +196,14 @@ type Entry = {
 };
 const ENTRIES: Entry[] = [
   { label: "Convert", groups: CONVERT, icon: <I.convert size={18} /> },
-  { label: "Edit", href: "/go/edit", icon: <I.edit size={18} /> },
-  { label: "Fill form", href: "/go/fill-form", icon: <I.form size={18} /> },
+  { label: "Edit", href: "/edit-pdf", icon: <I.edit size={18} /> },
+  { label: "Fill form", href: "/fill-pdf-form", icon: <I.form size={18} /> },
   { label: "Sign", groups: SIGN, icon: <I.sign size={18} />, roomy: true },
   { label: "Organize", groups: ORGANIZE, icon: <I.layers size={18} /> },
   // "Ask AI" opens the chat when clicked, and shows every AI tool (Translate PDF, Read PDF…) on hover.
   {
     label: "Ask AI",
-    href: "/go/ask",
+    href: "/chat-with-pdf",
     groups: AI,
     icon: <I.sparkle size={18} />,
     accent: true,
@@ -235,7 +235,7 @@ function Panel({ groups, onPick, roomy }: { groups: Group[]; onPick: () => void;
         <div key={g.title} className="mega-col">
           <div className="mega-title">{t(g.title)}</div>
           {g.items.map((it) => (
-            <Link prefetch={false} key={it.href + it.label} href={it.href.startsWith("/go/") ? it.href : lp(it.href)} className="mega-item" onClick={onPick}>
+            <Link prefetch={false} key={it.href + it.label} href={lp(it.href)} className="mega-item" onClick={onPick}>
               <span className="mega-ico">{it.icon}</span>
               <span className="col" style={{ gap: 0 }}>
                 <span>{it.tag ? <Tagged label={t(it.label)} tag={t(it.tag)} /> : t(it.label)}</span>
@@ -332,7 +332,7 @@ export function MarketingMenu() {
         {ENTRIES.map((e) =>
           e.groups && e.href ? (
             <div key={e.label} className="mk-drop" onMouseEnter={() => enter(e.label)} onMouseLeave={leave} onFocus={() => enter(e.label)} onBlur={leave}>
-              <Link prefetch={false} href={e.href} className={`mk-link ${e.accent ? "accent" : ""} ${open === e.label ? "on" : ""}`} aria-haspopup="true" aria-expanded={open === e.label}>
+              <Link prefetch={false} href={lp(e.href)} className={`mk-link ${e.accent ? "accent" : ""} ${open === e.label ? "on" : ""}`} aria-haspopup="true" aria-expanded={open === e.label}>
                 {e.accent && e.icon} {t(e.label)} <I.chevron size={13} />
               </Link>
               {open === e.label && (
@@ -357,7 +357,7 @@ export function MarketingMenu() {
               )}
             </div>
           ) : (
-            <Link prefetch={false} key={e.label} href={e.href!} className={`mk-link ${e.accent ? "accent" : ""}`}>
+            <Link prefetch={false} key={e.label} href={lp(e.href!)} className={`mk-link ${e.accent ? "accent" : ""}`}>
               {e.accent && e.icon} {t(e.label)}
             </Link>
           ),
@@ -378,7 +378,7 @@ export function MarketingMenu() {
             </div>
             <div className="mk-sheet-quick">
               {ENTRIES.filter((e) => e.href).map((e) => (
-                <Link prefetch={false} key={e.label} href={e.href!} className={`mk-quick ${e.accent ? "accent" : ""}`} onClick={() => setSheet(false)}>
+                <Link prefetch={false} key={e.label} href={lp(e.href!)} className={`mk-quick ${e.accent ? "accent" : ""}`} onClick={() => setSheet(false)}>
                   {e.icon} {t(e.label)}
                 </Link>
               ))}
