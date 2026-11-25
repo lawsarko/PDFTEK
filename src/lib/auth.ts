@@ -232,6 +232,9 @@ export function mergeGuestInto(guestId: string, targetWorkspaceId: string, targe
         targetWorkspaceId,
       );
     }
+    // Links to the guest workspace (the page they were on when signing in) keep working.
+    run("INSERT OR REPLACE INTO workspace_moves (from_id, to_id, at) VALUES (?, ?, ?)", ws.id, targetWorkspaceId, Date.now());
+    run("UPDATE workspace_moves SET to_id = ? WHERE to_id = ?", targetWorkspaceId, ws.id);
     run("DELETE FROM workspaces WHERE id = ?", ws.id);
   }
   // Form profiles belong to the person, so they come along too.

@@ -51,6 +51,8 @@ export function middleware(req: NextRequest) {
   // without a saved choice, show those pages in their browser's language.
   const visitor = !isLocale(saved) && /^\/(request|sign)\//.test(pathname) ? fromBrowser(req.headers.get("accept-language")) : null;
   headers.set(LOCALE_HEADER, isLocale(saved) ? saved : (visitor ?? DEFAULT_LOCALE));
+  // The full address (with ?doc=…), for app pages that need to send someone on to the same place.
+  headers.set("x-pdftek-path", pathname + req.nextUrl.search);
   return NextResponse.next({ request: { headers } });
 }
 

@@ -242,6 +242,14 @@ CREATE TABLE IF NOT EXISTS rate_limits (
 );
 
 -- Free-tier metering: completed tasks per subject (workspace or guest IP) per UTC day.
+-- A guest workspace merged into an account when its owner signs in: old links (the address the
+-- person was on, bookmarks) are sent on to the account's workspace.
+CREATE TABLE IF NOT EXISTS workspace_moves (
+  from_id TEXT PRIMARY KEY,
+  to_id TEXT NOT NULL,
+  at INTEGER NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS usage_daily (
   subject TEXT NOT NULL,
   day TEXT NOT NULL,
