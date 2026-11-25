@@ -87,7 +87,7 @@ export type TextRun = {
   descent: number;
 };
 
-type Item = { str: string; x: number; y: number; w: number; size: number; family: string; bold: boolean; italic: boolean; ascent: number; descent: number };
+type Item = { str: string; x: number; y: number; w: number; size: number; family: string; bold: boolean; italic: boolean; ascent: number; descent: number; order: number };
 
 /**
  * Returns editable text segments in PDF user space (origin bottom-left). Fragments that pdf.js
@@ -99,7 +99,7 @@ export async function textRuns(page: PDFPageProxy): Promise<TextRun[]> {
   const content = await page.getTextContent();
   const styles = content.styles as Record<string, { fontFamily: string; ascent?: number; descent?: number }>;
   const items: Item[] = [];
-  for (const item of content.items) {
+  for (const [order, item] of content.items.entries()) {
     if (!("str" in item) || !item.str) continue;
     const t = item.transform as number[];
     const size = Math.hypot(t[2], t[3]) || item.height || 10;
@@ -121,12 +121,13 @@ export async function textRuns(page: PDFPageProxy): Promise<TextRun[]> {
       italic: face.italic,
       ascent: st?.ascent && Number.isFinite(st.ascent) ? st.ascent : 0.9,
       descent: st?.descent && Number.isFinite(st.descent) ? st.descent : -0.25,
+      order,
     });
   }
 
   items.sort((a, b) => b.y - a.y || a.x - b.x);
-  const out: TextRun[] = [];
-  let cur: (TextRun & { end: number }) | null = null;
+  const out: (TextRun & { order: number })[] = [];
+  let cur: (TextRun & { end: number; order: number }) | null = null;
   const flush = () => {
     if (cur && cur.str.trim()) {
       cur.str = cur.str.replace(/\s+/g, " ").replace(/[\uFB00-\uFB06]/g, (l) => l.normalize("NFKC")).trim();
@@ -139,7 +140,7 @@ export async function textRuns(page: PDFPageProxy): Promise<TextRun[]> {
   for (const it of items) {
     const blank = !it.str.trim();
     if (cur) {
-      const c: TextRun & { end: number } = cur;
+      const c: TextRun & { end: number; order: number } = cur;
       const sameLine = Math.abs(it.y - c.y) < Math.max(1.5, c.size * 0.3);
       const gap = it.x - c.end;
       const sameStyle = it.family === c.family && it.bold === c.bold && it.italic === c.italic && Math.abs(it.size - c.size) < 0.6;
@@ -149,6 +150,7 @@ export async function textRuns(page: PDFPageProxy): Promise<TextRun[]> {
           c.str += it.str;
           c.end = Math.max(c.end, it.x + it.w);
           c.ascent = Math.max(c.ascent, it.ascent);
+          c.order = Math.max(c.order, it.order);
           c.descent = Math.min(c.descent, it.descent);
         } else if (!c.str.endsWith(" ")) c.str += " ";
         continue;
@@ -156,8 +158,18 @@ export async function textRuns(page: PDFPageProxy): Promise<TextRun[]> {
       flush();
     }
     if (blank) continue;
-    cur = { str: it.str, x: it.x, y: it.y, w: it.w, h: it.size, size: it.size, family: it.family, serif: isSerif(it.family), bold: it.bold, italic: it.italic, ascent: it.ascent, descent: it.descent, end: it.x + it.w };
+    cur = { str: it.str, x: it.x, y: it.y, w: it.w, h: it.size, size: it.size, family: it.family, serif: isSerif(it.family), bold: it.bold, italic: it.italic, ascent: it.ascent, descent: it.descent, end: it.x + it.w, order: it.order };
   }
   flush();
-  return out;
+  // Files edited before edits removed the original words hold two lines in the same place: the
+  // covered original and the replacement drawn over it. Keep only the one drawn last (the visible one).
+  const hidden = new Set<number>();
+  out.forEach((a, i) => {
+    out.forEach((b, j) => {
+      if (i === j || b.order <= a.order || Math.abs(a.y - b.y) > Math.max(1, a.size * 0.3)) return;
+      const overlap = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+      if (overlap > Math.min(a.w, b.w) * 0.6) hidden.add(i);
+    });
+  });
+  return out.filter((_, i) => !hidden.has(i)).map(({ order: _order, ...run }) => run);
 }

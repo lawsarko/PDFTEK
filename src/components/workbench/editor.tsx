@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { PageViewport } from "pdfjs-dist";
 import { BlendMode, LineCapStyle, LineJoinStyle, PDFDocument, StandardFonts, popGraphicsState, pushGraphicsState, rgb, setLineJoin, type PDFFont } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
+import { removePageText, type TextBox } from "@/lib/client/pdf-text-remove";
 import { cssStack, isSerif } from "@/lib/font-names";
 import { api, errMsg } from "@/lib/client/api";
 import type { Doc } from "@/lib/client/types";
@@ -1269,6 +1270,24 @@ async function buildPdf(src: string, ops: Op[], standardFontsOnly = false): Prom
       .join("");
 
   const pages = pdf.getPages();
+  // Edited lines: take the original words out of the page itself (the white box below stays as a
+  // backstop), so nothing hidden is left behind to be found, copied, or edited a second time.
+  const replaced = new Map<number, TextBox[]>();
+  for (const op of ops) {
+    if (op.type !== "replace" || !op.ow) continue;
+    const list = replaced.get(op.page) ?? [];
+    list.push({ x: op.x, y: op.y, w: op.ow, size: op.size });
+    replaced.set(op.page, list);
+  }
+  for (const [n, boxes] of replaced) {
+    const page = pages[n - 1];
+    if (!page) continue;
+    try {
+      removePageText(pdf, page, boxes);
+    } catch (e) {
+      console.warn("[pdftek] couldn't remove the original text; it stays covered", e);
+    }
+  }
   for (const op of ops) {
     const page = pages[op.page - 1];
     if (!page) continue;
