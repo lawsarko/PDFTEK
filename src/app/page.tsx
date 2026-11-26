@@ -142,7 +142,6 @@ export default async function Home() {
             <ul className="g-trust">
               <li><I.user size={15} /> {t("No account needed")}</li>
               <li><I.lock size={15} /> {t("Encrypted (HTTPS)")}</li>
-              <li><I.clock size={15} /> {t("Guest files deleted after 24 hours")}</li>
               <li><I.globe size={15} /> {t("{n} languages", { n: LOCALES.length })}</li>
             </ul>
           </div>
