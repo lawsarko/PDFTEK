@@ -17,7 +17,11 @@ export type Line = { y: number; size: number; segs: Seg[]; left: number; right: 
 export type Rule = { x0: number; x1: number; y: number; thickness: number; color: string };
 export type Link = { x0: number; y0: number; x1: number; y1: number; url: string };
 
-export type PageImage = { x0: number; y0: number; x1: number; y1: number; data: Buffer };
+export type PageImage = {
+  x0: number; y0: number; x1: number; y1: number; data: Buffer;
+  /** A page-sized design (certificate artwork, letterhead, form background) with the text printed on top: goes behind the text. */
+  behind?: boolean;
+};
 
 export type Block = {
   lines: Line[];
@@ -341,7 +345,7 @@ export async function analyzePdf(bytes: Uint8Array, opts: { ocr?: boolean; table
         pageRules = pageRules.filter((r) => !tables.some((t) => r.y >= t.y0 - 2 && r.y <= t.y1 + 2 && r.x0 < t.x1 && r.x1 > t.x0));
       }
       const layout = layoutPage(p, vp.width, vp.height, pageRuns, pageRules, links, tables);
-      if (opts.images && pics.length) layout.images = await pageImages(page, pics, vp.width, vp.height, visibleChars > 0);
+      if (opts.images && pics.length) layout.images = await pageImages(page, pics, vp.width, vp.height, visibleChars > 0, runs);
       if (opts.imageBoxes) layout.imageBoxes = boxes;
       pages.push(layout);
       page.cleanup();
@@ -375,6 +379,7 @@ async function pageImages(
   width: number,
   height: number,
   hasText: boolean,
+  runs: Run[] = [],
 ): Promise<PageImage[]> {
   const sharp = (await import("sharp")).default;
   const out: PageImage[] = [];
@@ -382,7 +387,10 @@ async function pageImages(
     const w = pic.x1 - pic.x0;
     const h = pic.y1 - pic.y0;
     if (w < 8 || h < 8) continue;
-    if (hasText && w * h > width * height * 0.6) continue;
+    // A picture covering most of a page that also has text is usually a photo of that same page
+    // (the words would show twice), so it's left out, unless it's artwork with blank space where
+    // the text goes (checked below once the pixels are decoded).
+    const large = hasText && w * h > width * height * 0.6;
     try {
       const img = (pic.inline ??
         (await new Promise<unknown>((resolve) => {
@@ -402,16 +410,52 @@ async function pageImages(
         channels = 1;
       }
       if (data.length < img.width * img.height * channels) continue;
+      if (large && !blankUnderText(data, img.width, img.height, channels, pic, runs)) continue;
       const png = await sharp(data, { raw: { width: img.width, height: img.height, channels } })
         .resize({ width: Math.min(img.width, 1600), withoutEnlargement: true })
         .png({ compressionLevel: 8 })
         .toBuffer();
-      out.push({ x0: pic.x0, y0: pic.y0, x1: pic.x1, y1: pic.y1, data: png });
+      out.push({ x0: pic.x0, y0: pic.y0, x1: pic.x1, y1: pic.y1, data: png, ...(large ? { behind: true } : {}) });
     } catch (err) {
       console.warn("[pdftek] image skipped", err);
     }
   }
   return out;
+}
+
+/**
+ * Whether a page-sized picture is blank where the page's text sits (artwork with the text printed
+ * on top) rather than a picture of the text itself. Looks at the pixels under each line of text: a
+ * spot is "inked" when a noticeable share of its pixels differ clearly from the spot's usual tone.
+ * The picture counts as blank under the text when at most a fifth of the text area is inked.
+ */
+function blankUnderText(data: Buffer, iw: number, ih: number, channels: number, pic: { x0: number; y0: number; x1: number; y1: number }, runs: Run[]): boolean {
+  const sx = iw / (pic.x1 - pic.x0);
+  const sy = ih / (pic.y1 - pic.y0);
+  let total = 0;
+  let inked = 0;
+  for (const r of runs) {
+    if (!r.str.trim() || r.w <= 0) continue;
+    const x0 = Math.max(0, Math.floor((r.x - pic.x0) * sx));
+    const x1 = Math.min(iw, Math.ceil((r.x + r.w - pic.x0) * sx));
+    const y0 = Math.max(0, Math.floor((r.y - r.size * 0.8 - pic.y0) * sy));
+    const y1 = Math.min(ih, Math.ceil((r.y + r.size * 0.2 - pic.y0) * sy));
+    if (x1 - x0 < 2 || y1 - y0 < 2) continue;
+    const step = Math.max(1, Math.floor(Math.sqrt(((x1 - x0) * (y1 - y0)) / 4000)));
+    const lum: number[] = [];
+    for (let y = y0; y < y1; y += step)
+      for (let x = x0; x < x1; x += step) {
+        const i = (y * iw + x) * channels;
+        lum.push(channels === 1 ? data[i] : 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+      }
+    const sorted = [...lum].sort((a, b) => a - b);
+    const median = sorted[sorted.length >> 1];
+    const odd = lum.filter((v) => Math.abs(v - median) > 70).length / lum.length;
+    const area = (x1 - x0) * (y1 - y0);
+    total += area;
+    if (odd > 0.04) inked += area;
+  }
+  return total > 0 && inked / total <= 0.2;
 }
 
 // ---------- geometry helpers ----------

@@ -179,6 +179,7 @@ function picture(img: NonNullable<PageLayout["images"]>[number]) {
       horizontalPosition: { relative: HorizontalPositionRelativeFrom.PAGE, offset: Math.round(img.x0 * 12700) },
       verticalPosition: { relative: VerticalPositionRelativeFrom.PAGE, offset: Math.round(img.y0 * 12700) },
       allowOverlap: true,
+      behindDocument: !!img.behind,
       wrap: { type: TextWrappingType.NONE },
     },
   });

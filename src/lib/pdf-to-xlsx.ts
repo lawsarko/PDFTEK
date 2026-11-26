@@ -382,7 +382,8 @@ function gridSheet(wb: ExcelJS.Workbook, page: PageLayout, name: string) {
   }
 
   // Pictures (logos, seals) at their spot: fractional column/row anchors from PDF positions.
-  for (const img of page.images ?? []) {
+  // Page-sized artwork would cover the cells, so only ordinary pictures (logos, photos, signatures) go in.
+  for (const img of (page.images ?? []).filter((i) => !i.behind)) {
     const ci = colAt(img.x0) - 1;
     const colFrac = ci + Math.max(0, Math.min(0.99, (img.x0 - bounds[ci]) / Math.max(1, bounds[ci + 1] - bounds[ci])));
     let anchorRow = 0;
