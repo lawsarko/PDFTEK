@@ -489,3 +489,15 @@
 @media (max-width: 640px) { .mk .mk-nav-inner .btn-sm { padding: 8px 12px; font-size: 13.5px; max-width: 44vw; } }
 :root:has(.mk) { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .scan-top { gap: 6px; min-width: 0; } .scan-state { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+
+/* Top menu bar: Source Sans 3 (Adobe's open-source sans), semibold, like a product menu. */
+:root:has(.mk) .mk-nav-inner, :root:has(.mk) .mk-nav-inner .mk-link, :root:has(.mk) .mk-nav-inner .btn,
+:root:has(.mk) .mega, :root:has(.mk) .mk-sheet, :root:has(.mk) .mk-sheet .btn {
+  font-family: "Source Sans 3", "Roboto", system-ui, sans-serif;
+}
+:root:has(.mk) .mk-nav-inner .mk-link, :root:has(.mk) .mk-nav-inner > .mk-link { font-size: 16px; font-weight: 600; letter-spacing: 0; color: #2b2622; }
+:root:has(.mk) .mk-nav-inner .mk-link.accent { color: var(--g-primary); }
+:root:has(.mk) .mk-nav-inner .btn { font-size: 15.5px; font-weight: 600; letter-spacing: 0; }
+:root:has(.mk) .mega-item { font-size: 15px; font-weight: 600; }
+:root:has(.mk) .mega-sub { font-weight: 400; font-size: 13px; }
+:root:has(.mk) .mega-title { font-size: 14px; font-weight: 700; }
