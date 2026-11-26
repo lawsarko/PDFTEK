@@ -30,8 +30,16 @@ export const POST = route<P>(async (req, { params }) => {
   if (action === "connect") {
     let accountId = pay.accountId;
     if (!accountId) {
+      // Stripe manages the account's risk (losses), onboarding and fees, and the owner gets the
+      // Express Dashboard. Stripe no longer accepts the older `type: "express"` setup when the
+      // platform isn't covering losses itself.
       const acct = await stripe<{ id: string }>("/accounts", {
-        type: "express",
+        controller: {
+          losses: { payments: "stripe" },
+          fees: { payer: "account" },
+          requirement_collection: "stripe",
+          stripe_dashboard: { type: "express" },
+        },
         email: ctx.user.email,
         business_profile: { name: ctx.workspace.name },
         metadata: { workspace_id: wid },
