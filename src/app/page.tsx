@@ -166,14 +166,14 @@ export default async function Home() {
             </div>
           </div>
         </div>
-        <div className="mk-section g-shot-wrap">
-          <TiltOnScroll>
-            <div className="mk-shot" aria-hidden>
-              <ProductShot t={t} />
-            </div>
-          </TiltOnScroll>
-        </div>
       </section>
+      <div className="mk-section g-shot-wrap">
+        <TiltOnScroll>
+          <div className="mk-shot" aria-hidden>
+            <ProductShot t={t} />
+          </div>
+        </TiltOnScroll>
+      </div>
 
       <div className="g-band">
       <div className="marquee" aria-hidden>
