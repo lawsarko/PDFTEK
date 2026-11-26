@@ -7,7 +7,7 @@ import { SEO_TOOLS, siteUrl } from "@/lib/seo-tools";
 import { TRIAL_DAYS, PRODUCTS } from "@/lib/plans";
 import { alternatesFor, getI18n } from "@/lib/i18n/server";
 import { LOCALES } from "@/lib/i18n/locales";
-import { ConvertDemo, CountUp, FlowSequence, LiveChat, Reveal, ScrollProgress, Spotlight, TiltOnScroll, Typewriter } from "@/components/motion";
+import { ConvertDemo, CountUp, FlowSequence, LiveChat, Reveal, ScanCard, ScrollProgress, Spotlight, TiltOnScroll, Typewriter } from "@/components/motion";
 import { ToolTile } from "@/components/tool-tile";
 
 export const dynamic = "force-dynamic";
@@ -119,30 +119,54 @@ export default async function Home() {
       <MarketingNav signedIn={!!user} />
 
       <ScrollProgress />
-      <section className="mk-hero">
-        <div className="hero-bg" aria-hidden>
-          <span className="orb orb-a" />
-          <span className="orb orb-b" />
-          <span className="orb orb-c" />
-        </div>
-        <div className="mk-section" style={{ paddingTop: 0, paddingBottom: 0 }}>
-          <span className="hero-kicker">
-            <span className="live" /> {t("Convert · Edit · Sign · Ask AI")}
-          </span>
-          <h1>
-            {t("Every document,")}
-            <br />
-            <Typewriter className="tw-word" words={TYPED.map((w) => t(w))} />
-          </h1>
-          <p className="lead">{t("Convert, edit, sign and understand your PDFs in one place.")}</p>
-          <div className="mk-cta">
-            <Link prefetch={false} className="btn btn-primary btn-lg btn-glow" href={user ? "/app" : "/go/start"}>
-              {user ? t("Open your workbench") : t("Start free — no sign-up needed")}
-            </Link>
-            <Link className="btn btn-lg" href={lp("/how-it-works")}>
-              {t("See how it works")}
-            </Link>
+      <section className="mk-hero g-hero">
+        <div className="g-hero-inner">
+          <div className="g-hero-copy">
+            <span className="hero-kicker">
+              <span className="live" /> {t("Convert · Edit · Sign · Ask AI")}
+            </span>
+            <h1>
+              {t("Every document,")}
+              <br />
+              <Typewriter className="tw-word" words={TYPED.map((w) => t(w))} />
+            </h1>
+            <p className="lead">{t("Convert, edit, sign and understand your PDFs in one place.")}</p>
+            <div className="mk-cta">
+              <Link prefetch={false} className="btn btn-primary btn-lg btn-glow" href={user ? "/app" : "/go/start"}>
+                {user ? t("Open your workbench") : t("Start free — no sign-up needed")}
+              </Link>
+              <Link className="btn btn-lg" href={lp("/how-it-works")}>
+                {t("See how it works")}
+              </Link>
+            </div>
+            <ul className="g-trust">
+              <li><I.user size={15} /> {t("No account needed")}</li>
+              <li><I.lock size={15} /> {t("Encrypted (HTTPS)")}</li>
+              <li><I.clock size={15} /> {t("Guest files deleted after 24 hours")}</li>
+              <li><I.globe size={15} /> {t("{n} languages", { n: LOCALES.length })}</li>
+            </ul>
           </div>
+          <div className="g-hero-art">
+            <div className="g-photo">
+              <img src="/images/team-office-1200.webp" srcSet="/images/team-office-640.webp 640w, /images/team-office-1200.webp 1200w" sizes="(max-width: 960px) 100vw, 600px" width={1200} height={670} alt={t("A team reviewing a PDF together on a laptop and a tablet")} fetchPriority="high" />
+            </div>
+            <ScanCard />
+            <div className="g-float g-float-sign" aria-hidden>
+              <span className="g-float-ico ok"><I.sign size={15} /></span>
+              <span>
+                <b>{t("Signed by all parties")}</b>
+                <small>{t("Certificate of completion added")}</small>
+              </span>
+            </div>
+            <div className="g-float g-float-conv" dir="ltr" aria-hidden>
+              <span className="fmt-chip fmt-docx">DOCX</span>
+              <span className="g-float-arrow">→</span>
+              <span className="fmt-chip fmt-pdf">PDF</span>
+              <small>{t("✓ formatting kept")}</small>
+            </div>
+          </div>
+        </div>
+        <div className="mk-section g-shot-wrap">
           <TiltOnScroll>
             <div className="mk-shot" aria-hidden>
               <ProductShot t={t} />
@@ -151,7 +175,8 @@ export default async function Home() {
         </div>
       </section>
 
-      <div className="marquee" aria-hidden style={{ marginTop: 40 }}>
+      <div className="g-band">
+      <div className="marquee" aria-hidden>
         <div className="marquee-track">
           {[...MARQUEE_A, ...MARQUEE_A].map(([a, b], i) => (
             <span key={i} className="marquee-item">
@@ -190,6 +215,7 @@ export default async function Home() {
           </Reveal>
         </div>
       </section>
+      </div>
 
       <section className="mk-section" id="convert">
         <div className="mk-split">
@@ -211,7 +237,8 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="mk-section" id="tools" style={{ paddingTop: 24 }}>
+      <div className="g-band">
+      <section className="mk-section" id="tools">
         <Reveal>
           <div className="eyebrow">{t("PDF tools")}</div>
           <h2 className="mk-h2" style={{ marginTop: 10 }}>{t("Popular PDF tools, free online.")}</h2>
@@ -225,6 +252,7 @@ export default async function Home() {
           </p>
         </Reveal>
       </section>
+      </div>
 
       <section className="mk-section" id="features">
         <Reveal>
@@ -245,6 +273,7 @@ export default async function Home() {
         </Spotlight>
       </section>
 
+      <div className="g-band">
       <section className="mk-section" id="how">
         <div className="mk-split">
           <Reveal>
@@ -260,15 +289,21 @@ export default async function Home() {
               <li>{t("Once it's fully signed, key terms go to the tracker, and a renewal reminder is set for 60 days before expiry.")}</li>
             </ul>
           </Reveal>
-          <Reveal delay={150} className="card" style={{ padding: 20 }}>
+          <Reveal delay={150} className="g-photo-stack">
+            <div className="g-photo">
+              <img src="/images/team-laptop-1200.webp" srcSet="/images/team-laptop-640.webp 640w, /images/team-laptop-1200.webp 1200w" sizes="(max-width: 960px) 100vw, 560px" width={1200} height={670} loading="lazy" alt={t("Colleagues going over a contract on a laptop")} />
+            </div>
+            <div className="card g-flow-card">
             <FlowSequence steps={[t("📥 New PDF in library"), t("🔍 Extract risk flags"), t("🔔 Notify team")]} note={t("Instant, on upload")} />
             <hr className="divider" />
             <FlowSequence steps={[t("✍️ Contract fully signed"), t("🔍 Extract key terms"), t("🔗 Webhook → tracker")]} note={t("Instant")} />
             <hr className="divider" />
             <FlowSequence steps={[t("📅 Renewal in 60 days"), t("✉️ Email reminder")]} note={t("Daily check, 9:00 AM")} />
+            </div>
           </Reveal>
         </div>
       </section>
+      </div>
 
       <section className="mk-section" id="security">
         <div className="mk-split">
@@ -302,6 +337,9 @@ export default async function Home() {
             <p className="mk-sub">
               {t("Contracts, financials and patient records need more than a free converter site. pdftek keeps your files in your workspace, logs who touched what, and can run entirely on your own servers.")}
             </p>
+            <div className="g-photo g-photo-wide">
+              <img src="/images/team-review-1200.webp" srcSet="/images/team-review-640.webp 640w, /images/team-review-1200.webp 1200w" sizes="(max-width: 960px) 100vw, 560px" width={1200} height={670} loading="lazy" alt={t("A team checking printed reports against a document on a laptop")} />
+            </div>
           </Reveal>
         </div>
       </section>
@@ -316,7 +354,7 @@ export default async function Home() {
         ))}
       </section>
 
-      <Reveal as="section" className="mk-section" style={{ textAlign: "center", paddingTop: 40 }}>
+      <Reveal as="section" className="mk-section g-final">
         <Logo size={40} />
         <h2 className="mk-h2" style={{ marginTop: 16 }}>
           {t("Your documents, finally under control.")}

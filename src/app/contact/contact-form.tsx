@@ -79,7 +79,7 @@ export function ContactForm({ me }: { me: { name: string; email: string } | null
         <textarea id="c-message" className="input" rows={7} required minLength={10} maxLength={5000} value={form.message} onChange={set("message")} placeholder={t("How can we help?")} style={{ resize: "vertical", minHeight: 140 }} />
       </div>
       {/* Hidden from people; bots fill it in. */}
-      <div aria-hidden="true" style={{ position: "absolute", left: -9999, width: 1, height: 1, overflow: "hidden" }}>
+      <div aria-hidden="true" style={{ position: "absolute", left: 0, top: 0, width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)", opacity: 0, pointerEvents: "none" }}>
         <label htmlFor="c-website">Website</label>
         <input id="c-website" tabIndex={-1} autoComplete="off" value={form.website} onChange={set("website")} />
       </div>

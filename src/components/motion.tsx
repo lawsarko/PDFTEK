@@ -6,6 +6,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { useT } from "./i18n";
+import { CONVERT_PAGES, DocSheet, SCAN_PAGES } from "./doc-sheet";
 
 function reducedMotion() {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -219,6 +220,71 @@ const CONVERSIONS: [string, string, string][] = [
   ["Receipt scan", "JPG", "PDF"],
 ];
 
+
+/**
+ * A paper document being scanned: a light bar sweeps down the page, and behind it the crooked,
+ * greyish photo turns into a clean, searchable PDF. Loops through a few documents.
+ */
+export function ScanCard() {
+  const t = useT();
+  const [k, setK] = useState(0);
+  const [p, setP] = useState(100);
+  useEffect(() => {
+    if (reducedMotion()) return;
+    let raf = 0;
+    let alive = true;
+    const SCAN = 2800;
+    const HOLD = 2400;
+    let t0 = performance.now() + 600;
+    let doc = 0;
+    setP(0);
+    const tick = (now: number) => {
+      if (!alive) return;
+      const e = now - t0;
+      if (e < 0) setP(0);
+      else if (e < SCAN) setP((e / SCAN) * 100);
+      else if (e < SCAN + HOLD) setP(100);
+      else {
+        doc = (doc + 1) % SCAN_PAGES.length;
+        setK(doc);
+        setP(0);
+        t0 = now + 500;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      alive = false;
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+  const done = p >= 100;
+  const kind = SCAN_PAGES[k];
+  return (
+    <div className={`scan-card ${done ? "done" : ""}`} aria-hidden>
+      <div className="scan-top">
+        <span className={`scan-state ${done ? "ok" : ""}`}>
+          {done ? "✓" : <span className="scan-pulse" />}
+          {done ? t("Searchable PDF") : t("Scanning…")}
+        </span>
+        <span className="scan-pct">{Math.round(p)}%</span>
+      </div>
+      <div className="scan-stage">
+        <div className="scan-raw">
+          <DocSheet kind={kind} />
+        </div>
+        <div className="scan-clean" style={{ clipPath: `inset(0 0 ${100 - p}% 0)` }}>
+          <DocSheet kind={kind} />
+        </div>
+        {!done && <div className="scan-beam" style={{ top: `${p}%` }} />}
+      </div>
+      <div className="scan-bar">
+        <i style={{ width: `${p}%` }} />
+      </div>
+    </div>
+  );
+}
+
 /** A file card that visibly converts from one format to another, cycling through examples. */
 export function ConvertDemo() {
   const [ref, seen] = useInView<HTMLDivElement>(0.3);
@@ -248,18 +314,13 @@ export function ConvertDemo() {
     };
   }, [seen]);
   const [name, from, to] = CONVERSIONS[i];
+  const kind = CONVERT_PAGES[i];
   const fmt = phase === "to" ? to : from;
   return (
     <div ref={ref} className="convert-demo">
-      <div className={`cd-file ${phase}`}>
+      <div className={`cd-file ${phase} kind-${kind}`}>
+        <DocSheet kind={kind} sheet={phase === "to" && to === "XLSX"} />
         <div className={`cd-badge fmt-${fmt.toLowerCase()}`}>{fmt}</div>
-        <div className="cd-lines">
-          <i style={{ width: "70%" }} />
-          <i />
-          <i style={{ width: "85%" }} />
-          <i style={{ width: "60%" }} />
-          <i style={{ width: "90%" }} />
-        </div>
         <div className="cd-name">
           {t(name)}.{fmt.toLowerCase()}
         </div>

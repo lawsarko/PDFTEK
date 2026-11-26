@@ -52,6 +52,16 @@ export default async function Contact() {
           <p className="contact-hours">
             <I.clock size={15} /> {t("We respond within 24 hours, Monday to Friday, 9am to 5pm Central Time (CT).")}
           </p>
+          <figure className="g-photo contact-photo">
+            <img src="/images/support-1200.webp" srcSet="/images/support-640.webp 640w, /images/support-1200.webp 1200w" sizes="(max-width: 860px) 100vw, 520px" width={1200} height={670} alt={t("A pdftek support agent wearing a headset at the desk")} fetchPriority="high" />
+            <figcaption className="g-float contact-float">
+              <span className="g-float-ico ok"><I.mail size={15} /></span>
+              <span>
+                <b>{t("Real people, real replies")}</b>
+                <small>{t("Monday to Friday, 9am to 5pm CT")}</small>
+              </span>
+            </figcaption>
+          </figure>
           <ul className="contact-points">
             <li>
               <b>{t("Billing or a purchase?")}</b> {t("Include the email you paid with so we can find it quickly.")}

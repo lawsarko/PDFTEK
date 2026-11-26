@@ -38,6 +38,8 @@ const KEYS = new Set(["label", "sub", "title", "desc", "description", "hint", "d
 const CALLS = new Set(["toast", "confirm", "alert", "setError", "notifyPaywall", "t", "badRequest", "notFound", "forbidden", "unauthorized", "describe"]);
 const ARRAY_KEYS = new Set(["steps", "benefits", "faq", "tips", "sections", "rows"]);
 const SKIP_DIRS = new Set(["i18n"]);
+// Pictures of sample documents (always shown in English), not interface text.
+const SKIP_FILES = new Set(["doc-sheet.tsx"]);
 const ENTITIES = { "&apos;": "'", "&quot;": '"', "&amp;": "&", "&lt;": "<", "&gt;": ">", "&nbsp;": " ", "&rarr;": "→", "&larr;": "←", "&mdash;": "—", "&ndash;": "–", "&hellip;": "…", "&middot;": "·", "&times;": "×", "&copy;": "©" };
 const decode = (s) => s.replace(/&[a-z]+;/g, (m) => ENTITIES[m] ?? m).replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
 
@@ -166,7 +168,7 @@ function walk(dir) {
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
     if (ent.isDirectory()) {
       if (!SKIP_DIRS.has(ent.name)) walk(path.join(dir, ent.name));
-    } else if (/\.(tsx?|mts)$/.test(ent.name) && !ent.name.endsWith(".d.ts")) {
+    } else if (/\.(tsx?|mts)$/.test(ent.name) && !ent.name.endsWith(".d.ts") && !SKIP_FILES.has(ent.name)) {
       const file = path.join(dir, ent.name);
       const sf = ts.createSourceFile(file, fs.readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true, file.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
       visit(sf, sf, file);

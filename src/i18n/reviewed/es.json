@@ -1485,5 +1485,18 @@
  "Leave it empty if the PDF opens without a password but blocks printing or copying.": "Déjala en blanco si el PDF se abre sin contraseña pero no deja imprimir ni copiar.",
  "AI credits": "Créditos de IA",
  "Questions or billing? Send a message and a real person will reply by email.": "¿Preguntas o facturación? Escríbenos y una persona real te responderá por correo.",
- "Questions about pdftek or billing? Send us a message and we'll get back to you by email.": "¿Preguntas sobre pdftek o la facturación? Escríbenos y te responderemos por correo."
+ "Questions about pdftek or billing? Send us a message and we'll get back to you by email.": "¿Preguntas sobre pdftek o la facturación? Escríbenos y te responderemos por correo.",
+ "A pdftek support agent wearing a headset at the desk": "Una agente de soporte de pdftek con auriculares en su escritorio",
+ "A team checking printed reports against a document on a laptop": "Un equipo comparando informes impresos con un documento en un portátil",
+ "A team reviewing a PDF together on a laptop and a tablet": "Un equipo revisando juntos un PDF en un portátil y una tableta",
+ "Certificate of completion added": "Certificado de finalización incluido",
+ "Colleagues going over a contract on a laptop": "Compañeros revisando un contrato en un portátil",
+ "Encrypted (HTTPS)": "Cifrado (HTTPS)",
+ "Guest files deleted after 24 hours": "Archivos de invitados eliminados a las 24 horas",
+ "Monday to Friday, 9am to 5pm CT": "De lunes a viernes, de 9:00 a 17:00 (hora central)",
+ "Real people, real replies": "Personas reales, respuestas reales",
+ "Scanning…": "Escaneando…",
+ "Searchable PDF": "PDF con búsqueda",
+ "Signed by all parties": "Firmado por todas las partes",
+ "{n} languages": "{n} idiomas"
 }
