@@ -316,10 +316,13 @@ export async function pageNumbers(
     const label = opts.format
       .replace(/\{n(?::(\d+))?\}/g, (_m, pad?: string) => String(i + opts.start).padStart(pad ? Number(pad) : 0, "0"))
       .replace("{total}", String(pages.length + opts.start - 1));
-    const size = 9;
+    // Sized for a letter page and scaled with the page, so the number looks the same on every page,
+    // including oversized ones (photos and scans imported at low resolution can be 2–3 feet wide).
+    const k = Math.min(6, Math.max(0.6, Math.min(width, height) / 612));
+    const size = 9 * k;
     const tw = font.widthOfTextAtSize(label, size);
-    const x = opts.position === "bottom-center" ? width / 2 - tw / 2 : width - 36 - tw;
-    const y = opts.position === "top-right" ? height - 28 : 22;
+    const x = opts.position === "bottom-center" ? width / 2 - tw / 2 : width - 36 * k - tw;
+    const y = opts.position === "top-right" ? height - 28 * k : 22 * k;
     page.drawText(label, { x, y, size, font, color: rgb(0.3, 0.3, 0.3) });
   });
   return Buffer.from(await doc.save());
