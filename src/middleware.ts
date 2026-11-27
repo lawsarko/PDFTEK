@@ -18,6 +18,17 @@ export function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
   const seg = pathname.split("/")[1]?.toLowerCase() ?? "";
   const saved = req.cookies.get(LOCALE_COOKIE)?.value;
+
+  // A firm's own address (sark.pdftek.com) is that firm's client portal. Signing and upload links
+  // keep working there too.
+  const firm = firmFromHost(req);
+  if (firm && !/^\/(sign|request|s)\//.test(pathname)) {
+    const url = req.nextUrl.clone();
+    url.pathname = `/portal/${firm}${pathname === "/" ? "" : pathname}`;
+    const headers = new Headers(req.headers);
+    headers.set(LOCALE_HEADER, isLocale(saved) ? saved : (fromBrowser(req.headers.get("accept-language")) ?? DEFAULT_LOCALE));
+    return NextResponse.rewrite(url, { request: { headers } });
+  }
   const remember = (res: NextResponse, code: string) => {
     if (saved !== code) res.cookies.set(LOCALE_COOKIE, code, { path: "/", maxAge: YEAR, sameSite: "lax" });
     return res;
@@ -49,7 +60,7 @@ export function middleware(req: NextRequest) {
   }
   // People opening a request or signing link (clients, tenants…) have usually never been to pdftek:
   // without a saved choice, show those pages in their browser's language.
-  const visitor = !isLocale(saved) && /^\/(request|sign)\//.test(pathname) ? fromBrowser(req.headers.get("accept-language")) : null;
+  const visitor = !isLocale(saved) && /^\/(request|sign|portal)\//.test(pathname) ? fromBrowser(req.headers.get("accept-language")) : null;
   headers.set(LOCALE_HEADER, isLocale(saved) ? saved : (visitor ?? DEFAULT_LOCALE));
   // The full address (with ?doc=…), for app pages that need to send someone on to the same place.
   headers.set("x-pdftek-path", pathname + req.nextUrl.search);
@@ -67,6 +78,25 @@ function fromBrowser(header: string | null): string | null {
     if (isLocale(base)) return base;
   }
   return null;
+}
+
+/** Names under pdftek's domain that aren't firms. */
+const NOT_FIRMS = new Set(["www", "app", "api", "admin", "mail", "status", "docs", "blog", "help"]);
+
+/** "sark" for sark.pdftek.com (or sark.localhost in development), else null. */
+function firmFromHost(req: NextRequest): string | null {
+  let base: string;
+  try {
+    base = new URL(process.env.APP_URL || "").hostname.replace(/^www\./, "").toLowerCase();
+  } catch {
+    return null;
+  }
+  if (!base) return null;
+  const host = (req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "").split(",")[0].trim().toLowerCase().replace(/:\d+$/, "");
+  if (!host.endsWith(`.${base}`)) return null;
+  const sub = host.slice(0, -(base.length + 1));
+  if (!/^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])$/.test(sub) || NOT_FIRMS.has(sub)) return null;
+  return sub;
 }
 
 function canonicalRedirect(req: NextRequest) {

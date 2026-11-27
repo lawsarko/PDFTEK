@@ -136,12 +136,12 @@ export function saveResult(doc: DocumentRow, kind: FinKind, result: FinResult) {
 
 // ---------- reading the pages ----------
 
-type PagePart = { page: number; text?: string; image?: string };
+export type PagePart = { page: number; text?: string; image?: string };
 
 const GRID = 150; // characters across the page
 
 /** Each page as text laid out on a character grid (columns stay lined up), or a JPEG for scans. */
-async function readPages(bytes: Uint8Array): Promise<PagePart[]> {
+export async function readPages(bytes: Uint8Array, opts: { maxPages?: number } = {}): Promise<PagePart[]> {
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   const doc = (await pdfjs.getDocument({
     data: new Uint8Array(bytes),
@@ -152,9 +152,9 @@ async function readPages(bytes: Uint8Array): Promise<PagePart[]> {
     verbosity: 0,
   }).promise) as unknown as PDFDocumentProxy;
   try {
-    if (doc.numPages > MAX_FIN_PAGES) throw new HttpError(413, `This PDF has ${doc.numPages} pages. Statements and invoices can be up to ${MAX_FIN_PAGES} pages; split it first.`);
+    if (!opts.maxPages && doc.numPages > MAX_FIN_PAGES) throw new HttpError(413, `This PDF has ${doc.numPages} pages. Statements and invoices can be up to ${MAX_FIN_PAGES} pages; split it first.`);
     const out: PagePart[] = [];
-    for (let p = 1; p <= doc.numPages; p++) {
+    for (let p = 1; p <= Math.min(doc.numPages, opts.maxPages ?? doc.numPages); p++) {
       const page = await doc.getPage(p);
       const vp = page.getViewport({ scale: 1 });
       const content = await page.getTextContent();
@@ -216,7 +216,7 @@ async function renderJpeg(doc: PDFDocumentProxy, p: number): Promise<string> {
   return canvas.toBuffer("image/jpeg", 80).toString("base64");
 }
 
-function pageBlocks(parts: PagePart[]): AiContent[] {
+export function pageBlocks(parts: PagePart[]): AiContent[] {
   const blocks: AiContent[] = [];
   for (const p of parts) {
     if (p.image) {

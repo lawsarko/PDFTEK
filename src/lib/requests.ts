@@ -52,6 +52,8 @@ export type RequestRow = {
   reminders_sent: number;
   packet: number;
   packet_document_id: string | null;
+  client_id: string | null;
+  year: number | null;
 };
 
 export type ItemRow = {
@@ -62,12 +64,18 @@ export type ItemRow = {
   note: string;
   required: number;
   accept: Accept;
-  status: "needed" | "uploaded" | "returned";
+  status: "needed" | "uploaded" | "returned" | "na";
   document_id: string | null;
   file_names: string;
   feedback: string | null;
   uploaded_at: number | null;
+  ai_status: "checking" | "ok" | "flagged" | "skipped" | null;
+  ai_json: string | null;
+  na_reason: string | null;
 };
+
+/** What the AI check found in an upload (see client-ai.ts). */
+export type AiCheck = { formType: string; taxYear: number | null; issuer: string; summary: string; problems: string[]; suggestedName: string };
 
 const DAY = 86_400_000;
 const OTP_TTL = 10 * 60_000;
@@ -123,6 +131,9 @@ export function itemView(i: ItemRow) {
     feedback: i.feedback,
     uploadedAt: i.uploaded_at,
     documentId: i.document_id,
+    aiStatus: i.ai_status,
+    ai: i.ai_json ? (JSON.parse(i.ai_json) as AiCheck) : null,
+    naReason: i.na_reason,
   };
 }
 
@@ -147,6 +158,11 @@ export type NewRequest = {
   expiresInDays: number;
   autoRemind: boolean;
   packet: boolean;
+  /** A client in Clients, and the tax year the documents are for. */
+  clientId?: string | null;
+  year?: number | null;
+  /** Leave the first email to the caller (bulk sends, schedules). */
+  quiet?: boolean;
 };
 
 export async function createRequest(ctx: Ctx, input: NewRequest) {
@@ -175,6 +191,8 @@ export async function createRequest(ctx: Ctx, input: NewRequest) {
       expires_at: now() + input.expiresInDays * DAY,
       auto_remind: input.autoRemind ? 1 : 0,
       packet: input.packet ? 1 : 0,
+      client_id: input.clientId ?? null,
+      year: input.year ?? null,
     });
     list.forEach((it, i) =>
       insert("doc_request_items", {
@@ -190,16 +208,20 @@ export async function createRequest(ctx: Ctx, input: NewRequest) {
     logEvent(rid, "created", `${list.length} item${list.length === 1 ? "" : "s"} · ${input.verify === "none" ? "link only" : input.verify === "email" ? "email code required" : "access code required"}`);
   });
   const r = get<RequestRow>("SELECT * FROM doc_requests WHERE id = ?", rid)!;
+  if (input.quiet) {
+    logActivity({ workspaceId: ctx.workspace.id, userId: ctx.user.id, action: "requested_document", meta: { title: input.title, from: input.recipientName } });
+    return { id: rid, link: requestLink(t), delivered: false, mailError: null, accessCode };
+  }
   const { delivered, error } = await emailRecipient(r, "new");
   logEvent(rid, delivered ? "emailed" : "email_failed", delivered ? input.recipientEmail : (error ?? ""));
   logActivity({ workspaceId: ctx.workspace.id, userId: ctx.user.id, action: "requested_document", meta: { title: input.title, from: input.recipientName } });
   return { id: rid, link: requestLink(t), delivered, mailError: delivered ? null : (error ?? null), accessCode };
 }
 
-async function emailRecipient(r: RequestRow, kind: "new" | "remind" | "returned", extra?: string) {
+export async function emailRecipient(r: RequestRow, kind: "new" | "remind" | "returned", extra?: string) {
   const who = requester(r);
   const list = items(r.id);
-  const needed = list.filter((i) => i.status !== "uploaded");
+  const needed = list.filter((i) => i.status !== "uploaded" && i.status !== "na");
   const subject =
     kind === "new" ? `${who.name} (${who.workspace_name}) requested: ${r.title}` : kind === "remind" ? `Reminder: ${r.title}` : `Please re-upload: ${r.title}`;
   const heading = kind === "new" ? `${who.name} requested documents` : kind === "remind" ? `A reminder from ${who.name}` : `${who.name} needs a new copy`;
@@ -214,6 +236,7 @@ async function emailRecipient(r: RequestRow, kind: "new" | "remind" | "returned"
     ...(r.due_date ? [`Due by ${r.due_date}.`] : []),
     ...(r.verify === "email" ? ["For your security, we'll email you a one-time code when you open the link."] : []),
     ...(r.verify === "code" ? [`For your security, you'll need the access code ${who.name} gives you separately.`] : []),
+    ...(r.client_id ? await portalLine(r) : []),
   ];
   return sendMail({
     to: r.recipient_email,
@@ -225,6 +248,13 @@ async function emailRecipient(r: RequestRow, kind: "new" | "remind" | "returned"
     footer: `Sent by pdftek for ${who.name}. Files you upload go privately to ${who.workspace_name}, no one else.`,
   });
 }
+
+/** For a firm's client: where they can see all their requests and documents. */
+async function portalLine(r: RequestRow): Promise<string[]> {
+  const { ensureSlug, portalUrl } = await import("./firm");
+  return [`You can also see everything ${who(r)} has asked for, and the documents you've shared, in your secure client portal: ${portalUrl(ensureSlug(r.workspace_id))}`];
+}
+const who = (r: RequestRow) => requester(r).workspace_name;
 
 // ---------- recipient side ----------
 
@@ -355,10 +385,35 @@ export async function uploadItem(r: RequestRow, itemId: string, files: File[], i
     actorLabel: `${r.recipient_name} (via request)`,
   });
   const names = files.map((f) => f.name);
-  update("doc_request_items", item.id, { status: "uploaded", document_id: doc.id, file_names: names.join("\n"), uploaded_at: now(), feedback: null });
+  let aiStatus: ItemRow["ai_status"] = null;
+  if (r.client_id) {
+    const { fileClientUpload } = await import("./clients");
+    aiStatus = fileClientUpload(r, item, doc.id);
+  }
+  update("doc_request_items", item.id, { status: "uploaded", document_id: doc.id, file_names: names.join("\n"), uploaded_at: now(), feedback: null, ai_status: aiStatus, ai_json: null, na_reason: null });
   if (r.status === "pending" || r.status === "viewed") update("doc_requests", r.id, { status: "in_progress" });
   logEvent(r.id, "uploaded", `${item.label}: ${names.join(", ")}`, ip);
-  return itemView({ ...item, status: "uploaded", document_id: doc.id, file_names: names.join("\n"), uploaded_at: now(), feedback: null });
+  if (aiStatus === "checking") void import("./client-ai").then((m) => m.checkUpload(r.id, item.id)).catch((e) => console.error("[pdftek] upload check failed", e));
+  return itemView({ ...item, status: "uploaded", document_id: doc.id, file_names: names.join("\n"), uploaded_at: now(), feedback: null, ai_status: aiStatus, ai_json: null, na_reason: null });
+}
+
+/** The recipient says an item doesn't apply to them this year (no 1098 this year…), or takes that back. */
+export function markNotApplicable(r: RequestRow, itemId: string, reason: string | null, ip: string) {
+  assertUsable(r);
+  const item = get<ItemRow>("SELECT * FROM doc_request_items WHERE id = ? AND request_id = ?", itemId, r.id);
+  if (!item) throw notFound("That checklist item doesn't exist.");
+  if (reason === null) {
+    if (item.status !== "na") return itemView(item);
+    update("doc_request_items", item.id, { status: "needed", na_reason: null });
+    logEvent(r.id, "na_undone", item.label, ip);
+    return itemView({ ...item, status: "needed", na_reason: null });
+  }
+  if (item.status === "uploaded") throw badRequest("This item already has a file. Remove it first.");
+  const why = reason.trim().slice(0, 300) || "Doesn't apply this year";
+  update("doc_request_items", item.id, { status: "na", na_reason: why, feedback: null });
+  if (r.status === "pending" || r.status === "viewed") update("doc_requests", r.id, { status: "in_progress" });
+  logEvent(r.id, "not_applicable", `${item.label}: ${why}`, ip);
+  return itemView({ ...item, status: "na", na_reason: why, feedback: null });
 }
 
 /** The recipient says they're done: needs every required item. */
@@ -366,7 +421,7 @@ export async function submit(r: RequestRow, ip: string) {
   assertUsable(r);
   if (r.status === "complete") return;
   const list = items(r.id);
-  const missing = list.filter((i) => i.required && i.status !== "uploaded");
+  const missing = list.filter((i) => i.required && i.status !== "uploaded" && i.status !== "na");
   if (missing.length) throw badRequest(`Still needed: ${missing.map((i) => i.label).join(", ")}.`);
   const uploaded = list.filter((i) => i.status === "uploaded" && i.document_id);
   let packetId: string | null = null;
@@ -391,6 +446,7 @@ export async function submit(r: RequestRow, ip: string) {
   update("doc_requests", r.id, { status: "complete", completed_at: now(), document_id: firstId, packet_document_id: packetId });
   logEvent(r.id, "submitted", `${uploaded.length} item${uploaded.length === 1 ? "" : "s"}${packetId ? " · combined packet created" : ""}`, ip);
   logActivity({ workspaceId: r.workspace_id, actorLabel: r.recipient_name, action: "fulfilled_request", documentId: firstId, meta: { title: r.title } });
+  if (r.client_id) void import("./clients").then((m) => m.onRequestComplete(r)).catch((e) => console.error(e));
   notify({ userId: r.created_by, workspaceId: r.workspace_id, title: `${r.recipient_name} sent ${r.title}`, link: `/app/${r.workspace_id}/requests?id=${r.id}` });
   const who = requester(r);
   void sendMail({
@@ -431,8 +487,13 @@ export function requestSummary(r: RequestRow) {
     autoRemind: Boolean(r.auto_remind),
     packet: Boolean(r.packet),
     received: list.filter((i) => i.status === "uploaded").length,
+    notApplicable: list.filter((i) => i.status === "na").length,
+    flagged: list.filter((i) => i.ai_status === "flagged" && i.status === "uploaded").length,
     total: list.length,
     link: requestLink(r.token),
+    clientId: r.client_id,
+    year: r.year,
+    lastRemindedAt: r.last_reminded_at,
   };
 }
 
@@ -498,15 +559,33 @@ export async function sendDueReminders() {
     "SELECT * FROM doc_requests WHERE auto_remind = 1 AND reminders_sent < 3 AND status IN ('pending', 'viewed', 'in_progress') AND (expires_at IS NULL OR expires_at > ?)",
     now(),
   );
+  // A firm's client gets one email covering everything still outstanding, not one per request.
+  const digests = new Map<string, RequestRow[]>();
   for (const r of open) {
     const due = r.due_date ? Date.parse(`${r.due_date}T15:00:00Z`) : null;
     const schedule = due ? [due - 2 * DAY, due, due + 3 * DAY] : [r.created_at + 3 * DAY, r.created_at + 7 * DAY, r.created_at + 14 * DAY];
     const next = schedule[r.reminders_sent];
     if (next === undefined || now() < next || (r.last_reminded_at && now() - r.last_reminded_at < 20 * 3600_000)) continue;
+    // Nothing left to chase (every required item is in or marked "doesn't apply"): no reminder.
+    if (!items(r.id).some((i) => i.required && i.status !== "uploaded" && i.status !== "na")) continue;
+    if (r.client_id) {
+      digests.set(r.client_id, [...(digests.get(r.client_id) ?? []), r]);
+      continue;
+    }
     try {
       await remind(r, true);
     } catch (err) {
       console.error("[pdftek] request reminder failed", r.id, err);
+    }
+  }
+  if (digests.size) {
+    const { remindClientDigest } = await import("./clients");
+    for (const [clientId, due] of digests) {
+      try {
+        await remindClientDigest(clientId, due.map((r) => r.id), true);
+      } catch (err) {
+        console.error("[pdftek] client reminder failed", clientId, err);
+      }
     }
   }
 }

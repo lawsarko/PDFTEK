@@ -357,6 +357,9 @@ export async function tick() {
     }
     const { sendDueReminders } = await import("./requests");
     await sendDueReminders().catch((err) => console.error("[pdftek] request reminders failed", err));
+    const clients = await import("./clients");
+    await clients.runSchedules().catch((err) => console.error("[pdftek] recurring requests failed", err));
+    await clients.runRetention().catch((err) => console.error("[pdftek] retention failed", err));
     if (now() - lastTrialRun > 3_600_000) {
       lastTrialRun = now();
       const { sendTrialNotices } = await import("./billing");

@@ -82,6 +82,9 @@ export function TopBar() {
       <div className="grow hide-mobile" />
 
       <UsageMeter wid={wid} />
+      <Link href={`/app/${wid}/clients`} className="tool-btn tool-btn-primary hide-mobile" title="Your clients: accounts, document requests and the client portal">
+        <I.users size={14} /> Clients
+      </Link>
       <Link href={`/app/${wid}/tools`} className="tool-btn hide-mobile" title="PDF tools">
         <I.tools size={14} /> Tools
       </Link>
@@ -111,6 +114,9 @@ export function TopBar() {
           </Link>
           <Link className="menu-item" href={`/app/${wid}/settings?tab=billing`}>
             <I.bolt size={14} /> Plan & billing <span className="badge badge-warn" style={{ marginLeft: "auto" }}>{info.workspace.plan}</span>
+          </Link>
+          <Link className="menu-item show-mobile" href={`/app/${wid}/clients`}>
+            <I.users size={14} /> Clients
           </Link>
           <Link className="menu-item show-mobile" href={`/app/${wid}/tools`}>
             <I.tools size={14} /> PDF tools

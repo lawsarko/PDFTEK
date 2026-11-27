@@ -529,6 +529,114 @@ CREATE TABLE IF NOT EXISTS inbound_messages (
 );
 CREATE INDEX IF NOT EXISTS inbound_messages_ws ON inbound_messages(workspace_id, created_at);
 
+-- Firms and their clients (tax preparers, accountants): client records, portal access,
+-- engagements by tax year, messages and the files exchanged with each client.
+CREATE TABLE IF NOT EXISTS clients (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL DEFAULT 'individual',
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  phone TEXT NOT NULL DEFAULT '',
+  spouse_name TEXT NOT NULL DEFAULT '',
+  spouse_email TEXT NOT NULL DEFAULT '',
+  company TEXT NOT NULL DEFAULT '',
+  tags TEXT NOT NULL DEFAULT '[]',
+  assigned_to TEXT,
+  notes TEXT NOT NULL DEFAULT '',
+  invited_at INTEGER,
+  last_login_at INTEGER,
+  created_by TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  archived_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS clients_ws ON clients(workspace_id, archived_at, name);
+CREATE INDEX IF NOT EXISTS clients_email ON clients(email);
+
+CREATE TABLE IF NOT EXISTS client_engagements (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  client_id TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  year INTEGER NOT NULL,
+  service TEXT NOT NULL DEFAULT 'Tax return',
+  status TEXT NOT NULL DEFAULT 'not_started',
+  due_date TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  UNIQUE (client_id, year, service)
+);
+CREATE INDEX IF NOT EXISTS client_engagements_ws ON client_engagements(workspace_id, year, status);
+
+CREATE TABLE IF NOT EXISTS client_messages (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  client_id TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  author TEXT NOT NULL,
+  author_id TEXT,
+  author_name TEXT NOT NULL,
+  body TEXT NOT NULL,
+  internal INTEGER NOT NULL DEFAULT 0,
+  read_at INTEGER,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS client_messages_client ON client_messages(client_id, created_at);
+
+-- Documents filed under a client: what they uploaded and what the firm shared with them.
+CREATE TABLE IF NOT EXISTS client_files (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  client_id TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  document_id TEXT NOT NULL,
+  year INTEGER,
+  category TEXT NOT NULL DEFAULT '',
+  source TEXT NOT NULL DEFAULT 'client',
+  shared INTEGER NOT NULL DEFAULT 0,
+  ai_json TEXT,
+  pay_cents INTEGER,
+  pay_currency TEXT,
+  pay_desc TEXT,
+  pay_session TEXT,
+  paid_at INTEGER,
+  client_viewed_at INTEGER,
+  created_by TEXT,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS client_files_client ON client_files(client_id, year, created_at);
+CREATE UNIQUE INDEX IF NOT EXISTS client_files_doc ON client_files(client_id, document_id);
+
+-- Client portal sign-in: a code and a one-click link, both emailed; only hashes are kept.
+CREATE TABLE IF NOT EXISTS client_login_codes (
+  id TEXT PRIMARY KEY,
+  client_id TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  code_hash TEXT NOT NULL,
+  link_hash TEXT NOT NULL,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  expires_at INTEGER NOT NULL,
+  used_at INTEGER,
+  created_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS client_sessions (
+  id TEXT PRIMARY KEY,
+  client_id TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  expires_at INTEGER NOT NULL,
+  created_at INTEGER NOT NULL
+);
+
+-- Requests sent again on a schedule (monthly statements for bookkeeping clients…).
+CREATE TABLE IF NOT EXISTS request_schedules (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  client_id TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  every TEXT NOT NULL,
+  spec_json TEXT NOT NULL,
+  next_run_at INTEGER NOT NULL,
+  last_run_at INTEGER,
+  active INTEGER NOT NULL DEFAULT 1,
+  created_by TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+
 -- Optional feedback from the workbench ("did pdftek give you what you needed?").
 CREATE TABLE IF NOT EXISTS feedback (
   id TEXT PRIMARY KEY,
@@ -589,6 +697,18 @@ const ADDED_COLUMNS: [table: string, column: string, ddl: string, backfill?: str
   // Stripe Connect account that receives payments collected through signing links.
   ["workspaces", "stripe_account_id", "TEXT"],
   ["workspaces", "stripe_account_ready", "INTEGER NOT NULL DEFAULT 0"],
+  // Firms: their own portal address (slug.pdftek.com), branding and document retention.
+  ["workspaces", "firm_slug", "TEXT"],
+  ["workspaces", "firm_name", "TEXT"],
+  ["workspaces", "brand_color", "TEXT"],
+  ["workspaces", "brand_logo_key", "TEXT"],
+  ["workspaces", "retention_years", "INTEGER"],
+  // Requests sent to a client, for a tax year; checklist items a client marks "doesn't apply" and AI checks.
+  ["doc_requests", "client_id", "TEXT"],
+  ["doc_requests", "year", "INTEGER"],
+  ["doc_request_items", "ai_status", "TEXT"],
+  ["doc_request_items", "ai_json", "TEXT"],
+  ["doc_request_items", "na_reason", "TEXT"],
 ];
 
 type GlobalWithDb = typeof globalThis & { __pdftekDb?: DatabaseSync };
@@ -622,6 +742,8 @@ function open(): DatabaseSync {
     SELECT 'itm_' || r.id, r.id, 0, r.title, CASE WHEN r.status = 'complete' THEN 'uploaded' ELSE 'needed' END, r.document_id, r.completed_at
       FROM doc_requests r WHERE NOT EXISTS (SELECT 1 FROM doc_request_items i WHERE i.request_id = r.id)`);
   db.exec("CREATE UNIQUE INDEX IF NOT EXISTS users_supabase_id ON users(supabase_id) WHERE supabase_id IS NOT NULL");
+  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS workspaces_firm_slug ON workspaces(firm_slug) WHERE firm_slug IS NOT NULL");
+  db.exec("CREATE INDEX IF NOT EXISTS doc_requests_client ON doc_requests(client_id, created_at)");
   return db;
 }
 

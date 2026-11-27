@@ -10,6 +10,8 @@ export const FREE_LIMITS = {
 export const PAID_LIMITS = { tasksPerDay: 2000, maxFileMb: 100, maxFiles: 50 } as const; // fair use
 /** People in a workspace (you included) on a Day Pass or Pro. Team has no limit; Free is just you. */
 export const PRO_SEATS = 5;
+/** Clients a firm can manage in Clients on Pro (Team has no limit). Client accounts are always free. */
+export const PRO_CLIENTS = 50;
 /** Free Pro trial: card collected at signup by Stripe, first charge when it ends, cancel anytime before. */
 export const TRIAL_DAYS = 3;
 /** AI credits during the trial (AI costs real money per request); the full 400 start with the first paid month. */
