@@ -252,7 +252,7 @@ export function Dashboard({ wid }: { wid: string }) {
                 </button>
               </div>
               <div className="row gap-8 wrap" style={{ marginTop: 12 }}>
-                <a className="btn btn-sm" href={d.portalUrl} target="_blank" rel="noreferrer">Preview</a>
+                <a className="btn btn-sm" href={firm && !firm.subdomains ? `/portal/${firm.slug}` : d.portalUrl} target="_blank" rel="noreferrer">Preview</a>
                 <Link className="btn btn-sm btn-ghost" href={`/app/${wid}/clients/settings`}>Branding & address</Link>
               </div>
               {d.plan.limit !== null && (

@@ -61,7 +61,7 @@ export function FirmShell({ wid, children }: { wid: string; children: React.Reac
           </nav>
           <div className="fa-side-foot">
             {firm && (
-              <a className="fa-nav-item" href={firm.portalUrl} target="_blank" rel="noreferrer">
+              <a className="fa-nav-item" href={firm.subdomains ? firm.portalUrl : `/portal/${firm.slug}`} target="_blank" rel="noreferrer" title="See the sign-in page your clients use">
                 <I.link size={18} /> <span>Open client portal</span>
               </a>
             )}
