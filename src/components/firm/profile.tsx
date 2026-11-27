@@ -221,7 +221,7 @@ export function ClientProfile({ wid, cid }: { wid: string; cid: string }) {
           <div className="row between wrap gap-8">
             <span className="fa-label" style={{ margin: 0 }}>
               {eng?.service ?? "Tax return"} ·{" "}
-              <select className="fa-inline-select" value={year} onChange={(e) => setYear(Number(e.target.value))} aria-label="Tax year">
+              <select className="fa-inline-select" value={year} onChange={(e) => setYear(Number(e.target.value))} aria-label="Fiscal year">
                 {[seasonYear() + 1, seasonYear(), seasonYear() - 1, seasonYear() - 2].map((y) => (
                   <option key={y} value={y}>
                     {y}
@@ -381,7 +381,7 @@ export function ClientProfile({ wid, cid }: { wid: string; cid: string }) {
                   <div className="grow" style={{ minWidth: 0 }}>
                     <h3 className="ellipsis">{r.title}</h3>
                     <div className="small muted">
-                      {r.year ? `Tax year ${r.year} · ` : ""}Sent {fmtDate(r.createdAt)}
+                      {r.year ? `Fiscal year ${r.year} · ` : ""}Sent {fmtDate(r.createdAt)}
                       {r.dueDate ? ` · due ${fmtDate(r.dueDate)}` : ""}
                       {r.viewedAt ? ` · opened ${timeAgo(r.viewedAt)}` : " · not opened yet"}
                       {r.lastRemindedAt ? ` · reminded ${timeAgo(r.lastRemindedAt)}` : ""}
@@ -457,7 +457,7 @@ export function ClientProfile({ wid, cid }: { wid: string; cid: string }) {
         <div className="col gap-16">
           <div className="row between wrap gap-8">
             <p className="muted small" style={{ margin: 0 }}>
-              Everything {c.name.split(" ")[0]} uploaded, and what you’ve shared with them, filed by tax year.
+              Everything {c.name.split(" ")[0]} uploaded, and what you’ve shared with them, filed by fiscal year.
             </p>
             <button className="btn btn-primary btn-sm" onClick={() => setSharing(true)}>
               <I.upload size={14} /> Share a document
@@ -475,7 +475,7 @@ export function ClientProfile({ wid, cid }: { wid: string; cid: string }) {
                 return (
                   <div key={y} className="fa-card">
                     <div className="fa-card-head">
-                      <h2>{y ? `Tax year ${y}` : "No year"}</h2>
+                      <h2>{y ? `Fiscal year ${y}` : "No year"}</h2>
                       {y > 0 && (
                         <a className="btn btn-sm btn-tonal" href={`/api/workspaces/${wid}/clients/${cid}/files?year=${y}`} title="The amounts read from this year's forms, in one spreadsheet">
                           <I.table size={14} /> Summary (Excel)
@@ -715,7 +715,7 @@ function ShareModal({ wid, cid, name, onClose, onDone }: { wid: string; cid: str
   const toast = useToast();
   const [file, setFile] = useState<globalThis.File | null>(null);
   const [year, setYear] = useState(seasonYear());
-  const [category, setCategory] = useState("Tax return");
+  const [category, setCategory] = useState("Other");
   const [charge, setCharge] = useState(false);
   const [amount, setAmount] = useState("");
   const [desc, setDesc] = useState("");
@@ -765,13 +765,13 @@ function ShareModal({ wid, cid, name, onClose, onDone }: { wid: string; cid: str
           <div className="field">
             <label htmlFor="sh-cat">What it is</label>
             <select id="sh-cat" className="select" value={category} onChange={(e) => setCategory(e.target.value)}>
-              {["Tax return", "Engagement letter", "Organizer", "Financial statements", "IRS notice", "Invoice", "Other"].map((x) => (
+              {["Contract", "Engagement letter", "Invoice", "Report", "Financial statements", "Tax return", "Organizer", "IRS notice", "Other"].map((x) => (
                 <option key={x}>{x}</option>
               ))}
             </select>
           </div>
           <div className="field">
-            <label htmlFor="sh-year">Tax year</label>
+            <label htmlFor="sh-year">Fiscal year</label>
             <select id="sh-year" className="select" value={year} onChange={(e) => setYear(Number(e.target.value))}>
               {[seasonYear() + 1, seasonYear(), seasonYear() - 1, seasonYear() - 2].map((y) => (
                 <option key={y}>{y}</option>

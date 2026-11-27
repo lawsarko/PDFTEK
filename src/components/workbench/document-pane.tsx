@@ -452,8 +452,8 @@ export function DocumentPane() {
         <button className="wb-ibtn" onClick={() => openDoc(null)} aria-label="Back to home" title="Back to home">
           <I.back size={20} />
         </button>
-        <button className={`wb-ibtn hide-mobile ${toolsOpen && !showRail ? "on" : ""}`} onClick={() => (showRail ? closeAI() : setPref("tools", !toolsOpen))} aria-label="All tools" title="All tools" disabled={!!editing}>
-          <I.tools size={18} />
+        <button className={`wb-btn wb-alltools hide-mobile ${toolsOpen && !showRail ? "tonal" : ""}`} onClick={() => (showRail ? closeAI() : setPref("tools", !toolsOpen))} aria-pressed={toolsOpen && !showRail} title={toolsOpen && !showRail ? "Hide the tools list" : "Show every tool: convert, edit, organize, sign, protect, AI"} disabled={!!editing}>
+          <I.grid size={16} /> All tools
         </button>
         <div className="wb-fname">
           <FileBadge type={active.sourceType} />

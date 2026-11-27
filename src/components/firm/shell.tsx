@@ -48,7 +48,7 @@ export function FirmShell({ wid, children }: { wid: string; children: React.Reac
             {firm?.logo ? <img src={firm.logo} alt="" className="fa-brand-logo" /> : <span className="fa-brand-mark">{(firm?.name ?? "F").slice(0, 1).toUpperCase()}</span>}
             <span className="fa-brand-text">
               <b className="ellipsis">{firm?.name ?? "Your firm"}</b>
-              <span className="ellipsis">{firm?.host ?? "Client portal"}</span>
+              <span className="ellipsis">{firm ? (firm.subdomains ? firm.host : firm.portalUrl.replace(/^https?:\/\//, "")) ?? "Client portal" : "Client portal"}</span>
             </span>
           </div>
           <nav className="fa-nav">

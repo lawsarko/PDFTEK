@@ -261,6 +261,9 @@
 .wb-dtop .grow { min-width: 8px; }
 .wb-dsearch { position: absolute; top: calc(100% + 8px); right: -120px; width: min(520px, 70vw); z-index: 75; border-radius: 28px; box-shadow: var(--wb-e3); }
 .wb2 .wb-dsearch .wb-search { background: var(--wb-surf); }
+.wb-dtop .wb-alltools { height: 36px; padding: 0 14px; margin: 0 4px; color: var(--wb-txt2); border-color: var(--wb-chipline); }
+.wb-dtop .wb-alltools.tonal { color: var(--wb-onsc); border-color: transparent; }
+.wb-dtop .wb-alltools:disabled { opacity: .45; cursor: default; }
 .wb-dtop-sep { width: 1px; height: 24px; background: var(--wb-line); margin: 0 4px; flex-shrink: 0; }
 .wb-dtop-account { display: inline-flex; align-items: center; gap: 2px; }
 .wb2 .wb-notice { margin: 10px 16px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; flex-shrink: 0; }

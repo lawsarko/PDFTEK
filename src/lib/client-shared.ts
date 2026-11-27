@@ -7,7 +7,7 @@ export const STAGES = [
   { key: "preparing", label: "Preparing", tone: "info" },
   { key: "review", label: "In review", tone: "info" },
   { key: "ready_to_sign", label: "Ready to sign", tone: "warn" },
-  { key: "filed", label: "Filed", tone: "good" },
+  { key: "filed", label: "Completed", tone: "good" },
 ] as const;
 export type Stage = (typeof STAGES)[number]["key"];
 export const STAGE_KEYS = STAGES.map((s) => s.key) as [Stage, ...Stage[]];

@@ -71,11 +71,11 @@ export function Dashboard({ wid }: { wid: string }) {
 
   return (
     <div className="fa-page">
-      <PageHead title={`${greet}`} sub={firm ? `Here's where ${firm.name}'s clients stand for the ${d.year} tax year.` : undefined}>
-        <select className="select fa-year" value={year} onChange={(e) => setYear(Number(e.target.value))} aria-label="Tax year">
+      <PageHead title={`${greet}`} sub={firm ? `Here's where ${firm.name}'s clients stand for the ${d.year} fiscal year.` : undefined}>
+        <select className="select fa-year" value={year} onChange={(e) => setYear(Number(e.target.value))} aria-label="Fiscal year">
           {[seasonYear() + 1, seasonYear(), seasonYear() - 1, seasonYear() - 2].map((y) => (
             <option key={y} value={y}>
-              Tax year {y}
+              Fiscal year {y}
             </option>
           ))}
         </select>
@@ -103,10 +103,10 @@ export function Dashboard({ wid }: { wid: string }) {
             <I.users size={40} />
           </div>
           <h2>Bring your clients on board</h2>
-          <p>Add your clients, then request their documents in a couple of clicks. They get a secure portal at <b>{firm?.host ?? "your firm's address"}</b>, sign in without a password, and upload from their phone. Every upload is checked, named and filed for you.</p>
+          <p>Add your clients, then request their documents in a couple of clicks. They get a secure portal at <b>{firm ? (firm.subdomains ? firm.host : firm.portalUrl.replace(/^https?:\/\//, "")) ?? "your firm's address" : "your firm's address"}</b>, sign in without a password, and upload from their phone. Every upload is checked, named and filed for you.</p>
           <ol className="fa-steps">
             <li><span>1</span>Add clients one by one, or import your list from a spreadsheet.</li>
-            <li><span>2</span>Send a checklist: 1040, Schedule C, rentals, business, or built from last year’s return.</li>
+            <li><span>2</span>Send a checklist: IDs, contracts, bank statements, onboarding or HR paperwork, tax forms, or your own list.</li>
             <li><span>3</span>Watch documents arrive here, checked and filed by year.</li>
           </ol>
           <div className="row gap-8 wrap center">
@@ -199,7 +199,7 @@ export function Dashboard({ wid }: { wid: string }) {
                         </span>
                         <span className="grow" style={{ minWidth: 0 }}>
                           <span className="ellipsis" style={{ display: "block" }}>{x.label}</span>
-                          <span className="small muted">{x.kind === "deadline" ? "IRS deadline" : "Request due"} · {days <= 0 ? "today" : days === 1 ? "tomorrow" : `in ${days} days`}</span>
+                          <span className="small muted">{x.kind === "deadline" ? "US tax filing date" : "Request due"} · {days <= 0 ? "today" : days === 1 ? "tomorrow" : `in ${days} days`}</span>
                         </span>
                       </>
                     );

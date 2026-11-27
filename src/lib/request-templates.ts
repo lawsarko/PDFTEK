@@ -173,7 +173,7 @@ export const FIRM_TEMPLATES: RequestTemplate[] = [
   },
   {
     key: "onboarding_tax",
-    name: "New client onboarding",
+    name: "Tax client onboarding",
     title: "Welcome: getting started",
     message: "Welcome! Please upload the documents below so we can get started.",
     items: [

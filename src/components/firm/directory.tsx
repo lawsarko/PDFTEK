@@ -172,7 +172,7 @@ export function Directory({ wid }: { wid: string }) {
               ))}
             </select>
           )}
-          <select className="select input-sm" value={year} onChange={(e) => setYear(Number(e.target.value))} aria-label="Tax year">
+          <select className="select input-sm" value={year} onChange={(e) => setYear(Number(e.target.value))} aria-label="Fiscal year">
             {[seasonYear() + 1, seasonYear(), seasonYear() - 1, seasonYear() - 2].map((y) => (
               <option key={y} value={y}>
                 {y}

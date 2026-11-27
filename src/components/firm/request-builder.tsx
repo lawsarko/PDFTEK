@@ -1,7 +1,13 @@
 "use client";
 import { useRef, useState } from "react";
 import { api, errMsg } from "@/lib/client/api";
-import { ACCEPT_LABEL, FIRM_TEMPLATES, type Accept } from "@/lib/request-templates";
+import { ACCEPT_LABEL, FIRM_TEMPLATES, REQUEST_TEMPLATES, type Accept, type RequestTemplate } from "@/lib/request-templates";
+
+/** Checklists to start from: everyday paperwork for any business, and tax and accounting sets. */
+const GENERAL: RequestTemplate[] = REQUEST_TEMPLATES.filter((t) => t.key !== "tax").map((t) => ({ ...t, key: `g_${t.key}` }));
+const ALL_TEMPLATES = [...GENERAL, ...FIRM_TEMPLATES];
+/** Sets that recur on their own schedule (titles without a year). */
+const NO_YEAR = new Set(["bookkeeping", "g_kyc", "g_employee", "g_claim", "g_rental", "g_loan", "g_client"]);
 import { seasonYear } from "@/lib/client-shared";
 import { Modal } from "../modal";
 import { useToast } from "../toast";
@@ -28,9 +34,9 @@ export function RequestBuilder({
 }) {
   const toast = useToast();
   const year0 = seasonYear();
-  const [template, setTemplate] = useState<string>("1040");
-  const first = FIRM_TEMPLATES[0];
-  const [title, setTitle] = useState(`${year0} tax documents`);
+  const first = GENERAL.find((t) => t.key === "g_client") ?? GENERAL[0];
+  const [template, setTemplate] = useState<string>(first.key);
+  const [title, setTitle] = useState(first.title);
   const [message, setMessage] = useState(first.message);
   const [items, setItems] = useState<Item[]>(first.items.map((i) => ({ label: i.label, note: i.note ?? "", required: i.required !== false, accept: i.accept ?? "any" })));
   const [year, setYear] = useState(year0);
@@ -50,8 +56,8 @@ export function RequestBuilder({
       setItems([blankItem()]);
       return;
     }
-    const t = FIRM_TEMPLATES.find((x) => x.key === key)!;
-    setTitle(key === "bookkeeping" ? t.title : `${year} ${t.title.charAt(0).toLowerCase()}${t.title.slice(1)}`);
+    const t = ALL_TEMPLATES.find((x) => x.key === key)!;
+    setTitle(NO_YEAR.has(key) ? t.title : `${year} ${t.title.charAt(0).toLowerCase()}${t.title.slice(1)}`);
     setMessage(t.message);
     setItems(t.items.map((i) => ({ label: i.label, note: i.note ?? "", required: i.required !== false, accept: i.accept ?? "any" })));
     if (key === "bookkeeping" && target.kind === "one") setRepeat("month");
@@ -134,19 +140,27 @@ export function RequestBuilder({
         <div>
           <div className="fa-label">Start from</div>
           <div className="fa-chips">
-            {FIRM_TEMPLATES.map((t) => (
+            {GENERAL.map((t) => (
               <button key={t.key} type="button" className={`fa-chip-btn ${template === t.key ? "on" : ""}`} onClick={() => pick(t.key)}>
                 {t.name}
               </button>
             ))}
             <button type="button" className={`fa-chip-btn ${template === "blank" ? "on" : ""}`} onClick={() => pick("blank")}>
-              Blank
+              Blank (your own list)
             </button>
+          </div>
+          <div className="fa-label mt-12">Tax and accounting</div>
+          <div className="fa-chips">
+            {FIRM_TEMPLATES.map((t) => (
+              <button key={t.key} type="button" className={`fa-chip-btn ${template === t.key ? "on" : ""}`} onClick={() => pick(t.key)}>
+                {t.name}
+              </button>
+            ))}
           </div>
           <div className={`fa-ai-card ${template === "ai" ? "on" : ""}`}>
             <span className="fa-ai-ico"><I.sparkle size={18} /></span>
             <div className="grow">
-              <b>Build it from last year’s return</b>
+              <b>Build a tax checklist from last year’s return</b>
               <div className="small muted">Upload the client’s prior-year return (PDF). AI lists a W-2 for each employer, a 1099 for each bank or broker, the 1098s and more. Uses AI credits.</div>
             </div>
             <button type="button" className="btn btn-tonal btn-sm" disabled={reading} onClick={() => fileRef.current?.click()}>
@@ -171,7 +185,7 @@ export function RequestBuilder({
           </div>
           <div className="row gap-12">
             <div className="field grow">
-              <label htmlFor="rb-year">Tax year</label>
+              <label htmlFor="rb-year">Fiscal year</label>
               <select id="rb-year" className="select" value={year} onChange={(e) => setYear(Number(e.target.value))}>
                 {[year0 + 1, year0, year0 - 1, year0 - 2].map((y) => (
                   <option key={y} value={y}>

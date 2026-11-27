@@ -102,7 +102,7 @@ export function FirmSettings({ wid }: { wid: string }) {
             <option value="">As long as you keep them (no automatic deletion)</option>
             {[3, 4, 5, 6, 7, 10].map((y) => (
               <option key={y} value={y}>
-                {y} years after the tax year, then move to the trash
+                {y} years after the fiscal year, then move to the trash
               </option>
             ))}
           </select>
