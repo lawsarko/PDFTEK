@@ -135,7 +135,7 @@ export default async function Home() {
               <Link prefetch={false} className="btn btn-primary btn-lg btn-glow" href={user ? "/app" : "/go/start"}>
                 {user ? t("Open your workbench") : t("Start free — no sign-up needed")}
               </Link>
-              <Link className="btn btn-lg" href={lp("/how-it-works")}>
+              <Link className="btn btn-lg" href={lp("/help")}>
                 {t("See how it works")}
               </Link>
             </div>

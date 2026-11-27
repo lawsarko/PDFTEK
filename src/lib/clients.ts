@@ -9,7 +9,7 @@ import { workspaceCanUseAi } from "./billing";
 import { aiConfigured } from "./ai";
 import { assertClientRoom, activeClientCount, brand, clientLimit, ensureSlug, firmDisplayName, firmOf, portalUrl } from "./firm";
 import { createRequest, items, logEvent, requestLink, requestSummary, statusOf, type ItemRow, type NewRequest, type RequestRow } from "./requests";
-import { deadlines, seasonYear, stageLabel, type Stage } from "./client-shared";
+import { DEFAULT_SERVICE, deadlines, seasonYear, stageLabel, type Stage } from "./client-shared";
 import type { Ctx } from "./auth";
 
 /**
@@ -135,7 +135,7 @@ export function clientDTO(c: ClientRow, year = seasonYear()) {
     lastActivityAt: last ?? c.created_at,
     lastRemindedAt: reqs.reduce<number | null>((m, r) => (r.last_reminded_at && (!m || r.last_reminded_at > m) ? r.last_reminded_at : m), null),
     stage: (e?.status ?? "not_started") as Stage,
-    service: e?.service ?? "Tax return",
+    service: e?.service ?? DEFAULT_SERVICE,
   };
 }
 export type ClientDTO = ReturnType<typeof clientDTO>;
@@ -194,7 +194,7 @@ export function createClient(ctx: Ctx, input: ClientInput) {
   const t = now();
   tx(() => {
     insert("clients", { id: cid, workspace_id: ctx.workspace.id, ...data, created_by: ctx.user.id, created_at: t, updated_at: t });
-    insert("client_engagements", { id: id("eng_"), workspace_id: ctx.workspace.id, client_id: cid, year: seasonYear(), service: "Tax return", status: "not_started", created_at: t, updated_at: t });
+    insert("client_engagements", { id: id("eng_"), workspace_id: ctx.workspace.id, client_id: cid, year: seasonYear(), service: DEFAULT_SERVICE, status: "not_started", created_at: t, updated_at: t });
   });
   logActivity({ workspaceId: ctx.workspace.id, userId: ctx.user.id, action: "client_added", meta: { name: data.name } });
   return getClient(ctx.workspace.id, cid);
@@ -220,7 +220,7 @@ export function importClients(ctx: Ctx, list: ClientInput[]) {
     for (const c of fresh) {
       const cid = id("cli_");
       insert("clients", { id: cid, workspace_id: ctx.workspace.id, ...row(ctx, c), assigned_to: ctx.user.id, created_by: ctx.user.id, created_at: t, updated_at: t });
-      insert("client_engagements", { id: id("eng_"), workspace_id: ctx.workspace.id, client_id: cid, year: seasonYear(), service: "Tax return", status: "not_started", created_at: t, updated_at: t });
+      insert("client_engagements", { id: id("eng_"), workspace_id: ctx.workspace.id, client_id: cid, year: seasonYear(), service: DEFAULT_SERVICE, status: "not_started", created_at: t, updated_at: t });
     }
   });
   if (fresh.length) logActivity({ workspaceId: ctx.workspace.id, userId: ctx.user.id, action: "clients_imported", meta: { count: fresh.length } });
@@ -246,7 +246,7 @@ export function archiveClient(ctx: Ctx, clientId: string, archived: boolean) {
   if (archived) run("DELETE FROM client_sessions WHERE client_id = ?", c.id);
 }
 
-export function setStage(ctx: Ctx, clientId: string, year: number, status: Stage, service = "Tax return", dueDate?: string | null) {
+export function setStage(ctx: Ctx, clientId: string, year: number, status: Stage, service: string = DEFAULT_SERVICE, dueDate?: string | null) {
   const c = getClient(ctx.workspace.id, clientId);
   const e = get<{ id: string; status: string }>("SELECT id, status FROM client_engagements WHERE client_id = ? AND year = ? AND service = ?", c.id, year, service);
   if (e) update("client_engagements", e.id, { status, updated_at: now(), ...(dueDate !== undefined ? { due_date: dueDate } : {}) });
@@ -273,7 +273,7 @@ export async function requestForClient(ctx: Ctx, clientId: string, input: Omit<N
   const out = await createRequest(ctx, { ...input, verify, recipientName: c.name, recipientEmail: c.email, clientId: c.id, year });
   run("UPDATE client_engagements SET status = 'waiting', updated_at = ? WHERE client_id = ? AND year = ? AND status IN ('not_started','docs_in')", now(), c.id, year);
   if (!get("SELECT 1 FROM client_engagements WHERE client_id = ? AND year = ?", c.id, year)) {
-    insert("client_engagements", { id: id("eng_"), workspace_id: ctx.workspace.id, client_id: c.id, year, service: "Tax return", status: "waiting", created_at: now(), updated_at: now() });
+    insert("client_engagements", { id: id("eng_"), workspace_id: ctx.workspace.id, client_id: c.id, year, service: DEFAULT_SERVICE, status: "waiting", created_at: now(), updated_at: now() });
   }
   return out;
 }

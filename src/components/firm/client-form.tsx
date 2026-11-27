@@ -111,7 +111,7 @@ export function ClientFormModal({ wid, client, clientId, onClose, onSaved }: { w
           )}
           <div className="field">
             <label htmlFor="cf-tags">Tags</label>
-            <input id="cf-tags" className="input" value={tagText} onChange={(e) => setTagText(e.target.value)} placeholder="1040, Schedule C, Bookkeeping" />
+            <input id="cf-tags" className="input" value={tagText} onChange={(e) => setTagText(e.target.value)} placeholder="VIP, Onboarding, Bookkeeping" />
           </div>
           <div className="field">
             <label htmlFor="cf-assign">Assigned to</label>

@@ -13,7 +13,7 @@ export function GET() {
   const out: string[] = [
     "# PDFTEK – full reference",
     "",
-    `> Online PDF workbench in ${LOCALES.length} languages. Summary: ${base}/llms.txt · Guide: ${base}/how-it-works · Pricing: ${base}/pricing`,
+    `> Online PDF workbench in ${LOCALES.length} languages. Summary: ${base}/llms.txt · Guide: ${base}/help · Pricing: ${base}/pricing`,
     "",
   ];
   for (const c of SEO_CATEGORIES) {

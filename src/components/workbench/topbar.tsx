@@ -84,8 +84,9 @@ export function WorkspaceSwitch() {
 
 /** Bell and account menu (plan and credits, settings, theme, language, feedback, sign out). */
 export function AccountButtons() {
-  const { wid, info, theme, setTheme } = useWB();
+  const { wid, info, theme, setTheme, active, openDoc } = useWB();
   const [userMenu, setUserMenu] = useState(false);
+  const [helpMenu, setHelpMenu] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const languageName = useLanguageName();
   const [feedback, setFeedback] = useState(false);
@@ -98,6 +99,34 @@ export function AccountButtons() {
 
   return (
     <>
+      <div className="menu-wrap">
+        <button className="wb-ibtn wb-help" onClick={() => setHelpMenu((v) => !v)} aria-label="Help" title="Help: guides and videos">
+          <I.help size={20} />
+        </button>
+        <Menu open={helpMenu} onClose={() => setHelpMenu(false)}>
+          <a className="menu-item" href="/help" target="_blank" rel="noreferrer">
+            <I.help size={14} /> Help Center: guides and videos
+          </a>
+          {active && (
+            <a className="menu-item" href="/help/getting-started" target="_blank" rel="noreferrer">
+              <I.play size={14} /> Watch: get started
+            </a>
+          )}
+          <button
+            className="menu-item"
+            onClick={() => {
+              setHelpMenu(false);
+              if (active) openDoc(null);
+              setTimeout(() => window.dispatchEvent(new Event("pdftek:tour")), active ? 600 : 0);
+            }}
+          >
+            <I.steps size={14} /> Take the tour
+          </button>
+          <Link className="menu-item" href="/contact">
+            <I.mail size={14} /> Contact support
+          </Link>
+        </Menu>
+      </div>
       <Notifications />
       <div className="menu-wrap">
         <button className="avatar wb-avatar" onClick={() => setUserMenu((v) => !v)} aria-label="Account menu">

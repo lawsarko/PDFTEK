@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SEO_TOOLS, siteUrl } from "@/lib/seo-tools";
+import { GUIDES } from "@/lib/help/guides";
 import { LOCALES, localizePath } from "@/lib/i18n/locales";
 import { readyLocales } from "@/lib/i18n/server";
 
@@ -18,7 +19,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ["/tools", "weekly", 0.9],
     ...SEO_TOOLS.map((t): [string, Freq, number] => [`/${t.slug}`, "monthly", 0.8]),
     ["/pricing", "monthly", 0.7],
-    ["/how-it-works", "monthly", 0.6],
+    ["/help", "weekly", 0.7],
+    ...GUIDES.map((g): [string, Freq, number] => [`/help/${g.slug}`, "monthly", 0.6]),
     ["/contact", "yearly", 0.4],
     ["/signup", "yearly", 0.3],
     ["/terms", "yearly", 0.1],

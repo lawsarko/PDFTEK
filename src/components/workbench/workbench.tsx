@@ -10,6 +10,7 @@ import type { Flash } from "../pdf-viewer";
 import { WorkbenchContext, type WB } from "./context";
 import { TopBar } from "./topbar";
 import { DocumentPane } from "./document-pane";
+import { Tour } from "./tour";
 import { UploadModal } from "./upload-modal";
 import { daysLeft, notifyPaywall, openSaveAccount, startCheckout } from "../paywall";
 import { FREE_LIMITS, PRODUCTS, TRIAL_DAYS, usd } from "@/lib/plans";
@@ -235,6 +236,7 @@ export function Workbench({ wid }: { wid: string }) {
             </Link>
           </nav>
         )}
+        {!active && <Tour />}
         {uploadOpen && (
           <UploadModal
             initialTab={uploadOpen}

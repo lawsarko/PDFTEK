@@ -15,6 +15,9 @@ export async function MarketingNav({ signedIn }: { signedIn: boolean }) {
         </Link>
         <MarketingMenu />
         <span className="grow" />
+        <Link href={lp("/help")} className="mk-link hide-mobile">
+          {t("Help")}
+        </Link>
         <Link href={lp("/pricing")} className="mk-link hide-mobile">
           {t("Plans")}
         </Link>
@@ -60,7 +63,7 @@ export async function MarketingFooter() {
           <Link href={lp("/pricing")}>{t("Plans")}</Link>
           <Link href={`${lp("/")}#convert`}>{t("Convert")}</Link>
           <Link href={`${lp("/")}#features`}>{t("Features")}</Link>
-          <Link href={lp("/how-it-works")}>{t("How it works")}</Link>
+          <Link href={lp("/help")}>{t("Help Center")}</Link>
           <Link href={`${lp("/")}#security`}>{t("Security")}</Link>
           <Link href={`${lp("/")}#faq`}>{t("FAQ")}</Link>
           <Link href={lp("/terms")}>{t("Terms")}</Link>

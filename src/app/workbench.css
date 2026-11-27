@@ -412,3 +412,21 @@
 }
 @keyframes wbUp { from { transform: translateY(24px); opacity: .6; } to { transform: none; opacity: 1; } }
 @keyframes wbFade { from { opacity: 0; } to { opacity: 1; } }
+
+/* first-time tour */
+.wb-tour { position: fixed; inset: 0; z-index: 90; pointer-events: none; }
+.wb-tour-dim { position: absolute; inset: 0; background: rgba(31, 26, 23, .45); pointer-events: auto; }
+.wb-tour-ring { position: absolute; border-radius: 18px; box-shadow: 0 0 0 4px var(--wb-p), 0 0 0 9999px rgba(31, 26, 23, .45); transition: all .25s ease; pointer-events: none; }
+.wb-tour-card { position: absolute; width: 360px; max-width: calc(100vw - 32px); padding: 16px 18px 14px; border-radius: 20px; background: var(--wb-surf); color: var(--wb-txt); box-shadow: var(--wb-e3); pointer-events: auto; transition: left .25s ease, top .25s ease; }
+.wb-tour-card b { display: block; font-size: 16px; font-weight: 500; margin: 2px 0 6px; }
+.wb-tour-card p { margin: 0 0 12px; color: var(--wb-txt2); line-height: 1.5; font-size: 14px; }
+.wb-tour-n { font-size: 12px; font-weight: 600; color: var(--wb-p); }
+.wb-tour-actions { display: flex; align-items: center; gap: 6px; }
+
+/* Full-page app screens (Settings, Signatures, Requests, Compare, Fill form…) share the workbench look. */
+.wb2.app-shell { font-size: 14.5px; }
+.wb2 .app-shell-top { height: 64px; background: var(--wb-surf); border-bottom: 1px solid var(--wb-line2); }
+.wb2 .app-shell-top .brand:hover { background: none; }
+.wb2 .app-shell-top .viewer-title { font-family: var(--font-body); font-weight: 500; font-size: 16px; color: var(--wb-txt); }
+.wb2 .app-shell-top .tool-btn { border-radius: 18px; font-family: var(--font-body); font-weight: 500; }
+.wb2 .app-shell-top .icon-btn { width: 38px; height: 38px; border-radius: 50%; }

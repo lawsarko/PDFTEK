@@ -106,7 +106,7 @@ export function FirmSettings({ wid }: { wid: string }) {
               </option>
             ))}
           </select>
-          <span className="small muted">The IRS generally asks preparers to keep copies for at least 3 years; many firms keep 7. Check the rules that apply to you.</span>
+          <span className="small muted">Many professions must keep client records for several years (tax preparers often keep 7). Check the rules that apply to you.</span>
         </div>
         <div className="row" style={{ justifyContent: "flex-end" }}>
           <button className="btn btn-primary" disabled={busy} onClick={save}>

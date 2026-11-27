@@ -28,7 +28,7 @@ export function GET() {
     "- Every tool is on a tabbed toolbar above the document (Convert, Edit, Organize, Fill & sign, Protect, AI tools) and runs on the open document; a search box finds any tool.",
     "- Results download straight away or are saved as a new version, so nothing is lost; version history restores earlier versions.",
     `- Teams: invite colleagues to a shared workspace (up to ${PRO_SEATS} people on a Day Pass or Pro, unlimited on Team), hand documents off, and automate steps.`,
-    `- Step-by-step guide: ${base}/how-it-works`,
+    `- Step-by-step guide: ${base}/help`,
     `- Full details of every tool (steps and FAQs), for assistants: ${base}/llms-full.txt`,
     "",
     "## Pricing",

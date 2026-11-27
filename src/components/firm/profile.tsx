@@ -220,7 +220,7 @@ export function ClientProfile({ wid, cid }: { wid: string; cid: string }) {
         <div className="fa-stepper-wrap">
           <div className="row between wrap gap-8">
             <span className="fa-label" style={{ margin: 0 }}>
-              {eng?.service ?? "Tax return"} ·{" "}
+              {eng?.service ?? "Client work"} ·{" "}
               <select className="fa-inline-select" value={year} onChange={(e) => setYear(Number(e.target.value))} aria-label="Fiscal year">
                 {[seasonYear() + 1, seasonYear(), seasonYear() - 1, seasonYear() - 2].map((y) => (
                   <option key={y} value={y}>

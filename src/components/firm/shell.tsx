@@ -65,6 +65,9 @@ export function FirmShell({ wid, children }: { wid: string; children: React.Reac
                 <I.link size={18} /> <span>Open client portal</span>
               </a>
             )}
+            <a className="fa-nav-item" href="/help#clients" target="_blank" rel="noreferrer">
+              <I.help size={18} /> <span>Help with Clients</span>
+            </a>
             <Link className="fa-nav-item" href={`/app/${wid}`}>
               <Logo size={18} /> <span>Back to workbench</span>
             </Link>

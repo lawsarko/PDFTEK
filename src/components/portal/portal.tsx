@@ -218,7 +218,7 @@ function PortalHome({ slug, onSignedOut }: { slug: string; onSignedOut: () => vo
         {current && (
           <div className="pt-track">
             <div className="small muted">
-              Your {current.year} {current.service.toLowerCase()}: <b style={{ color: "var(--text-hi)" }}>{current.label}</b>
+              {current.service === "Client work" ? <>Progress for {current.year}</> : <>Your {current.year} {current.service.toLowerCase()}</>}: <b style={{ color: "var(--text-hi)" }}>{current.label}</b>
             </div>
             <ol className="pt-track-steps" aria-label="Progress">
               {STAGES.map((s, i) => (

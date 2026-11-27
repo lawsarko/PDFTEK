@@ -1,0 +1,2823 @@
+{
+ "ask-ai": {
+  "duration": 46.52,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 2.65,
+    "step": -1,
+    "text": "Ask AI about your documents."
+   },
+   {
+    "start": 2.97,
+    "end": 6.89,
+    "step": -1,
+    "text": "Get summaries and answers that cite the exact page they came from."
+   },
+   {
+    "start": 8.04,
+    "end": 9.39,
+    "step": 0,
+    "text": "Open Ask AI."
+   },
+   {
+    "start": 9.71,
+    "end": 12.76,
+    "step": 0,
+    "text": "Open a document and click Ask AI at the top."
+   },
+   {
+    "start": 13.08,
+    "end": 15.02,
+    "step": 0,
+    "text": "The panel opens beside the page."
+   },
+   {
+    "start": 16.17,
+    "end": 17.06,
+    "step": 1,
+    "text": "Summarize."
+   },
+   {
+    "start": 17.38,
+    "end": 22.65,
+    "step": 1,
+    "text": "Click Summarize with key facts, or one of the suggested questions that fit your document."
+   },
+   {
+    "start": 23.8,
+    "end": 25.15,
+    "step": 2,
+    "text": "Follow the citations."
+   },
+   {
+    "start": 25.47,
+    "end": 27.15,
+    "step": 2,
+    "text": "Answers show page references."
+   },
+   {
+    "start": 27.47,
+    "end": 30.93,
+    "step": 2,
+    "text": "Click one to jump to that page, with the quoted words highlighted."
+   },
+   {
+    "start": 32.08,
+    "end": 33.51,
+    "step": 3,
+    "text": "Ask across your library."
+   },
+   {
+    "start": 33.83,
+    "end": 39.91,
+    "step": 3,
+    "text": "Switch to Whole library to ask about all your documents at once, for example which contracts renew soon."
+   },
+   {
+    "start": 41.06,
+    "end": 41.93,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 42.25,
+    "end": 45.82,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "automations": {
+  "duration": 44.32,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 1.43,
+    "step": -1,
+    "text": "Automations."
+   },
+   {
+    "start": 1.75,
+    "end": 8.9,
+    "step": -1,
+    "text": "Let pdftek do routine work: flag risks on upload, send a morning digest, remind you of renewals."
+   },
+   {
+    "start": 10.05,
+    "end": 11.35,
+    "step": 0,
+    "text": "Open Automations."
+   },
+   {
+    "start": 11.67,
+    "end": 16.51,
+    "step": 0,
+    "text": "Click Automations in the left menu on Home, or the Automate tab in Ask AI."
+   },
+   {
+    "start": 17.66,
+    "end": 18.98,
+    "step": 1,
+    "text": "Start from a recipe."
+   },
+   {
+    "start": 19.3,
+    "end": 25.32,
+    "step": 1,
+    "text": "Pick Risk review on upload, Morning digest, Renewal reminders or Signed \u2192 tracker, or build your own."
+   },
+   {
+    "start": 26.47,
+    "end": 27.37,
+    "step": 2,
+    "text": "When and then."
+   },
+   {
+    "start": 27.69,
+    "end": 37.71,
+    "step": 2,
+    "text": "Choose when it runs (a document is uploaded, a signature completes, a renewal is coming, or a schedule) and what happens next (extract, tag, notify or email)."
+   },
+   {
+    "start": 38.86,
+    "end": 39.74,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 40.06,
+    "end": 43.62,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "client-portal": {
+  "duration": 42.61,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 1.64,
+    "step": -1,
+    "text": "What your clients see."
+   },
+   {
+    "start": 1.96,
+    "end": 6.96,
+    "step": -1,
+    "text": "Your clients sign in to your portal to upload documents, see what's needed and message you."
+   },
+   {
+    "start": 8.11,
+    "end": 9.41,
+    "step": 0,
+    "text": "Passwordless sign-in."
+   },
+   {
+    "start": 9.73,
+    "end": 15.49,
+    "step": 0,
+    "text": "Clients enter their email and type the code you send them, or click the one-time link in their invite."
+   },
+   {
+    "start": 16.64,
+    "end": 18.09,
+    "step": 1,
+    "text": "Upload from any device."
+   },
+   {
+    "start": 18.41,
+    "end": 20.48,
+    "step": 1,
+    "text": "Their checklist shows what's still needed."
+   },
+   {
+    "start": 20.8,
+    "end": 25.3,
+    "step": 1,
+    "text": "They can upload from a phone camera or computer, and mark items that don't apply."
+   },
+   {
+    "start": 26.45,
+    "end": 28.16,
+    "step": 2,
+    "text": "Messages and shared files."
+   },
+   {
+    "start": 28.48,
+    "end": 32.23,
+    "step": 2,
+    "text": "Clients message you securely and download files you share with them."
+   },
+   {
+    "start": 32.55,
+    "end": 36.01,
+    "step": 2,
+    "text": "Use Open client portal in Clients to see it as they do."
+   },
+   {
+    "start": 37.16,
+    "end": 38.03,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 38.35,
+    "end": 41.91,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "client-requests": {
+  "duration": 54.92,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 2.28,
+    "step": -1,
+    "text": "Request documents from clients."
+   },
+   {
+    "start": 2.6,
+    "end": 7.45,
+    "step": -1,
+    "text": "Send checklists, track progress by stage, and let AI check every upload."
+   },
+   {
+    "start": 8.6,
+    "end": 9.9,
+    "step": 0,
+    "text": "Request documents."
+   },
+   {
+    "start": 10.22,
+    "end": 12.76,
+    "step": 0,
+    "text": "Open a client and click Request documents."
+   },
+   {
+    "start": 13.08,
+    "end": 19.69,
+    "step": 0,
+    "text": "Start from New client onboarding, ID verification, Employee onboarding, a tax checklist or your own list."
+   },
+   {
+    "start": 20.84,
+    "end": 22.25,
+    "step": 1,
+    "text": "Repeat automatically."
+   },
+   {
+    "start": 22.57,
+    "end": 28.05,
+    "step": 1,
+    "text": "Choose to repeat the request every month, quarter or year, for example for monthly bookkeeping."
+   },
+   {
+    "start": 29.2,
+    "end": 30.4,
+    "step": 2,
+    "text": "Uploads are checked."
+   },
+   {
+    "start": 30.72,
+    "end": 36.37,
+    "step": 2,
+    "text": "Each upload is checked against the item it was sent for, renamed and filed under the client and year."
+   },
+   {
+    "start": 36.69,
+    "end": 39.23,
+    "step": 2,
+    "text": "Problems are flagged for you and for the client."
+   },
+   {
+    "start": 40.38,
+    "end": 41.62,
+    "step": 3,
+    "text": "Move clients along."
+   },
+   {
+    "start": 41.94,
+    "end": 46.03,
+    "step": 3,
+    "text": "Click a stage to move the client from Waiting on client through to Completed."
+   },
+   {
+    "start": 46.35,
+    "end": 48.31,
+    "step": 3,
+    "text": "The dashboard shows who needs attention."
+   },
+   {
+    "start": 49.46,
+    "end": 50.34,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 50.66,
+    "end": 54.22,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "clients-setup": {
+  "duration": 47.88,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 2.22,
+    "step": -1,
+    "text": "Set up Clients and your portal."
+   },
+   {
+    "start": 2.54,
+    "end": 7.3,
+    "step": -1,
+    "text": "Give your clients a branded portal and keep everything about each client in one place."
+   },
+   {
+    "start": 8.45,
+    "end": 9.51,
+    "step": 0,
+    "text": "Open Clients."
+   },
+   {
+    "start": 9.83,
+    "end": 11.58,
+    "step": 0,
+    "text": "Click Clients in the left menu."
+   },
+   {
+    "start": 11.9,
+    "end": 15.1,
+    "step": 0,
+    "text": "The dashboard shows where every client stands for the fiscal year."
+   },
+   {
+    "start": 16.25,
+    "end": 17.3,
+    "step": 1,
+    "text": "Brand your portal."
+   },
+   {
+    "start": 17.62,
+    "end": 20.82,
+    "step": 1,
+    "text": "In Firm settings, set your firm's name, colour and logo."
+   },
+   {
+    "start": 21.14,
+    "end": 22.82,
+    "step": 1,
+    "text": "Clients see them when they sign in."
+   },
+   {
+    "start": 23.97,
+    "end": 25.02,
+    "step": 2,
+    "text": "Add clients."
+   },
+   {
+    "start": 25.34,
+    "end": 29.54,
+    "step": 2,
+    "text": "Click Add client, or Import to bring in a spreadsheet of names and emails."
+   },
+   {
+    "start": 29.86,
+    "end": 32.27,
+    "step": 2,
+    "text": "Pro includes up to 50 active clients."
+   },
+   {
+    "start": 33.42,
+    "end": 34.36,
+    "step": 3,
+    "text": "Invite them."
+   },
+   {
+    "start": 34.68,
+    "end": 37.16,
+    "step": 3,
+    "text": "Open a client and click Invite to portal."
+   },
+   {
+    "start": 37.48,
+    "end": 41.27,
+    "step": 3,
+    "text": "They sign in with a code by email, with no password to remember."
+   },
+   {
+    "start": 42.42,
+    "end": 43.3,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 43.62,
+    "end": 47.18,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "cloud-and-email-in": {
+  "duration": 46.24,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 2.65,
+    "step": -1,
+    "text": "Cloud storage, email in and Stripe."
+   },
+   {
+    "start": 2.97,
+    "end": 9.99,
+    "step": -1,
+    "text": "Connect Google Drive, Dropbox or OneDrive, email documents to pdftek, and get paid with Stripe."
+   },
+   {
+    "start": 11.14,
+    "end": 12.48,
+    "step": 0,
+    "text": "Open Integrations."
+   },
+   {
+    "start": 12.8,
+    "end": 14.66,
+    "step": 0,
+    "text": "Open Settings, Integrations."
+   },
+   {
+    "start": 15.81,
+    "end": 16.94,
+    "step": 1,
+    "text": "Cloud storage."
+   },
+   {
+    "start": 17.26,
+    "end": 24.32,
+    "step": 1,
+    "text": "Connect Google Drive, Dropbox or OneDrive to open files from them and save results back with Save to cloud."
+   },
+   {
+    "start": 25.47,
+    "end": 27.03,
+    "step": 2,
+    "text": "Email to pdftek."
+   },
+   {
+    "start": 27.35,
+    "end": 29.44,
+    "step": 2,
+    "text": "Turn on your workspace's email address."
+   },
+   {
+    "start": 29.76,
+    "end": 34.07,
+    "step": 2,
+    "text": "Attachments sent to it are added to your documents, and you choose who can send."
+   },
+   {
+    "start": 35.22,
+    "end": 36.47,
+    "step": 3,
+    "text": "Payments with Stripe."
+   },
+   {
+    "start": 36.79,
+    "end": 39.63,
+    "step": 3,
+    "text": "Connect Stripe to collect payments when people sign."
+   },
+   {
+    "start": 40.78,
+    "end": 41.66,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 41.98,
+    "end": 45.54,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "compare": {
+  "duration": 34.98,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 1.82,
+    "step": -1,
+    "text": "Compare two documents."
+   },
+   {
+    "start": 2.14,
+    "end": 6.44,
+    "step": -1,
+    "text": "See every change between two documents, or between two versions of one."
+   },
+   {
+    "start": 7.59,
+    "end": 8.64,
+    "step": 0,
+    "text": "Open Compare."
+   },
+   {
+    "start": 8.96,
+    "end": 13.14,
+    "step": 0,
+    "text": "Click Compare under Organize in All tools, or Compare in your account menu."
+   },
+   {
+    "start": 14.29,
+    "end": 15.72,
+    "step": 1,
+    "text": "Pick the two documents."
+   },
+   {
+    "start": 16.04,
+    "end": 17.96,
+    "step": 1,
+    "text": "Choose the original and the new one."
+   },
+   {
+    "start": 18.28,
+    "end": 21.48,
+    "step": 1,
+    "text": "Additions and deletions are highlighted side by side."
+   },
+   {
+    "start": 22.63,
+    "end": 23.74,
+    "step": 2,
+    "text": "Compare versions."
+   },
+   {
+    "start": 24.06,
+    "end": 28.37,
+    "step": 2,
+    "text": "In Version history, click Compare next to an earlier version to see what changed."
+   },
+   {
+    "start": 29.52,
+    "end": 30.39,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 30.71,
+    "end": 34.28,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "compress": {
+  "duration": 28.88,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 1.73,
+    "step": -1,
+    "text": "Compress a PDF."
+   },
+   {
+    "start": 2.05,
+    "end": 6.12,
+    "step": -1,
+    "text": "Make a large PDF smaller so it is easier to email and upload."
+   },
+   {
+    "start": 7.27,
+    "end": 8.36,
+    "step": 0,
+    "text": "Open Compress."
+   },
+   {
+    "start": 8.68,
+    "end": 12.71,
+    "step": 0,
+    "text": "Open the document and click Compress under Organize in All tools."
+   },
+   {
+    "start": 13.86,
+    "end": 15.42,
+    "step": 1,
+    "text": "Create the smaller copy."
+   },
+   {
+    "start": 15.74,
+    "end": 22.27,
+    "step": 1,
+    "text": "Choose Recommended for good quality at a much smaller size, or a stronger setting, and create the smaller copy."
+   },
+   {
+    "start": 23.42,
+    "end": 24.29,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 24.61,
+    "end": 28.18,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "convert-from-pdf": {
+  "duration": 48.03,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 4.31,
+    "step": -1,
+    "text": "Convert a PDF to Word, Excel, PowerPoint or images."
+   },
+   {
+    "start": 4.63,
+    "end": 9.54,
+    "step": -1,
+    "text": "Turn a PDF into an editable Office file or into images, keeping the layout."
+   },
+   {
+    "start": 10.69,
+    "end": 11.97,
+    "step": 0,
+    "text": "Open the PDF."
+   },
+   {
+    "start": 12.29,
+    "end": 16.49,
+    "step": 0,
+    "text": "Open the document from Home, or click Convert on Home and choose your file."
+   },
+   {
+    "start": 17.64,
+    "end": 18.69,
+    "step": 1,
+    "text": "Pick a format."
+   },
+   {
+    "start": 19.01,
+    "end": 25.64,
+    "step": 1,
+    "text": "In All tools, under Convert, click To Word, To Excel, To PowerPoint, To JPG or To PNG."
+   },
+   {
+    "start": 26.79,
+    "end": 27.79,
+    "step": 2,
+    "text": "More formats."
+   },
+   {
+    "start": 28.11,
+    "end": 33.83,
+    "step": 2,
+    "text": "Click More formats for WEBP, TIFF or plain text, or to convert only the page you are looking at."
+   },
+   {
+    "start": 34.98,
+    "end": 35.86,
+    "step": 3,
+    "text": "Download."
+   },
+   {
+    "start": 36.18,
+    "end": 38.35,
+    "step": 3,
+    "text": "The converted file downloads straight away."
+   },
+   {
+    "start": 38.67,
+    "end": 41.42,
+    "step": 3,
+    "text": "Your original PDF stays in your documents."
+   },
+   {
+    "start": 42.57,
+    "end": 43.45,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 43.77,
+    "end": 47.33,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "convert-to-pdf": {
+  "duration": 43.96,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 4.23,
+    "step": -1,
+    "text": "Convert Word, Excel, PowerPoint or images to PDF."
+   },
+   {
+    "start": 4.55,
+    "end": 9.0,
+    "step": -1,
+    "text": "Make a PDF from Office files, text files, TIFFs or a set of photos."
+   },
+   {
+    "start": 10.15,
+    "end": 11.52,
+    "step": 0,
+    "text": "Files to PDF."
+   },
+   {
+    "start": 11.84,
+    "end": 18.71,
+    "step": 0,
+    "text": "In All tools, click Files \u2192 PDF, or choose Word, Excel or PowerPoint to PDF in the New menu."
+   },
+   {
+    "start": 19.86,
+    "end": 20.93,
+    "step": 1,
+    "text": "Add your files."
+   },
+   {
+    "start": 21.25,
+    "end": 22.7,
+    "step": 1,
+    "text": "Pick one or more files."
+   },
+   {
+    "start": 23.02,
+    "end": 26.96,
+    "step": 1,
+    "text": "Each becomes a PDF in your documents, ready for every other tool."
+   },
+   {
+    "start": 28.11,
+    "end": 29.59,
+    "step": 2,
+    "text": "Images to PDF."
+   },
+   {
+    "start": 29.91,
+    "end": 33.98,
+    "step": 2,
+    "text": "Choose Images to PDF to combine photos into one document."
+   },
+   {
+    "start": 34.3,
+    "end": 37.35,
+    "step": 2,
+    "text": "Set the page size and the order before you create it."
+   },
+   {
+    "start": 38.5,
+    "end": 39.38,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 39.7,
+    "end": 43.26,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "document-requests": {
+  "duration": 44.13,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 2.6,
+    "step": -1,
+    "text": "Request documents with a secure link."
+   },
+   {
+    "start": 2.92,
+    "end": 6.57,
+    "step": -1,
+    "text": "Send a checklist and collect files without email attachments."
+   },
+   {
+    "start": 6.89,
+    "end": 9.24,
+    "step": -1,
+    "text": "Anyone can upload, no account needed."
+   },
+   {
+    "start": 10.39,
+    "end": 11.35,
+    "step": 0,
+    "text": "New request."
+   },
+   {
+    "start": 11.67,
+    "end": 14.53,
+    "step": 0,
+    "text": "Click Requests in the left menu, then New request."
+   },
+   {
+    "start": 14.85,
+    "end": 20.37,
+    "step": 0,
+    "text": "Start from a checklist such as ID verification or Rental application, or write your own."
+   },
+   {
+    "start": 21.52,
+    "end": 22.29,
+    "step": 1,
+    "text": "Send it."
+   },
+   {
+    "start": 22.61,
+    "end": 24.79,
+    "step": 1,
+    "text": "Add the person's email and a due date."
+   },
+   {
+    "start": 25.11,
+    "end": 29.74,
+    "step": 1,
+    "text": "They get a secure link; reminders go out automatically until everything arrives."
+   },
+   {
+    "start": 30.89,
+    "end": 32.02,
+    "step": 2,
+    "text": "Collect the files."
+   },
+   {
+    "start": 32.34,
+    "end": 35.24,
+    "step": 2,
+    "text": "Uploads land in your documents, named and tagged."
+   },
+   {
+    "start": 35.56,
+    "end": 37.52,
+    "step": 2,
+    "text": "You can see what's still missing at a glance."
+   },
+   {
+    "start": 38.67,
+    "end": 39.55,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 39.87,
+    "end": 43.43,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "edit-pdf": {
+  "duration": 52.7,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 2.67,
+    "step": -1,
+    "text": "Edit text and images in a PDF."
+   },
+   {
+    "start": 2.99,
+    "end": 7.66,
+    "step": -1,
+    "text": "Change existing text, type anywhere, add images, highlight, draw and white out."
+   },
+   {
+    "start": 8.81,
+    "end": 9.75,
+    "step": 0,
+    "text": "Start editing."
+   },
+   {
+    "start": 10.07,
+    "end": 14.06,
+    "step": 0,
+    "text": "Open the document and click Edit PDF on Home or in All tools."
+   },
+   {
+    "start": 14.38,
+    "end": 18.03,
+    "step": 0,
+    "text": "You hold the edit lock while you work, so teammates don't overwrite you."
+   },
+   {
+    "start": 19.18,
+    "end": 20.56,
+    "step": 1,
+    "text": "Change or add text."
+   },
+   {
+    "start": 20.88,
+    "end": 26.41,
+    "step": 1,
+    "text": "Click any text to change it in a matching font, or choose Add text and click where you want to type."
+   },
+   {
+    "start": 27.56,
+    "end": 29.52,
+    "step": 2,
+    "text": "Images, highlights and drawings."
+   },
+   {
+    "start": 29.84,
+    "end": 34.53,
+    "step": 2,
+    "text": "Use Image, Highlight, Draw, Shape and Whiteout in the toolbar above the page."
+   },
+   {
+    "start": 34.85,
+    "end": 37.56,
+    "step": 2,
+    "text": "Colour and thickness appear when a tool is selected."
+   },
+   {
+    "start": 38.71,
+    "end": 39.93,
+    "step": 3,
+    "text": "Save a new version."
+   },
+   {
+    "start": 40.25,
+    "end": 41.42,
+    "step": 3,
+    "text": "Click Save version."
+   },
+   {
+    "start": 41.74,
+    "end": 46.1,
+    "step": 3,
+    "text": "Your edit becomes a new version, and the earlier one stays in Version history."
+   },
+   {
+    "start": 47.25,
+    "end": 48.12,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 48.44,
+    "end": 52.0,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "extract-data": {
+  "duration": 38.58,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 2.8,
+    "step": -1,
+    "text": "Extract key terms, dates and tables."
+   },
+   {
+    "start": 3.12,
+    "end": 7.34,
+    "step": -1,
+    "text": "Pull structured data out of a document into a table you can download."
+   },
+   {
+    "start": 8.49,
+    "end": 9.62,
+    "step": 0,
+    "text": "Open Extract."
+   },
+   {
+    "start": 9.94,
+    "end": 15.49,
+    "step": 0,
+    "text": "Click Ask AI, then the Extract tab, or Extract data under AI in All tools."
+   },
+   {
+    "start": 16.64,
+    "end": 17.77,
+    "step": 1,
+    "text": "Choose what to pull."
+   },
+   {
+    "start": 18.09,
+    "end": 24.62,
+    "step": 1,
+    "text": "Pick Key terms, Dates and deadlines, Risk flags, Obligations, Parties, Financial figures or Tables."
+   },
+   {
+    "start": 25.77,
+    "end": 26.92,
+    "step": 2,
+    "text": "Use the results."
+   },
+   {
+    "start": 27.24,
+    "end": 29.84,
+    "step": 2,
+    "text": "Results appear as tables with page references."
+   },
+   {
+    "start": 30.16,
+    "end": 31.97,
+    "step": 2,
+    "text": "Download them as a spreadsheet."
+   },
+   {
+    "start": 33.12,
+    "end": 34.0,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 34.32,
+    "end": 37.88,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "fill-forms": {
+  "duration": 38.2,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 2.5,
+    "step": -1,
+    "text": "Fill a PDF form with AI."
+   },
+   {
+    "start": 2.82,
+    "end": 6.59,
+    "step": -1,
+    "text": "pdftek finds every field and fills it from your profile."
+   },
+   {
+    "start": 6.91,
+    "end": 8.43,
+    "step": -1,
+    "text": "You check and finish the rest."
+   },
+   {
+    "start": 9.58,
+    "end": 10.77,
+    "step": 0,
+    "text": "Open Fill form."
+   },
+   {
+    "start": 11.09,
+    "end": 15.21,
+    "step": 0,
+    "text": "Open the form and click Fill a form on Home or Fill form in All tools."
+   },
+   {
+    "start": 16.36,
+    "end": 17.49,
+    "step": 1,
+    "text": "Review the fields."
+   },
+   {
+    "start": 17.81,
+    "end": 22.8,
+    "step": 1,
+    "text": "Every field is found, including on scanned forms, and filled from your saved profile."
+   },
+   {
+    "start": 23.12,
+    "end": 24.74,
+    "step": 1,
+    "text": "Click any field to change it."
+   },
+   {
+    "start": 25.89,
+    "end": 26.98,
+    "step": 2,
+    "text": "Sign and save."
+   },
+   {
+    "start": 27.3,
+    "end": 31.59,
+    "step": 2,
+    "text": "Add your signature, then save the filled form as a new version or download it."
+   },
+   {
+    "start": 32.74,
+    "end": 33.62,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 33.94,
+    "end": 37.5,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "getting-started": {
+  "duration": 68.17,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 2.28,
+    "step": -1,
+    "text": "Get started with pdftek."
+   },
+   {
+    "start": 2.6,
+    "end": 7.58,
+    "step": -1,
+    "text": "A quick tour of your workbench: the Home screen, your documents and where every tool lives."
+   },
+   {
+    "start": 8.73,
+    "end": 9.69,
+    "step": 0,
+    "text": "Start free."
+   },
+   {
+    "start": 10.01,
+    "end": 12.25,
+    "step": 0,
+    "text": "Click Start free on pdftek.com."
+   },
+   {
+    "start": 12.57,
+    "end": 15.91,
+    "step": 0,
+    "text": "You get a private workspace straight away, no sign-up needed."
+   },
+   {
+    "start": 16.23,
+    "end": 19.88,
+    "step": 0,
+    "text": "Create a free account to keep your files and get more tasks a day."
+   },
+   {
+    "start": 21.03,
+    "end": 22.1,
+    "step": 1,
+    "text": "Your Home screen."
+   },
+   {
+    "start": 22.42,
+    "end": 31.68,
+    "step": 1,
+    "text": "Home shows a greeting, six quick starts (Convert, Edit PDF, Sign or send, Fill a form, Scan and Ask AI) and your recent documents."
+   },
+   {
+    "start": 32.83,
+    "end": 33.87,
+    "step": 2,
+    "text": "The left menu."
+   },
+   {
+    "start": 34.19,
+    "end": 40.89,
+    "step": 2,
+    "text": "Use the menu on the left for Documents, Clients, Signatures, Requests, Automations, All tools and Trash."
+   },
+   {
+    "start": 41.21,
+    "end": 44.03,
+    "step": 2,
+    "text": "Your plan and AI credits are at the bottom."
+   },
+   {
+    "start": 45.18,
+    "end": 46.46,
+    "step": 3,
+    "text": "Open a document."
+   },
+   {
+    "start": 46.78,
+    "end": 48.59,
+    "step": 3,
+    "text": "Click any document to open it."
+   },
+   {
+    "start": 48.91,
+    "end": 54.88,
+    "step": 3,
+    "text": "The page sits in the middle, every tool is listed on the left and Ask AI opens on the right."
+   },
+   {
+    "start": 56.03,
+    "end": 56.97,
+    "step": 4,
+    "text": "Go back Home."
+   },
+   {
+    "start": 57.29,
+    "end": 61.56,
+    "step": 4,
+    "text": "Click the arrow at the top left of a document to return to Home at any time."
+   },
+   {
+    "start": 62.71,
+    "end": 63.58,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 63.9,
+    "end": 67.47,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "language-and-dark-mode": {
+  "duration": 44.62,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 2.73,
+    "step": -1,
+    "text": "Language, dark mode and your profile."
+   },
+   {
+    "start": 3.05,
+    "end": 9.03,
+    "step": -1,
+    "text": "Use pdftek in 26 languages, switch to dark mode and keep your profile up to date."
+   },
+   {
+    "start": 10.18,
+    "end": 11.18,
+    "step": 0,
+    "text": "Account menu."
+   },
+   {
+    "start": 11.5,
+    "end": 18.07,
+    "step": 0,
+    "text": "Click your initials at the top right for Profile, Plan & billing, the language, Dark mode, feedback and Sign out."
+   },
+   {
+    "start": 19.22,
+    "end": 20.48,
+    "step": 1,
+    "text": "Change the language."
+   },
+   {
+    "start": 20.8,
+    "end": 24.0,
+    "step": 1,
+    "text": "Click the language name and pick from 26 languages."
+   },
+   {
+    "start": 24.32,
+    "end": 25.9,
+    "step": 1,
+    "text": "The whole site and app switch."
+   },
+   {
+    "start": 27.05,
+    "end": 27.96,
+    "step": 2,
+    "text": "Dark mode."
+   },
+   {
+    "start": 28.28,
+    "end": 32.51,
+    "step": 2,
+    "text": "Choose Dark mode for a darker workbench; choose Light mode to switch back."
+   },
+   {
+    "start": 33.66,
+    "end": 34.6,
+    "step": 3,
+    "text": "Your profile."
+   },
+   {
+    "start": 34.92,
+    "end": 38.01,
+    "step": 3,
+    "text": "In Settings, Profile, update your name and password."
+   },
+   {
+    "start": 39.16,
+    "end": 40.03,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 40.35,
+    "end": 43.92,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "merge-and-split": {
+  "duration": 40.99,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 2.16,
+    "step": -1,
+    "text": "Merge and split PDFs."
+   },
+   {
+    "start": 2.48,
+    "end": 6.94,
+    "step": -1,
+    "text": "Combine documents into one, or break one into parts by page ranges."
+   },
+   {
+    "start": 8.09,
+    "end": 8.87,
+    "step": 0,
+    "text": "Merge."
+   },
+   {
+    "start": 9.19,
+    "end": 11.71,
+    "step": 0,
+    "text": "Click Merge in All tools or in the New menu."
+   },
+   {
+    "start": 12.03,
+    "end": 16.28,
+    "step": 0,
+    "text": "Pick the documents, drag them into order and create the merged PDF."
+   },
+   {
+    "start": 17.43,
+    "end": 18.17,
+    "step": 1,
+    "text": "Split."
+   },
+   {
+    "start": 18.49,
+    "end": 20.46,
+    "step": 1,
+    "text": "Open a document and click Split."
+   },
+   {
+    "start": 20.78,
+    "end": 27.18,
+    "step": 1,
+    "text": "Type page ranges such as 1-3, 4-6 and each range becomes its own PDF."
+   },
+   {
+    "start": 28.33,
+    "end": 29.56,
+    "step": 2,
+    "text": "Extract pages."
+   },
+   {
+    "start": 29.88,
+    "end": 34.39,
+    "step": 2,
+    "text": "Click Extract pages to copy just the pages you need into a new document."
+   },
+   {
+    "start": 35.54,
+    "end": 36.41,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 36.73,
+    "end": 40.29,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "ocr": {
+  "duration": 41.27,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 2.65,
+    "step": -1,
+    "text": "Make a scan searchable (OCR)."
+   },
+   {
+    "start": 2.97,
+    "end": 7.68,
+    "step": -1,
+    "text": "Recognize the text in scanned pages so you can search, copy and listen to it."
+   },
+   {
+    "start": 8.83,
+    "end": 9.81,
+    "step": 0,
+    "text": "Spot a scan."
+   },
+   {
+    "start": 10.13,
+    "end": 15.17,
+    "step": 0,
+    "text": "Scanned documents show a Scan badge on Home, and a notice above the page when you open them."
+   },
+   {
+    "start": 16.32,
+    "end": 17.45,
+    "step": 1,
+    "text": "Run OCR."
+   },
+   {
+    "start": 17.77,
+    "end": 21.67,
+    "step": 1,
+    "text": "Click Run OCR on the notice, or OCR in All tools."
+   },
+   {
+    "start": 21.99,
+    "end": 25.6,
+    "step": 1,
+    "text": "Pick every language in the document and click Start OCR."
+   },
+   {
+    "start": 26.75,
+    "end": 27.84,
+    "step": 2,
+    "text": "Search the text."
+   },
+   {
+    "start": 28.16,
+    "end": 31.04,
+    "step": 2,
+    "text": "Text recognition runs privately in your browser."
+   },
+   {
+    "start": 31.36,
+    "end": 34.66,
+    "step": 2,
+    "text": "Afterwards the document's words appear in search and Read aloud."
+   },
+   {
+    "start": 35.81,
+    "end": 36.69,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 37.01,
+    "end": 40.57,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "organize-pages": {
+  "duration": 41.59,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 2.67,
+    "step": -1,
+    "text": "Reorder, rotate and delete pages."
+   },
+   {
+    "start": 2.99,
+    "end": 7.0,
+    "step": -1,
+    "text": "Rearrange pages visually and save the result as a new version."
+   },
+   {
+    "start": 8.15,
+    "end": 9.77,
+    "step": 0,
+    "text": "Open Organize pages."
+   },
+   {
+    "start": 10.09,
+    "end": 14.78,
+    "step": 0,
+    "text": "Open the document and click Organize pages under Organize in All tools."
+   },
+   {
+    "start": 15.93,
+    "end": 17.66,
+    "step": 1,
+    "text": "Drag, rotate or remove."
+   },
+   {
+    "start": 17.98,
+    "end": 24.02,
+    "step": 1,
+    "text": "Drag thumbnails to reorder them, rotate pages that are sideways and remove the ones you don't need."
+   },
+   {
+    "start": 25.17,
+    "end": 26.6,
+    "step": 2,
+    "text": "Use the page thumbnails."
+   },
+   {
+    "start": 26.92,
+    "end": 29.82,
+    "step": 2,
+    "text": "The thumbnails beside the page show every page."
+   },
+   {
+    "start": 30.14,
+    "end": 34.98,
+    "step": 2,
+    "text": "Click one to jump to it; the control at the bottom zooms and fits the page to the width."
+   },
+   {
+    "start": 36.13,
+    "end": 37.01,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 37.33,
+    "end": 40.89,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "phone": {
+  "duration": 56.71,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 2.39,
+    "step": -1,
+    "text": "Use pdftek on your phone."
+   },
+   {
+    "start": 2.71,
+    "end": 9.05,
+    "step": -1,
+    "text": "Everything works on a phone: scan with the camera, open tools from a sheet and ask the AI full screen."
+   },
+   {
+    "start": 10.2,
+    "end": 11.31,
+    "step": 0,
+    "text": "Home on your phone."
+   },
+   {
+    "start": 11.63,
+    "end": 16.17,
+    "step": 0,
+    "text": "Search sits at the top, with six quick starts and your recent documents below."
+   },
+   {
+    "start": 16.49,
+    "end": 20.61,
+    "step": 0,
+    "text": "The bar at the bottom has Home, Files, Scan, Clients and Account."
+   },
+   {
+    "start": 21.76,
+    "end": 22.5,
+    "step": 1,
+    "text": "Scan."
+   },
+   {
+    "start": 22.82,
+    "end": 31.49,
+    "step": 1,
+    "text": "Tap the big Scan button to photograph paper documents. pdftek finds the edges, straightens the page and saves a clean PDF."
+   },
+   {
+    "start": 32.64,
+    "end": 34.34,
+    "step": 2,
+    "text": "Tools for the open document."
+   },
+   {
+    "start": 34.66,
+    "end": 36.58,
+    "step": 2,
+    "text": "Open a document and tap Tools."
+   },
+   {
+    "start": 36.9,
+    "end": 40.59,
+    "step": 2,
+    "text": "The sheet shows the most used tools; tap All tools for everything."
+   },
+   {
+    "start": 41.74,
+    "end": 42.9,
+    "step": 3,
+    "text": "Ask AI."
+   },
+   {
+    "start": 43.22,
+    "end": 46.16,
+    "step": 3,
+    "text": "Tap Ask AI for answers about the document."
+   },
+   {
+    "start": 46.48,
+    "end": 50.11,
+    "step": 3,
+    "text": "Tap a page reference in an answer to jump straight to that page."
+   },
+   {
+    "start": 51.26,
+    "end": 52.13,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 52.45,
+    "end": 56.01,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "plans-and-credits": {
+  "duration": 40.54,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 2.75,
+    "step": -1,
+    "text": "Plans, Day Pass and AI credits."
+   },
+   {
+    "start": 3.07,
+    "end": 4.46,
+    "step": -1,
+    "text": "Free tools stay free."
+   },
+   {
+    "start": 4.78,
+    "end": 8.45,
+    "step": -1,
+    "text": "Upgrade for editing, e-signatures, Clients and more AI."
+   },
+   {
+    "start": 9.6,
+    "end": 10.56,
+    "step": 0,
+    "text": "See your plan."
+   },
+   {
+    "start": 10.88,
+    "end": 16.28,
+    "step": 0,
+    "text": "Your plan and AI credits are at the bottom of the left menu and in your account menu."
+   },
+   {
+    "start": 17.43,
+    "end": 18.79,
+    "step": 1,
+    "text": "Upgrade or top up."
+   },
+   {
+    "start": 19.11,
+    "end": 27.16,
+    "step": 1,
+    "text": "Open Settings, Plan & billing to start a free Pro trial, buy a Day Pass for 24 hours, or top up AI credits."
+   },
+   {
+    "start": 28.31,
+    "end": 29.37,
+    "step": 2,
+    "text": "Manage billing."
+   },
+   {
+    "start": 29.69,
+    "end": 33.94,
+    "step": 2,
+    "text": "Change or cancel your plan and download invoices from the same page."
+   },
+   {
+    "start": 35.09,
+    "end": 35.96,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 36.28,
+    "end": 39.84,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "playbook": {
+  "duration": 33.19,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 1.62,
+    "step": -1,
+    "text": "Your review playbook."
+   },
+   {
+    "start": 1.94,
+    "end": 5.72,
+    "step": -1,
+    "text": "Tell the AI your team's rules so it flags what matters to you."
+   },
+   {
+    "start": 6.87,
+    "end": 7.89,
+    "step": 0,
+    "text": "Write your rules."
+   },
+   {
+    "start": 8.21,
+    "end": 17.13,
+    "step": 0,
+    "text": "Open Settings, Review playbook, and write your positions, for example: liability cap at least 12 months of fees, no auto-renewal over one year."
+   },
+   {
+    "start": 18.28,
+    "end": 19.88,
+    "step": 1,
+    "text": "Check documents against it."
+   },
+   {
+    "start": 20.2,
+    "end": 26.58,
+    "step": 1,
+    "text": "Risk flags in Extract, and Compare to playbook in Ask AI, check each document against these rules."
+   },
+   {
+    "start": 27.73,
+    "end": 28.6,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 28.92,
+    "end": 32.49,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "protect-and-unlock": {
+  "duration": 32.31,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 2.03,
+    "step": -1,
+    "text": "Add or remove a password."
+   },
+   {
+    "start": 2.35,
+    "end": 6.81,
+    "step": -1,
+    "text": "Encrypt a PDF with a password and permissions, or unlock one you can open."
+   },
+   {
+    "start": 7.96,
+    "end": 9.0,
+    "step": 0,
+    "text": "Add a password."
+   },
+   {
+    "start": 9.32,
+    "end": 11.8,
+    "step": 0,
+    "text": "Click Add password under Protect in All tools."
+   },
+   {
+    "start": 12.12,
+    "end": 15.94,
+    "step": 0,
+    "text": "Set a password, and choose whether people may print, copy or edit."
+   },
+   {
+    "start": 17.09,
+    "end": 18.24,
+    "step": 1,
+    "text": "Remove a password."
+   },
+   {
+    "start": 18.56,
+    "end": 22.76,
+    "step": 1,
+    "text": "Click Remove password, upload the locked PDF and enter its password."
+   },
+   {
+    "start": 23.08,
+    "end": 25.7,
+    "step": 1,
+    "text": "An unlocked copy is added to your documents."
+   },
+   {
+    "start": 26.85,
+    "end": 27.73,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 28.05,
+    "end": 31.61,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "read-aloud": {
+  "duration": 26.89,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 1.86,
+    "step": -1,
+    "text": "Listen to a document."
+   },
+   {
+    "start": 2.18,
+    "end": 6.15,
+    "step": -1,
+    "text": "Have pdftek read a document to you, in 11 languages."
+   },
+   {
+    "start": 7.3,
+    "end": 8.26,
+    "step": 0,
+    "text": "Start reading."
+   },
+   {
+    "start": 8.58,
+    "end": 12.97,
+    "step": 0,
+    "text": "Open the document and click Read PDF under AI in All tools."
+   },
+   {
+    "start": 14.12,
+    "end": 15.25,
+    "step": 1,
+    "text": "Control playback."
+   },
+   {
+    "start": 15.57,
+    "end": 18.05,
+    "step": 1,
+    "text": "Pause, skip, change the speed or the voice."
+   },
+   {
+    "start": 18.37,
+    "end": 20.29,
+    "step": 1,
+    "text": "Reading starts from the page you are on."
+   },
+   {
+    "start": 21.44,
+    "end": 22.31,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 22.63,
+    "end": 26.19,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "redact": {
+  "duration": 35.51,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 2.14,
+    "step": -1,
+    "text": "Redact sensitive information."
+   },
+   {
+    "start": 2.46,
+    "end": 7.04,
+    "step": -1,
+    "text": "Permanently remove names, numbers or anything else before you share a document."
+   },
+   {
+    "start": 8.19,
+    "end": 9.28,
+    "step": 0,
+    "text": "Open Redact."
+   },
+   {
+    "start": 9.6,
+    "end": 12.48,
+    "step": 0,
+    "text": "Click Redact under Edit or Protect in All tools."
+   },
+   {
+    "start": 13.63,
+    "end": 14.91,
+    "step": 1,
+    "text": "Mark what to remove."
+   },
+   {
+    "start": 15.23,
+    "end": 17.68,
+    "step": 1,
+    "text": "Drag over text or areas to black them out."
+   },
+   {
+    "start": 18.0,
+    "end": 21.1,
+    "step": 1,
+    "text": "Each mark can be moved or deleted until you save."
+   },
+   {
+    "start": 22.25,
+    "end": 22.99,
+    "step": 2,
+    "text": "Save."
+   },
+   {
+    "start": 23.31,
+    "end": 24.49,
+    "step": 2,
+    "text": "Click Save version."
+   },
+   {
+    "start": 24.81,
+    "end": 28.9,
+    "step": 2,
+    "text": "Redacted content is removed from the file for good, not just hidden."
+   },
+   {
+    "start": 30.05,
+    "end": 30.93,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 31.25,
+    "end": 34.81,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "request-signatures": {
+  "duration": 51.36,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 1.69,
+    "step": -1,
+    "text": "Request signatures."
+   },
+   {
+    "start": 2.01,
+    "end": 7.13,
+    "step": -1,
+    "text": "Send a document for legally binding e-signature, with reminders and an audit trail."
+   },
+   {
+    "start": 8.28,
+    "end": 9.66,
+    "step": 0,
+    "text": "Click Request signature."
+   },
+   {
+    "start": 9.98,
+    "end": 13.23,
+    "step": 0,
+    "text": "Open the document and click Request signature at the top."
+   },
+   {
+    "start": 14.38,
+    "end": 15.83,
+    "step": 1,
+    "text": "Add signers and fields."
+   },
+   {
+    "start": 16.15,
+    "end": 23.51,
+    "step": 1,
+    "text": "Add each signer's name and email, then drag signature, date, initials and text fields onto the page for each person."
+   },
+   {
+    "start": 23.83,
+    "end": 25.53,
+    "step": 1,
+    "text": "Choose whether they sign in order."
+   },
+   {
+    "start": 26.68,
+    "end": 27.75,
+    "step": 2,
+    "text": "Send and track."
+   },
+   {
+    "start": 28.07,
+    "end": 28.95,
+    "step": 2,
+    "text": "Click Send."
+   },
+   {
+    "start": 29.27,
+    "end": 31.48,
+    "step": 2,
+    "text": "Signers get an email with a secure link."
+   },
+   {
+    "start": 31.8,
+    "end": 35.32,
+    "step": 2,
+    "text": "Follow progress, send reminders or cancel in Signatures."
+   },
+   {
+    "start": 36.47,
+    "end": 37.58,
+    "step": 3,
+    "text": "The signed copy."
+   },
+   {
+    "start": 37.9,
+    "end": 44.75,
+    "step": 3,
+    "text": "When everyone has signed, the signed PDF and its audit trail are saved as a new version and emailed to everyone."
+   },
+   {
+    "start": 45.9,
+    "end": 46.78,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 47.1,
+    "end": 50.66,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "scan": {
+  "duration": 40.78,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 1.92,
+    "step": -1,
+    "text": "Scan paper documents."
+   },
+   {
+    "start": 2.24,
+    "end": 6.89,
+    "step": -1,
+    "text": "Use your phone or laptop camera to make a clean, straight, searchable PDF."
+   },
+   {
+    "start": 8.04,
+    "end": 9.09,
+    "step": 0,
+    "text": "Open the scanner."
+   },
+   {
+    "start": 9.41,
+    "end": 14.95,
+    "step": 0,
+    "text": "Click Scan on Home, choose Scan with camera in the New menu, or tap the Scan button on your phone."
+   },
+   {
+    "start": 16.1,
+    "end": 17.24,
+    "step": 1,
+    "text": "Capture pages."
+   },
+   {
+    "start": 17.56,
+    "end": 25.58,
+    "step": 1,
+    "text": "Hold the page in view and take a photo. pdftek detects the edges and straightens it; add as many pages as you need."
+   },
+   {
+    "start": 26.73,
+    "end": 28.28,
+    "step": 2,
+    "text": "Save and make it searchable."
+   },
+   {
+    "start": 28.6,
+    "end": 30.35,
+    "step": 2,
+    "text": "Save the scan as a PDF."
+   },
+   {
+    "start": 30.67,
+    "end": 34.17,
+    "step": 2,
+    "text": "Run OCR on it so you can search and copy its text."
+   },
+   {
+    "start": 35.32,
+    "end": 36.2,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 36.52,
+    "end": 40.08,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "search": {
+  "duration": 50.48,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 1.52,
+    "step": -1,
+    "text": "Search everything."
+   },
+   {
+    "start": 1.84,
+    "end": 9.18,
+    "step": -1,
+    "text": "One search box finds documents by name, words inside any page, tools, or sends your question to the AI."
+   },
+   {
+    "start": 10.33,
+    "end": 11.33,
+    "step": 0,
+    "text": "Open search."
+   },
+   {
+    "start": 11.65,
+    "end": 16.3,
+    "step": 0,
+    "text": "Click the search box at the top, or press the slash key on your keyboard from anywhere."
+   },
+   {
+    "start": 17.45,
+    "end": 19.8,
+    "step": 1,
+    "text": "Find a tool, a document or a page."
+   },
+   {
+    "start": 20.12,
+    "end": 21.31,
+    "step": 1,
+    "text": "Type a few letters."
+   },
+   {
+    "start": 21.63,
+    "end": 27.58,
+    "step": 1,
+    "text": "Results show matching tools, document names and the exact pages where your words appear, highlighted."
+   },
+   {
+    "start": 28.73,
+    "end": 29.84,
+    "step": 2,
+    "text": "Jump to the page."
+   },
+   {
+    "start": 30.16,
+    "end": 35.07,
+    "step": 2,
+    "text": "Click a result inside a document and it opens at that page with your words highlighted."
+   },
+   {
+    "start": 36.22,
+    "end": 37.2,
+    "step": 3,
+    "text": "Ask instead."
+   },
+   {
+    "start": 37.52,
+    "end": 43.88,
+    "step": 3,
+    "text": "The last result asks the AI your question, about the open document or your whole library."
+   },
+   {
+    "start": 45.03,
+    "end": 45.9,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 46.22,
+    "end": 49.78,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "sign-templates-and-links": {
+  "duration": 54.03,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 3.74,
+    "step": -1,
+    "text": "Signing templates, bulk send, signing links and payments."
+   },
+   {
+    "start": 4.06,
+    "end": 9.56,
+    "step": -1,
+    "text": "Set a document up once and send it forever, to many people at once or with one public link."
+   },
+   {
+    "start": 10.71,
+    "end": 11.8,
+    "step": 0,
+    "text": "Save a template."
+   },
+   {
+    "start": 12.12,
+    "end": 14.38,
+    "step": 0,
+    "text": "Click Save as template under Fill & sign."
+   },
+   {
+    "start": 14.7,
+    "end": 18.39,
+    "step": 0,
+    "text": "Name the roles, for example Client, and place their fields once."
+   },
+   {
+    "start": 19.54,
+    "end": 20.44,
+    "step": 1,
+    "text": "Bulk send."
+   },
+   {
+    "start": 20.76,
+    "end": 23.34,
+    "step": 1,
+    "text": "In Signatures, choose a template and Bulk send."
+   },
+   {
+    "start": 23.66,
+    "end": 27.54,
+    "step": 1,
+    "text": "Paste a list of names and emails; everyone gets their own copy."
+   },
+   {
+    "start": 28.69,
+    "end": 30.23,
+    "step": 2,
+    "text": "One link anyone can sign."
+   },
+   {
+    "start": 30.55,
+    "end": 33.83,
+    "step": 2,
+    "text": "Create a Signing link to put on your website or in an email."
+   },
+   {
+    "start": 34.15,
+    "end": 37.33,
+    "step": 2,
+    "text": "Set an end date or a limit on signers if you need to."
+   },
+   {
+    "start": 38.48,
+    "end": 39.8,
+    "step": 3,
+    "text": "Get paid when they sign."
+   },
+   {
+    "start": 40.12,
+    "end": 45.58,
+    "step": 3,
+    "text": "Connect Stripe in Settings, Integrations, then add Collect a payment to a template or link."
+   },
+   {
+    "start": 45.9,
+    "end": 47.42,
+    "step": 3,
+    "text": "Signers pay as they sign."
+   },
+   {
+    "start": 48.57,
+    "end": 49.44,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 49.76,
+    "end": 53.33,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "statement-to-excel": {
+  "duration": 36.3,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 2.52,
+    "step": -1,
+    "text": "Bank statements and invoices to Excel."
+   },
+   {
+    "start": 2.84,
+    "end": 7.96,
+    "step": -1,
+    "text": "Pull every transaction or line item into a clean spreadsheet, checked against the totals."
+   },
+   {
+    "start": 9.11,
+    "end": 10.33,
+    "step": 0,
+    "text": "Choose the converter."
+   },
+   {
+    "start": 10.65,
+    "end": 15.15,
+    "step": 0,
+    "text": "Click Statement \u2192 Excel or Invoice \u2192 Excel under Convert in All tools."
+   },
+   {
+    "start": 16.3,
+    "end": 17.38,
+    "step": 1,
+    "text": "Check the results."
+   },
+   {
+    "start": 17.7,
+    "end": 24.19,
+    "step": 1,
+    "text": "Transactions are listed with dates, descriptions and amounts and checked against the opening and closing balances."
+   },
+   {
+    "start": 25.34,
+    "end": 26.21,
+    "step": 2,
+    "text": "Download."
+   },
+   {
+    "start": 26.53,
+    "end": 29.69,
+    "step": 2,
+    "text": "Download the spreadsheet, ready for your accounting software."
+   },
+   {
+    "start": 30.84,
+    "end": 31.72,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 32.04,
+    "end": 35.6,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "translate": {
+  "duration": 34.34,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 1.84,
+    "step": -1,
+    "text": "Translate a PDF."
+   },
+   {
+    "start": 2.16,
+    "end": 7.02,
+    "step": -1,
+    "text": "Translate a whole PDF into 35+ languages while keeping its layout."
+   },
+   {
+    "start": 8.17,
+    "end": 9.32,
+    "step": 0,
+    "text": "Open Translate."
+   },
+   {
+    "start": 9.64,
+    "end": 12.42,
+    "step": 0,
+    "text": "Click Translate under AI in All tools."
+   },
+   {
+    "start": 13.57,
+    "end": 14.68,
+    "step": 1,
+    "text": "Pick the language."
+   },
+   {
+    "start": 15.0,
+    "end": 16.21,
+    "step": 1,
+    "text": "Choose the language."
+   },
+   {
+    "start": 16.53,
+    "end": 19.99,
+    "step": 1,
+    "text": "You see roughly how many credits it will use before you start."
+   },
+   {
+    "start": 21.14,
+    "end": 22.55,
+    "step": 2,
+    "text": "Open the translation."
+   },
+   {
+    "start": 22.87,
+    "end": 27.73,
+    "step": 2,
+    "text": "The translated PDF is added to your documents and opens when it is ready."
+   },
+   {
+    "start": 28.88,
+    "end": 29.75,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 30.07,
+    "end": 33.64,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "upload-and-organize": {
+  "duration": 70.39,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 2.5,
+    "step": -1,
+    "text": "Upload and organize documents."
+   },
+   {
+    "start": 2.82,
+    "end": 8.71,
+    "step": -1,
+    "text": "Add files from your computer, your phone or the cloud, then rename, tag, filter and tidy them up."
+   },
+   {
+    "start": 9.86,
+    "end": 10.84,
+    "step": 0,
+    "text": "Add files."
+   },
+   {
+    "start": 11.16,
+    "end": 15.51,
+    "step": 0,
+    "text": "Click New, then Upload files, or drag files anywhere onto the Home screen."
+   },
+   {
+    "start": 15.83,
+    "end": 23.27,
+    "step": 0,
+    "text": "PDFs, Word, Excel, PowerPoint, images and TIFF all work; other formats become PDFs as they upload."
+   },
+   {
+    "start": 24.42,
+    "end": 25.38,
+    "step": 1,
+    "text": "From the cloud."
+   },
+   {
+    "start": 25.7,
+    "end": 32.57,
+    "step": 1,
+    "text": "Choose From Google Drive, Dropbox or OneDrive in the New menu to open files straight from your cloud storage."
+   },
+   {
+    "start": 33.72,
+    "end": 35.22,
+    "step": 2,
+    "text": "Filter and switch views."
+   },
+   {
+    "start": 35.54,
+    "end": 40.36,
+    "step": 2,
+    "text": "Use the chips to show only PDFs, files from Office, scans or a tag."
+   },
+   {
+    "start": 40.68,
+    "end": 43.99,
+    "step": 2,
+    "text": "Switch between the grid and the list with the buttons on the right."
+   },
+   {
+    "start": 45.14,
+    "end": 46.84,
+    "step": 3,
+    "text": "Rename, tag or download."
+   },
+   {
+    "start": 47.16,
+    "end": 52.88,
+    "step": 3,
+    "text": "Click the three dots on a document for Rename, Tags, Download PDF or Move to trash."
+   },
+   {
+    "start": 53.2,
+    "end": 56.38,
+    "step": 3,
+    "text": "Tags appear as filter chips so you can group documents."
+   },
+   {
+    "start": 57.53,
+    "end": 58.77,
+    "step": 4,
+    "text": "Restore from Trash."
+   },
+   {
+    "start": 59.09,
+    "end": 60.79,
+    "step": 4,
+    "text": "Deleted something by mistake?"
+   },
+   {
+    "start": 61.11,
+    "end": 63.78,
+    "step": 4,
+    "text": "Click Trash in the left menu and choose Restore."
+   },
+   {
+    "start": 64.93,
+    "end": 65.8,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 66.12,
+    "end": 69.69,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "versions-and-teamwork": {
+  "duration": 48.33,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 2.39,
+    "step": -1,
+    "text": "Versions, check out and hand off."
+   },
+   {
+    "start": 2.71,
+    "end": 5.12,
+    "step": -1,
+    "text": "Every change is a version you can restore."
+   },
+   {
+    "start": 5.44,
+    "end": 8.43,
+    "step": -1,
+    "text": "Lock a document while you work or pass it to a teammate."
+   },
+   {
+    "start": 9.58,
+    "end": 10.67,
+    "step": 0,
+    "text": "Version history."
+   },
+   {
+    "start": 10.99,
+    "end": 14.98,
+    "step": 0,
+    "text": "Click the three dots at the top right of a document, then Version history."
+   },
+   {
+    "start": 15.3,
+    "end": 17.83,
+    "step": 0,
+    "text": "View, compare or restore any earlier version."
+   },
+   {
+    "start": 18.98,
+    "end": 19.86,
+    "step": 1,
+    "text": "Check out."
+   },
+   {
+    "start": 20.18,
+    "end": 22.5,
+    "step": 1,
+    "text": "Choose Check out to lock editing while you work."
+   },
+   {
+    "start": 22.82,
+    "end": 26.73,
+    "step": 1,
+    "text": "Teammates can still read and ask the AI; click Check in when you're done."
+   },
+   {
+    "start": 27.88,
+    "end": 28.73,
+    "step": 2,
+    "text": "Hand off."
+   },
+   {
+    "start": 29.05,
+    "end": 32.25,
+    "step": 2,
+    "text": "Choose Hand off to a teammate, pick a person and add a note."
+   },
+   {
+    "start": 32.57,
+    "end": 34.94,
+    "step": 2,
+    "text": "They're notified, and your lock moves with it."
+   },
+   {
+    "start": 36.09,
+    "end": 37.01,
+    "step": 3,
+    "text": "Share a link."
+   },
+   {
+    "start": 37.33,
+    "end": 41.72,
+    "step": 3,
+    "text": "Click the share button to copy a link to the document for people in your workspace."
+   },
+   {
+    "start": 42.87,
+    "end": 43.75,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 44.07,
+    "end": 47.63,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "watermark-and-page-numbers": {
+  "duration": 37.28,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 2.88,
+    "step": -1,
+    "text": "Watermarks, page numbers and properties."
+   },
+   {
+    "start": 3.2,
+    "end": 7.94,
+    "step": -1,
+    "text": "Stamp DRAFT or CONFIDENTIAL, number your pages or set the title and author."
+   },
+   {
+    "start": 9.09,
+    "end": 9.98,
+    "step": 0,
+    "text": "Watermark."
+   },
+   {
+    "start": 10.3,
+    "end": 16.41,
+    "step": 0,
+    "text": "Click Watermark under Edit in All tools, type the text, then choose its size, angle and opacity."
+   },
+   {
+    "start": 17.56,
+    "end": 18.6,
+    "step": 1,
+    "text": "Page numbers."
+   },
+   {
+    "start": 18.92,
+    "end": 24.64,
+    "step": 1,
+    "text": "Click Page numbers to add Page 1 of 10, plain numbers or Bates numbers in the corner you choose."
+   },
+   {
+    "start": 25.79,
+    "end": 26.64,
+    "step": 2,
+    "text": "Properties."
+   },
+   {
+    "start": 26.96,
+    "end": 30.67,
+    "step": 2,
+    "text": "Click Properties to set the document's title, author and subject."
+   },
+   {
+    "start": 31.82,
+    "end": 32.7,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 33.02,
+    "end": 36.58,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ },
+ "workspaces-and-members": {
+  "duration": 42.27,
+  "cues": [
+   {
+    "start": 0.45,
+    "end": 1.96,
+    "step": -1,
+    "text": "Workspaces and teammates."
+   },
+   {
+    "start": 2.28,
+    "end": 6.64,
+    "step": -1,
+    "text": "Keep work separate in workspaces and invite your team with the right permissions."
+   },
+   {
+    "start": 7.79,
+    "end": 9.43,
+    "step": 0,
+    "text": "Switch or add workspaces."
+   },
+   {
+    "start": 9.75,
+    "end": 13.59,
+    "step": 0,
+    "text": "Click the workspace name at the top to switch, or choose New workspace."
+   },
+   {
+    "start": 13.91,
+    "end": 16.66,
+    "step": 0,
+    "text": "Each has its own documents, members and billing."
+   },
+   {
+    "start": 17.81,
+    "end": 18.94,
+    "step": 1,
+    "text": "Invite teammates."
+   },
+   {
+    "start": 19.26,
+    "end": 20.71,
+    "step": 1,
+    "text": "Open Settings, Members."
+   },
+   {
+    "start": 21.03,
+    "end": 24.17,
+    "step": 1,
+    "text": "Enter an email and choose a role: Member or Admin."
+   },
+   {
+    "start": 24.49,
+    "end": 27.24,
+    "step": 1,
+    "text": "The person who created the workspace is its Owner."
+   },
+   {
+    "start": 28.39,
+    "end": 29.59,
+    "step": 2,
+    "text": "What roles can do."
+   },
+   {
+    "start": 29.91,
+    "end": 33.7,
+    "step": 2,
+    "text": "Admins invite people, edit the playbook and release edit locks."
+   },
+   {
+    "start": 34.02,
+    "end": 35.67,
+    "step": 2,
+    "text": "Owners also manage billing."
+   },
+   {
+    "start": 36.82,
+    "end": 37.69,
+    "step": -1,
+    "text": "That\u2019s it."
+   },
+   {
+    "start": 38.01,
+    "end": 41.57,
+    "step": -1,
+    "text": "Find every guide and video in the pdftek Help Center."
+   }
+  ]
+ }
+}

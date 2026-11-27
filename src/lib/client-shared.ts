@@ -21,7 +21,9 @@ export const CLIENT_KINDS = [
 export type ClientKind = (typeof CLIENT_KINDS)[number]["key"];
 
 /** Services a firm tracks per client and year. */
-export const SERVICES = ["Tax return", "Bookkeeping", "Payroll", "Sales tax", "Advisory"] as const;
+export const SERVICES = ["Client work", "Tax return", "Bookkeeping", "Payroll", "Sales tax", "Advisory"] as const;
+/** What a new client's yearly progress is called until the firm names it. */
+export const DEFAULT_SERVICE = "Client work";
 
 /**
  * The tax year a firm is working on: from November, next season's returns (this year's income);
