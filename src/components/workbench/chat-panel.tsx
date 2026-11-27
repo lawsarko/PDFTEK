@@ -1,14 +1,30 @@
 "use client";
 import { notifyPaywall, notifyUsage } from "../paywall";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api, errMsg } from "@/lib/client/api";
+import { api, errMsg, timeAgo } from "@/lib/client/api";
 import type { ChatMessage, Citation, SourceRef } from "@/lib/client/types";
 import { I } from "../icons";
 import { useToast } from "../toast";
 import { useWB } from "./context";
 import { AiUnavailable, RichText } from "./assistant";
 
-const DOC_SUGGESTIONS = ["Summarize this document", "What are the key dates and deadlines?", "What's our exit path if we just want out?", "Compare to playbook", "List each party's obligations"];
+const CONTRACT = ["Summarize this document", "What are the key dates and deadlines?", "What's our exit path if we just want out?", "Compare to playbook", "List each party's obligations"];
+const INVOICE = ["Summarize this document", "What is the total, and when is it due?", "List the line items with amounts", "Who is the vendor, and how do we pay?"];
+const STATEMENT = ["Summarize this document", "What are the opening and closing balances?", "List the largest transactions", "Are there any fees or unusual charges?"];
+const TAX = ["Summarize this document", "What are the key amounts on this form?", "Which tax year and taxpayer is this for?", "Is anything missing or unsigned?"];
+const RESUME = ["Summarize this document", "List the work history with dates", "What are the key skills?"];
+const GENERAL = ["Summarize this document", "What are the key dates and deadlines?", "List the names, amounts and dates", "What needs action, and by whom?"];
+
+/** Suggested questions that fit the kind of document (from its name and tags). */
+function docSuggestions(name: string, tags: string[]) {
+  const s = `${name} ${tags.join(" ")}`.toLowerCase();
+  if (/invoice|receipt|bill\b|quote|estimate|purchase order|\bpo\b/.test(s)) return INVOICE;
+  if (/statement|bank|account summary|transactions/.test(s)) return STATEMENT;
+  if (/\b(w-?2|w-?9|1099|1040|1098|k-?1|tax|irs)\b/.test(s)) return TAX;
+  if (/resume|résumé|\bcv\b|curriculum/.test(s)) return RESUME;
+  if (/contract|agreement|lease|nda|terms|addendum|amendment|offer|policy|msa|sow/.test(s)) return CONTRACT;
+  return GENERAL;
+}
 const KB_SUGGESTIONS = ["Which contracts renew in the next 90 days?", "Where do we cap liability, and at what amount?", "Summarize everything we have from this vendor"];
 
 export function ChatPanel() {
@@ -24,6 +40,8 @@ export function ChatPanel() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const bottom = useRef<HTMLDivElement>(null);
+  /** A question asked while the panel was still opening; sent once the conversation loads. */
+  const queued = useRef<string | null>(null);
   const endpoint = scope === "doc" && active ? `/api/documents/${active.id}/chat` : `/api/workspaces/${wid}/chat`;
 
   useEffect(() => {
@@ -105,12 +123,20 @@ export function ChatPanel() {
     [busy, endpoint],
   );
 
+  useEffect(() => {
+    if (messages === null || !queued.current) return;
+    const q = queued.current;
+    queued.current = null;
+    void send(q);
+  }, [messages, send]);
+
   // The toolbar's AI buttons ("Summarize", "Ask a question") hand the chat a question.
   useEffect(() => {
     const onAsk = (e: Event) => {
       const { question, submit } = (e as CustomEvent<{ question: string; submit?: boolean }>).detail;
       if (active) setScope("doc");
       if (submit && messages !== null) void send(question);
+      else if (submit && question) queued.current = question;
       else {
         setInput(question);
         setTimeout(() => document.querySelector<HTMLTextAreaElement>(".assistant textarea")?.focus(), 50);
@@ -196,9 +222,38 @@ export function ChatPanel() {
             </div>
           ),
         )}
+        {messages && messages.length === 0 && scope === "doc" && active && info.capabilities.ai && (
+          <div className="wb-sum">
+            <div className="wb-sum-k">
+              <I.file size={13} /> This document
+            </div>
+            <div className="wb-facts">
+              <span>Name</span>
+              <b className="ellipsis">{active.name}</b>
+              <span>Pages</span>
+              <b>{active.pageCount}</b>
+              <span>Updated</span>
+              <b>{timeAgo(active.updatedAt)}</b>
+              {active.tags.length > 0 && (
+                <>
+                  <span>Tags</span>
+                  <b>{active.tags.map((t) => `#${t}`).join(" ")}</b>
+                </>
+              )}
+            </div>
+            <button
+              className="btn btn-sm btn-tonal mt-12"
+              disabled={busy}
+              onClick={() => send("Summarize this document: the main points, the people or companies involved, key dates and amounts, and anything that needs action.")}
+            >
+              <I.sparkle size={13} /> Summarize with key facts
+            </button>
+            <div className="tiny faint mt-8">Answers cite the page they came from. Uses AI credits.</div>
+          </div>
+        )}
         {messages && messages.length < 2 && info.capabilities.ai && (
           <div className="suggestions">
-            {(scope === "doc" ? DOC_SUGGESTIONS : KB_SUGGESTIONS).map((s) => (
+            {(scope === "doc" && active ? docSuggestions(active.name, active.tags) : KB_SUGGESTIONS).map((s) => (
               <button key={s} className="chip" onClick={() => send(s)} disabled={busy}>
                 {s}
               </button>

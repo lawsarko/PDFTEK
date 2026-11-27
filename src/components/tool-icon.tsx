@@ -370,10 +370,14 @@ function Sheet({ x = 0, y = 0, rotate = 0, faded = false }: { x?: number; y?: nu
   );
 }
 
-export function ToolIcon({ slug, size = 56, className }: { slug: string; size?: number; className?: string }) {
+/**
+ * `uid` keeps the gradient ids unique when the same icon appears more than once on a page and one
+ * copy may be hidden (a hidden copy's gradients would blank the visible ones).
+ */
+export function ToolIcon({ slug, size = 56, className, uid }: { slug: string; size?: number; className?: string; uid?: string }) {
   const spec = SPECS[slug] ?? FALLBACK;
   const [light, deep] = PALETTE[spec.family];
-  const id = `ti-${slug}`;
+  const id = `ti-${slug}${uid ? `-${uid.replace(/[^a-zA-Z0-9_-]/g, "")}` : ""}`;
   const behind = spec.paper.kind === "double" || spec.paper.kind === "stack";
   const tilted = spec.paper.kind === "tilted";
   return (

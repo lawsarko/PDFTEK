@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import "./globals.css";
 import "./site.css";
+import "./workbench.css";
 import { ToastProvider } from "@/components/toast";
 import { SaveSheetHost } from "@/components/save-sheet";
 import { PaywallHost } from "@/components/paywall";

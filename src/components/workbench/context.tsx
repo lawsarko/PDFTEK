@@ -21,6 +21,16 @@ export type WB = {
   setMobileView: (v: "library" | "document" | "assistant") => void;
   assistantTab: string;
   setAssistantTab: (t: string) => void;
+  /** The Ask AI panel is open (desktop: beside the page; phone: full screen). */
+  aiOpen: boolean;
+  openAI: (tab?: string) => void;
+  closeAI: () => void;
+  /** Home screen: recent documents, or every document. */
+  section: "home" | "documents";
+  setSection: (s: "home" | "documents") => void;
+  /** Light (default) or dark workbench. */
+  theme: "light" | "dark";
+  setTheme: (t: "light" | "dark") => void;
 };
 
 export const WorkbenchContext = createContext<WB | null>(null);

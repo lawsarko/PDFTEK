@@ -14,13 +14,25 @@ const TABS: [string, string, React.ReactNode][] = [
 ];
 
 export function Assistant() {
-  const { assistantTab, setAssistantTab } = useWB();
+  const { assistantTab, setAssistantTab, closeAI, active } = useWB();
   return (
-    <aside className="assistant">
-      <div className="tabs" role="tablist">
+    <aside className="assistant wb-ai" aria-label="Ask AI">
+      <div className="wb-aih">
+        <span className="wb-spark">
+          <I.sparkle size={18} />
+        </span>
+        <span className="grow">
+          Ask AI
+          <span className="wb-aih-sub">{active ? "About this document" : "Across your library"}</span>
+        </span>
+        <button className="wb-ibtn" onClick={closeAI} aria-label="Close Ask AI" title="Close">
+          <I.x size={18} />
+        </button>
+      </div>
+      <div className="tabs wb-ai-tabs" role="tablist">
         {TABS.map(([key, label]) => (
           <button key={key} role="tab" aria-selected={assistantTab === key} className={`tab ${assistantTab === key ? "active" : ""}`} onClick={() => setAssistantTab(key)}>
-            {label}
+            {TABS.find((t) => t[0] === key)?.[2]} {label}
           </button>
         ))}
       </div>

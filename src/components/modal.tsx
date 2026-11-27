@@ -53,15 +53,18 @@ export function Menu({
   children: React.ReactNode;
   align?: "left" | "right";
 }) {
+  // One outside-click listener while the menu is open (a parent re-rendering doesn't reset it).
+  const close = useRef(onClose);
+  close.current = onClose;
   useEffect(() => {
     if (!open) return;
-    const h = () => onClose();
+    const h = () => close.current();
     const t = setTimeout(() => window.addEventListener("click", h), 0);
     return () => {
       clearTimeout(t);
       window.removeEventListener("click", h);
     };
-  }, [open, onClose]);
+  }, [open]);
   if (!open) return null;
   return (
     <div className={`menu ${align === "left" ? "left" : ""}`} onClick={(e) => e.stopPropagation()}>

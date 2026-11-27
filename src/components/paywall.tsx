@@ -229,8 +229,8 @@ export function PaywallHost() {
   );
 }
 
-/** Compact plan / usage / credits indicator for the app header. */
-export function UsageMeter({ wid }: { wid: string }) {
+/** The workspace's plan, tasks and AI credits, kept fresh after every task and once a minute. */
+export function useUsage(wid: string) {
   const [e, setE] = useState<Entitlements | null>(null);
   const load = useCallback(() => {
     fetch(`/api/workspaces/${wid}/usage`)
@@ -247,29 +247,37 @@ export function UsageMeter({ wid }: { wid: string }) {
       clearInterval(t);
     };
   }, [load]);
+  return e;
+}
+
+/** "Pro", "Day Pass · 5h left", "2 of 3 free tasks left"… */
+export function planLabel(e: Entitlements) {
+  const hours = e.passUntil ? Math.max(1, Math.round((e.passUntil - Date.now()) / 3_600_000)) : 0;
+  return e.tier === "admin"
+    ? "Admin"
+    : e.tier === "team"
+      ? "Team"
+      : e.tier === "pro"
+        ? e.trialEndsAt
+          ? `Pro trial · ${daysLeft(e.trialEndsAt)}d left`
+          : "Pro"
+        : e.tier === "pass"
+          ? `Day Pass · ${hours}h left`
+          : `${Math.max(0, (e.taskLimit ?? 0) - e.tasksToday)} of ${e.taskLimit} free tasks left`;
+}
+
+export const openPlans = (e: Entitlements | null) =>
+  notifyPaywall({ code: "browse", message: e?.membership ? undefined : "Free tools stay free. Upgrade only when you need more." });
+
+/** Compact plan / usage / credits indicator for the app header. */
+export function UsageMeter({ wid }: { wid: string }) {
+  const e = useUsage(wid);
   if (!e) return null;
   const credits = e.credits + e.allowance;
-  const hours = e.passUntil ? Math.max(1, Math.round((e.passUntil - Date.now()) / 3_600_000)) : 0;
-  const label =
-    e.tier === "admin"
-      ? "Admin"
-      : e.tier === "team"
-        ? "Team"
-        : e.tier === "pro"
-          ? e.trialEndsAt
-            ? `Pro trial · ${daysLeft(e.trialEndsAt)}d left`
-            : "Pro"
-          : e.tier === "pass"
-            ? `Day Pass · ${hours}h left`
-            : `${Math.max(0, (e.taskLimit ?? 0) - e.tasksToday)} of ${e.taskLimit} free tasks left`;
   const low = !e.membership && e.taskLimit !== null && e.tasksToday >= e.taskLimit * 0.7;
   return (
-    <button
-      className={`usage-meter ${e.membership ? "paid" : ""} ${low ? "low" : ""}`}
-      onClick={() => notifyPaywall({ code: "browse", message: e.membership ? undefined : "Free tools stay free. Upgrade only when you need more." })}
-      title="Plan and credits"
-    >
-      <span>{label}</span>
+    <button className={`usage-meter ${e.membership ? "paid" : ""} ${low ? "low" : ""}`} onClick={() => openPlans(e)} title="Plan and credits">
+      <span>{planLabel(e)}</span>
       {(credits > 0 || e.tier !== "guest") && (
         <span className="usage-credits">
           <I.sparkle size={11} /> {credits.toLocaleString()}
@@ -277,6 +285,32 @@ export function UsageMeter({ wid }: { wid: string }) {
       )}
       {!e.membership && <span className="usage-upgrade">Upgrade</span>}
     </button>
+  );
+}
+
+/** The plan and credits as a card (the workbench's left navigation). */
+export function UsageCard({ wid }: { wid: string }) {
+  const e = useUsage(wid);
+  if (!e) return null;
+  const credits = e.credits + e.allowance;
+  const used = e.taskLimit ? Math.min(1, e.tasksToday / e.taskLimit) : null;
+  return (
+    <div className="wb-credits">
+      <b>{planLabel(e)}</b>
+      {used !== null && (
+        <div className="wb-bar" aria-hidden>
+          <i style={{ width: `${Math.round(used * 100)}%` }} />
+        </div>
+      )}
+      <div className="wb-credits-row">
+        <span>
+          <I.sparkle size={12} /> {credits.toLocaleString()} AI credits
+        </span>
+        <button className="link-btn" onClick={() => openPlans(e)}>
+          {e.membership ? "Top up" : "Upgrade"}
+        </button>
+      </div>
+    </div>
   );
 }
 

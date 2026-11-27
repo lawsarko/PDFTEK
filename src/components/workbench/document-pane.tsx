@@ -14,14 +14,24 @@ import { useToast } from "../toast";
 import { useWB } from "./context";
 import { ReadAloud } from "./read-aloud";
 import { Editor, type EditorTool } from "./editor";
-import { Ribbon, needsDoc } from "./ribbon";
+import { RIBBON, needsDoc } from "./ribbon";
+import { ToolArt, ToolsPanel } from "./tools-panel";
+import { PageRail } from "./thumbs";
+import { FileBadge, Home, RenameModal, TagModal } from "./home";
+import { Assistant } from "./assistant";
+import { AccountButtons, GlobalSearch } from "./topbar";
+
+const ACTS = RIBBON.flatMap((g) => g.acts);
+/** The phone's Tools sheet: the most used tools, then "All tools". */
+const PHONE_TOOLS = ["convert-docx", "edit", "sign", "fill", "organize", "optimize", "protect", "translate"];
+const PREFS = "pdftek-doc-panels";
 import { ToolModal, UnlockModal, type ToolKey } from "../tools/tool-modals";
 import { TranslateModal } from "../tools/translate-modal";
 import { SaveToCloudModal } from "../cloud";
 import { ConvertToPdfModal } from "../convert-to-pdf";
 
 export function DocumentPane() {
-  const { active, info, docs, showUpload, queueAction, flash, upsertDoc, requirePro, wid, openDoc, setAssistantTab, setMobileView } = useWB();
+  const { active, info, docs, showUpload, queueAction, flash, upsertDoc, requirePro, wid, openDoc, aiOpen, openAI, closeAI, jump, reloadDocs } = useWB();
   const toast = useToast();
   const [scale, setScale] = useState(1.25);
   const [page, setPage] = useState(1);
@@ -42,6 +52,39 @@ export function DocumentPane() {
   const translated = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [fitDone, setFitDone] = useState(false);
+  // Side panels in the document view (remembered): every tool, and page thumbnails.
+  const [toolsOpen, setToolsOpen] = useState(true);
+  const [pagesOpen, setPagesOpen] = useState(true);
+  const [sheet, setSheet] = useState<null | "tools" | "all">(null);
+  const [renaming, setRenaming] = useState(false);
+  const [tagging, setTagging] = useState(false);
+  const [findOpen, setFindOpen] = useState(false);
+  // "/" opens search in the document view too.
+  useEffect(() => {
+    if (!active) return;
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement;
+      if (e.key !== "/" || /INPUT|TEXTAREA|SELECT/.test(el.tagName) || el.isContentEditable) return;
+      e.preventDefault();
+      setFindOpen(true);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [active]);
+  useEffect(() => {
+    try {
+      const p = JSON.parse(localStorage.getItem(PREFS) || "{}") as { tools?: boolean; pages?: boolean };
+      if (p.tools === false) setToolsOpen(false);
+      if (p.pages === false) setPagesOpen(false);
+    } catch {}
+  }, []);
+  const setPref = (k: "tools" | "pages", v: boolean) => {
+    (k === "tools" ? setToolsOpen : setPagesOpen)(v);
+    try {
+      const p = JSON.parse(localStorage.getItem(PREFS) || "{}") as Record<string, boolean>;
+      localStorage.setItem(PREFS, JSON.stringify({ ...p, [k]: v }));
+    } catch {}
+  };
 
   const src = active ? `/api/documents/${active.id}/file?version=${active.versionId}` : "";
 
@@ -64,7 +107,7 @@ export function DocumentPane() {
       const p = await d.getPage(1);
       const w = p.getViewport({ scale: 1 }).width;
       const avail = (scrollRef.current?.clientWidth ?? 800) - 48;
-      setScale(Math.max(0.5, Math.min(1.6, avail / w)));
+      setScale(Math.max(0.5, Math.min(1.5, avail / w)));
       setFitDone(true);
     },
     [fitDone],
@@ -134,8 +177,7 @@ export function DocumentPane() {
     if (requirePro("Edit PDF")) setEditing(tool);
   };
   const toAssistant = (tab: string) => {
-    setAssistantTab(tab);
-    setMobileView("assistant");
+    openAI(tab);
   };
   const ask = (question: string, submit: boolean) => {
     toAssistant("chat");
@@ -247,41 +289,94 @@ export function DocumentPane() {
   };
   actionRef.current = run;
 
+  // Tools picked in the top search run here.
+  useEffect(() => {
+    const onRun = (e: Event) => actionRef.current?.((e as CustomEvent<{ key: string }>).detail.key);
+    window.addEventListener("pdftek:run", onRun);
+    return () => window.removeEventListener("pdftek:run", onRun);
+  }, []);
+
+  const trashDoc = async () => {
+    if (!active || !confirm(`Move “${active.name}” to trash?`)) return;
+    try {
+      await api(`/api/documents/${active.id}`, { method: "DELETE" });
+      toast("Moved to trash");
+      openDoc(null);
+      void reloadDocs();
+    } catch (e) {
+      toast(errMsg(e), "error");
+    }
+  };
+
+  /** Fits the page to the width available (the button; or automatically while the user hasn't zoomed). */
+  const autoFit = useRef(true);
+  const fit = useCallback(
+    async (max = 3) => {
+      if (!pdf || !scrollRef.current) return;
+      const p = await pdf.getPage(1);
+      const w = p.getViewport({ scale: 1 }).width;
+      const avail = scrollRef.current.clientWidth - 48;
+      if (avail > 100) setScale(Math.max(0.4, Math.min(max, +(avail / w).toFixed(2))));
+    },
+    [pdf],
+  );
+  const zoom = (d: number) => {
+    autoFit.current = false;
+    setScale((s) => Math.max(0.4, Math.min(3, +(s + d).toFixed(2))));
+  };
+  // Opening or closing a side panel (or resizing the window) refits the page until the user zooms.
+  useEffect(() => {
+    if (!pdf) return;
+    const t = setTimeout(() => autoFit.current && void fit(1.5), 60);
+    const onResize = () => autoFit.current && void fit(1.5);
+    window.addEventListener("resize", onResize);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [pdf, fit, aiOpen, toolsOpen, pagesOpen, editing]);
+
   const print = () => {
     const w = window.open(src, "_blank");
     w?.addEventListener("load", () => w.print());
   };
 
-  const ribbon = (
-    <Ribbon
-      run={run}
+  const formatsMenu =
+    formatsOpen && active
+      ? {
+          key: "convert-more",
+          node: (
+            <Menu open onClose={() => setFormatsOpen(false)}>
+              <div className="menu-label">All {active.pageCount} pages</div>
+              <button className="menu-item" onClick={() => convert("webp")}>WEBP <span className="sub">smaller images</span></button>
+              <button className="menu-item" onClick={() => convert("tiff")}>TIFF <span className="sub">print / archival</span></button>
+              <button className="menu-item" onClick={() => convert("txt")}>Plain text (.txt)</button>
+              <div className="menu-label">This page only (p.{page})</div>
+              <div className="row gap-4" style={{ padding: "2px 8px 8px" }}>
+                {(["jpg", "png", "webp", "tiff"] as const).map((f) => (
+                  <button key={f} className="chip" onClick={() => convert(f, [page])}>
+                    {f.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </Menu>
+          ),
+        }
+      : null;
+  const labels = { checkout: lockedByMe ? "Check in" : "Check out", read: tts ? "Stop reading" : "Read PDF" };
+  const toolsPanel = (onClose?: () => void) => (
+    <ToolsPanel
+      run={(k) => {
+        if (onClose && k !== "convert-more") onClose();
+        run(k);
+      }}
       member={member}
       hasDoc={!!active}
       ready={!!pdf}
-      labels={{ checkout: lockedByMe ? "Check in" : "Check out", read: tts ? "Stop reading" : "Read PDF" }}
-      menu={
-        formatsOpen && active
-          ? {
-              key: "convert-more",
-              node: (
-                <Menu open onClose={() => setFormatsOpen(false)}>
-                  <div className="menu-label">All {active.pageCount} pages</div>
-                  <button className="menu-item" onClick={() => convert("webp")}>WEBP <span className="sub">smaller images</span></button>
-                  <button className="menu-item" onClick={() => convert("tiff")}>TIFF <span className="sub">print / archival</span></button>
-                  <button className="menu-item" onClick={() => convert("txt")}>Plain text (.txt)</button>
-                  <div className="menu-label">This page only (p.{page})</div>
-                  <div className="row gap-4" style={{ padding: "2px 8px 8px" }}>
-                    {(["jpg", "png", "webp", "tiff"] as const).map((f) => (
-                      <button key={f} className="chip" onClick={() => convert(f, [page])}>
-                        {f.toUpperCase()}
-                      </button>
-                    ))}
-                  </div>
-                </Menu>
-              ),
-            }
-          : null
-      }
+      labels={labels}
+      menu={formatsMenu}
+      current={editing ? "edit" : tts ? "read" : null}
+      onClose={onClose}
     />
   );
 
@@ -328,119 +423,143 @@ export function DocumentPane() {
     </>
   );
 
+
   if (!active) {
     return (
-      <section className="viewer">
-        {ribbon}
-        <div className="empty" style={{ margin: "auto", maxWidth: 460 }}>
-          <div className="rb-empty-ico">
-            <I.upload size={22} />
-          </div>
-          <h3>Open or upload a document</h3>
-          <p>Pick a document from your library, or upload a PDF, Word, Excel, PowerPoint, image or scan. Every tool above works on it; choose one first and we&apos;ll ask for the file.</p>
-          <button className="btn btn-primary mt-12" onClick={() => showUpload()}>
-            <I.upload size={14} /> Upload documents
-          </button>
-        </div>
+      <>
+        <Home run={run} />
+        {aiOpen && <Assistant />}
         {modals}
-      </section>
+      </>
     );
   }
 
-  if (editing) {
-    return (
-      <section className="viewer">
-        <Editor
-          doc={active}
-          initialTool={editing}
-          onExit={(saved) => {
-            setEditing(null);
-            if (saved) {
-              forgetPdf(src);
-              upsertDoc(saved);
-            }
-          }}
-        />
-      </section>
-    );
-  }
+  const shareLink = async () => {
+    const url = `${window.location.origin}/app/${wid}?doc=${active.id}`;
+    try {
+      if (navigator.share && window.innerWidth <= 960) await navigator.share({ title: active.name, url });
+      else {
+        await navigator.clipboard.writeText(url);
+        toast("Link copied. Teammates in this workspace can open it.", "success");
+      }
+    } catch {}
+  };
+  const showRail = aiOpen && !editing;
 
   return (
-    <section className="viewer">
-      <div className="viewer-toolbar">
-        <div className="grow" style={{ minWidth: 160 }}>
-          <div className="viewer-title ellipsis" title={active.name}>
-            {active.name}
+    <section className="viewer wb-doc">
+      <header className="wb-dtop">
+        <button className="wb-ibtn" onClick={() => openDoc(null)} aria-label="Back to home" title="Back to home">
+          <I.back size={20} />
+        </button>
+        <button className={`wb-ibtn hide-mobile ${toolsOpen && !showRail ? "on" : ""}`} onClick={() => (showRail ? closeAI() : setPref("tools", !toolsOpen))} aria-label="All tools" title="All tools" disabled={!!editing}>
+          <I.tools size={18} />
+        </button>
+        <div className="wb-fname">
+          <FileBadge type={active.sourceType} />
+          <div className="wb-fname-text">
+            <b className="ellipsis" title={active.name}>{active.name}</b>
+            <span className="ellipsis">
+              Saved · {active.pageCount} {active.pageCount === 1 ? "page" : "pages"} · {bytes(active.size)} · updated {timeAgo(active.updatedAt)}
+              {active.assignedTo && <> · assigned to {active.assignedTo.id === me ? "you" : active.assignedTo.name}</>}
+            </span>
           </div>
-          <div className="tiny mono faint row gap-4" style={{ marginTop: 2 }}>
-            {active.pageCount} pages · {bytes(active.size)} · updated {timeAgo(active.updatedAt)}
-            {active.assignedTo && <> · assigned to {active.assignedTo.id === me ? "you" : active.assignedTo.name}</>}
-            {lockedByMe && (
-              <span className="badge badge-warn" style={{ marginLeft: 4 }}>
-                <I.lock size={10} /> checked out by you
-              </span>
-            )}
-          </div>
+          {lockedByMe && (
+            <span className="badge badge-warn hide-mobile">
+              <I.lock size={10} /> checked out by you
+            </span>
+          )}
         </div>
-        <div className="viewer-tools">
-          <a className="tool-btn tool-btn-primary" href={`/api/documents/${active.id}/file?download=1`} title="Download the latest version as PDF">
-            <I.download size={13} /> Download
-          </a>
-          <button className="tool-btn hide-mobile" onClick={print} title="Print">
-            <I.file size={13} /> Print
+        <span className="grow" />
+        <div className="menu-wrap hide-mobile">
+          <button className={`wb-ibtn ${findOpen ? "on" : ""}`} onClick={() => setFindOpen((v) => !v)} aria-label="Search" title="Search documents, tools, or ask (/)">
+            <I.search size={19} />
           </button>
-          <button className="tool-btn hide-mobile" onClick={() => run("sign")} title="Send for e-signature">
-            <I.sign size={13} /> Request signature
+          {findOpen && (
+            <div className="wb-dsearch">
+              <GlobalSearch autoFocus onDone={() => setFindOpen(false)} />
+            </div>
+          )}
+        </div>
+        <button className={`wb-btn ${aiOpen ? "tonal" : "askai"} hide-mobile`} onClick={() => (aiOpen ? closeAI() : openAI())} aria-pressed={aiOpen}>
+          <I.sparkle size={16} /> Ask AI
+        </button>
+        <button className="wb-btn hide-mobile wb-hide-md" onClick={() => run("sign")} title="Send for e-signature">
+          <I.sign size={16} /> Request signature
+        </button>
+        <a className="wb-btn filled" href={`/api/documents/${active.id}/file?download=1`} title="Download the latest version as PDF">
+          <I.download size={16} /> <span className="hide-mobile">Download</span>
+        </a>
+        <button className="wb-ibtn hide-mobile" onClick={shareLink} aria-label="Copy link" title="Copy a link for teammates">
+          <I.share size={18} />
+        </button>
+        <div className="menu-wrap">
+          <button className="wb-ibtn" onClick={() => setMoreOpen((v) => !v)} aria-label="More actions">
+            <I.more size={18} />
           </button>
-          <div className="menu-wrap">
-            <button className="tool-btn" onClick={() => setMoreOpen((v) => !v)} aria-label="More actions">
-              <I.more size={13} />
+          <Menu open={moreOpen} onClose={() => setMoreOpen(false)}>
+            <button className="menu-item show-mobile" onClick={() => { setMoreOpen(false); run("sign"); }}>
+              <I.sign size={14} /> Request signature
             </button>
-            <Menu open={moreOpen} onClose={() => setMoreOpen(false)}>
-              <button className="menu-item" onClick={() => { setMoreOpen(false); setVersionsOpen(true); }}>
-                <I.history size={14} /> Version history
+            <button className="menu-item show-mobile" onClick={() => { setMoreOpen(false); void shareLink(); }}>
+              <I.share size={14} /> Share link
+            </button>
+            <button className="menu-item" onClick={() => { setMoreOpen(false); setRenaming(true); }}>
+              <I.edit size={14} /> Rename
+            </button>
+            <button className="menu-item" onClick={() => { setMoreOpen(false); setTagging(true); }}>
+              <I.tag size={14} /> Tags
+            </button>
+            <button className="menu-item" onClick={() => { setMoreOpen(false); setVersionsOpen(true); }}>
+              <I.history size={14} /> Version history
+            </button>
+            <button className="menu-item" onClick={() => { setMoreOpen(false); setHandoffOpen(true); }} disabled={lockedByOther}>
+              <I.swap size={14} /> Hand off to a teammate
+            </button>
+            <button className="menu-item" onClick={() => { setMoreOpen(false); void toggleLock(); }} disabled={lockedByOther && info.role === "member"}>
+              {lockedByMe ? <I.unlock size={14} /> : <I.lock size={14} />} {lockedByMe ? "Check in" : "Check out (lock editing)"}
+            </button>
+            <button className="menu-item" onClick={() => { setMoreOpen(false); setCloudSave(true); }}>
+              <I.folder size={14} /> Save to cloud
+            </button>
+            <button className="menu-item" onClick={() => { setMoreOpen(false); print(); }}>
+              <I.file size={14} /> Print
+            </button>
+            <Link className="menu-item" href={`/app/${wid}/tools?doc=${active.id}`}>
+              <I.tools size={14} /> All tools
+            </Link>
+            {lockedByOther && info.role !== "member" && (
+              <button
+                className="menu-item"
+                onClick={async () => {
+                  setMoreOpen(false);
+                  const r = await api<{ document: Doc }>(`/api/documents/${active.id}/checkout`, { method: "POST", json: { action: "force_checkin" } });
+                  upsertDoc(r.document);
+                  toast("Lock released");
+                }}
+              >
+                <I.unlock size={14} /> Release {active.checkedOutBy?.name}’s lock
               </button>
-              <button className="menu-item" onClick={() => { setMoreOpen(false); setHandoffOpen(true); }} disabled={lockedByOther}>
-                <I.swap size={14} /> Hand off to a teammate
-              </button>
-              <button className="menu-item" onClick={() => { setMoreOpen(false); void toggleLock(); }} disabled={lockedByOther && info.role === "member"}>
-                {lockedByMe ? <I.unlock size={14} /> : <I.lock size={14} />} {lockedByMe ? "Check in" : "Check out (lock editing)"}
-              </button>
-              <button className="menu-item" onClick={() => { setMoreOpen(false); setCloudSave(true); }}>
-                <I.folder size={14} /> Save to cloud
-              </button>
-              <button className="menu-item" onClick={() => { setMoreOpen(false); print(); }}>
-                <I.file size={14} /> Print
-              </button>
-              <Link className="menu-item" href={`/app/${wid}/tools?doc=${active.id}`}>
-                <I.tools size={14} /> All tools
-              </Link>
-              {lockedByOther && info.role !== "member" && (
-                <button
-                  className="menu-item"
-                  onClick={async () => {
-                    setMoreOpen(false);
-                    const r = await api<{ document: Doc }>(`/api/documents/${active.id}/checkout`, { method: "POST", json: { action: "force_checkin" } });
-                    upsertDoc(r.document);
-                    toast("Lock released");
-                  }}
-                >
-                  <I.unlock size={14} /> Release {active.checkedOutBy?.name}’s lock
-                </button>
-              )}
-            </Menu>
-          </div>
+            )}
+            <div className="menu-sep" />
+            <button className="menu-item" style={{ color: "var(--bad)" }} onClick={() => { setMoreOpen(false); void trashDoc(); }}>
+              <I.trash size={14} /> Move to trash
+            </button>
+          </Menu>
         </div>
-      </div>
-      {ribbon}
+        <span className="wb-dtop-sep hide-mobile" />
+        <span className="wb-dtop-account hide-mobile">
+          <AccountButtons />
+        </span>
+      </header>
 
       {lockedByOther && (
-        <div className="notice" style={{ margin: "10px 16px 0", display: "flex", gap: 8, alignItems: "center" }}>
+        <div className="notice wb-notice">
           <I.lock size={14} /> {active.checkedOutBy?.name} has this document checked out {active.checkedOutAt ? timeAgo(active.checkedOutAt) : ""}. You can read, chat and extract; edits are paused until it’s checked in or handed to you.
         </div>
       )}
-      {active.scanned && (
-        <div className="notice notice-info" style={{ margin: "10px 16px 0", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+      {active.scanned && !editing && (
+        <div className="notice notice-info wb-notice">
           <I.scan size={14} /> This looks like a scan without a text layer. Run OCR so search and read-aloud can use its text (the AI assistant can already read it).
           <button className="btn btn-sm" style={{ marginLeft: "auto" }} onClick={() => setOcrOpen(true)}>
             Run OCR
@@ -461,26 +580,122 @@ export function DocumentPane() {
         </div>
       )}
 
-      <div className="page-scroll" ref={scrollRef}>
-        <PdfViewer src={src} scale={scale} flash={flash} onLoaded={onLoaded} onVisiblePage={setPage} scrollRef={scrollRef} onError={(e) => toast(e.message, "error")} />
+      <div className="wb-dbody">
+        {!editing && showRail && (
+          <nav className="wb-rail hide-mobile" aria-label="Tools">
+            <button className="wb-ri" onClick={() => { closeAI(); setPref("tools", true); }}>
+              <span className="wb-pill"><I.tools size={20} /></span>Tools
+            </button>
+            <button className={`wb-ri ${pagesOpen ? "on" : ""}`} onClick={() => setPref("pages", !pagesOpen)}>
+              <span className="wb-pill"><I.pages size={20} /></span>Pages
+            </button>
+            <button className={`wb-ri ${findOpen ? "on" : ""}`} onClick={() => setFindOpen(true)}>
+              <span className="wb-pill"><I.search size={20} /></span>Find
+            </button>
+            <button className="wb-ri" onClick={() => run("edit")}>
+              <span className="wb-pill"><I.edit size={20} /></span>Edit
+            </button>
+            <button className="wb-ri" onClick={() => run("sign")}>
+              <span className="wb-pill"><I.sign size={20} /></span>Sign
+            </button>
+          </nav>
+        )}
+        {!editing && !showRail && toolsOpen && <div className="wb-tools-wrap hide-mobile">{toolsPanel()}</div>}
+        {!editing && pagesOpen && (
+          <div className="wb-pages-wrap hide-mobile">
+            <PageRail pdf={pdf} page={page} onPick={(n) => jump(n)} />
+          </div>
+        )}
+        <div className="wb-canvas">
+          {editing ? (
+            <Editor
+              doc={active}
+              initialTool={editing}
+              onExit={(saved) => {
+                setEditing(null);
+                if (saved) {
+                  forgetPdf(src);
+                  upsertDoc(saved);
+                }
+              }}
+            />
+          ) : (
+            <>
+              <div className="page-scroll" ref={scrollRef}>
+                <PdfViewer src={src} scale={scale} flash={flash} onLoaded={onLoaded} onVisiblePage={setPage} scrollRef={scrollRef} onError={(e) => toast(e.message, "error")} />
+              </div>
+              {!tts && (
+                <div className="viewer-float wb-pctrl">
+                  <button className={`wb-ibtn sm hide-mobile ${pagesOpen ? "on" : ""}`} onClick={() => setPref("pages", !pagesOpen)} aria-label="Page thumbnails" title="Page thumbnails" aria-pressed={pagesOpen}>
+                    <I.pages size={16} />
+                  </button>
+                  <button className="wb-ibtn sm" onClick={() => zoom(-0.15)} aria-label="Zoom out">
+                    <I.zoomOut size={16} />
+                  </button>
+                  <span className="wb-pct">{Math.round(scale * 100)}%</span>
+                  <button className="wb-ibtn sm" onClick={() => zoom(0.15)} aria-label="Zoom in">
+                    <I.zoomIn size={16} />
+                  </button>
+                  <span className="wb-vsep" />
+                  <span className="wb-pno">
+                    {page} / {active.pageCount}
+                  </span>
+                  <button className="wb-ibtn sm" onClick={() => { autoFit.current = true; void fit(); }} aria-label="Fit to width" title="Fit to width">
+                    <I.fit size={16} />
+                  </button>
+                </div>
+              )}
+              {tts && <ReadAloud doc={active} startPage={page} onClose={() => setTts(false)} />}
+            </>
+          )}
+        </div>
+        {aiOpen && <Assistant />}
       </div>
 
-      {!tts && (
-        <div className="viewer-float">
-          <button className="icon-btn" onClick={() => setScale((s) => Math.max(0.4, +(s - 0.15).toFixed(2)))} aria-label="Zoom out">
-            <I.zoomOut size={15} />
+      {!editing && (
+        <div className="wb-phbar show-mobile">
+          <button className="wb-btn tonal" onClick={() => setSheet("tools")}>
+            <I.tools size={16} /> Tools
           </button>
-          <span style={{ minWidth: 40, textAlign: "center" }}>{Math.round(scale * 100)}%</span>
-          <button className="icon-btn" onClick={() => setScale((s) => Math.min(3, +(s + 0.15).toFixed(2)))} aria-label="Zoom in">
-            <I.zoomIn size={15} />
+          <button className="wb-btn askai" onClick={() => openAI()}>
+            <I.sparkle size={16} /> Ask AI
           </button>
-          <span style={{ width: 1, height: 16, background: "var(--line)" }} />
-          <span>
-            {page} / {active.pageCount}
-          </span>
         </div>
       )}
-      {tts && <ReadAloud doc={active} startPage={page} onClose={() => setTts(false)} />}
+      {sheet && (
+        <div className="wb-sheet-back show-mobile" onClick={() => setSheet(null)}>
+          <div className={`wb-sheet ${sheet === "all" ? "tall" : ""}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Tools">
+            <div className="wb-grab" />
+            {sheet === "tools" ? (
+              <div className="wb-sgrid">
+                <button onClick={() => { setSheet(null); openAI(); }}>
+                  <ToolArt act={{ key: "ask", label: "", icon: null, hint: "" }} size={40} />
+                  Ask AI
+                </button>
+                {PHONE_TOOLS.map((k) => {
+                  const a = ACTS.find((x) => x.key === k)!;
+                  return (
+                    <button key={k} onClick={() => { setSheet(null); run(k); }}>
+                      <ToolArt act={a} size={40} />
+                      {labels[k as keyof typeof labels] ?? a.label}
+                    </button>
+                  );
+                })}
+                <button onClick={() => setSheet("all")}>
+                  <span className="wb-art wb-art-plain" style={{ width: 40, height: 40 }}>
+                    <I.grid size={20} />
+                  </span>
+                  All tools
+                </button>
+              </div>
+            ) : (
+              toolsPanel(() => setSheet(null))
+            )}
+          </div>
+        </div>
+      )}
+      {renaming && <RenameModal doc={active} onClose={() => setRenaming(false)} />}
+      {tagging && <TagModal doc={active} onClose={() => setTagging(false)} suggestions={[...new Set(docs.flatMap((d) => d.tags))].sort()} />}
       {versionsOpen && <VersionsModal doc={active} onClose={() => setVersionsOpen(false)} />}
       {handoffOpen && <HandOffModal doc={active} onClose={() => setHandoffOpen(false)} />}
       {ocrOpen && pdf && <OcrModal doc={active} pdf={pdf} onClose={() => setOcrOpen(false)} />}

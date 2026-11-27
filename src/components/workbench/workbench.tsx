@@ -9,9 +9,7 @@ import { I } from "../icons";
 import type { Flash } from "../pdf-viewer";
 import { WorkbenchContext, type WB } from "./context";
 import { TopBar } from "./topbar";
-import { Library } from "./library";
 import { DocumentPane } from "./document-pane";
-import { Assistant } from "./assistant";
 import { UploadModal } from "./upload-modal";
 import { daysLeft, notifyPaywall, openSaveAccount, startCheckout } from "../paywall";
 import { FREE_LIMITS, PRODUCTS, TRIAL_DAYS, usd } from "@/lib/plans";
@@ -27,8 +25,11 @@ export function Workbench({ wid }: { wid: string }) {
     const add = params.get("add");
     return add === "images" || add === "scan" || add === "upload" || add === "cloud" ? add : false;
   });
-  const [mobileView, setMobileView] = useState<"library" | "document" | "assistant">(() => (params.get("do") === "ask" ? "assistant" : "library"));
+  const [, setMobileView] = useState<"library" | "document" | "assistant">(() => (params.get("do") === "ask" ? "assistant" : "library"));
   const [assistantTab, setAssistantTab] = useState("chat");
+  const [aiOpen, setAiOpenState] = useState(() => params.get("do") === "ask");
+  const [section, setSection] = useState<"home" | "documents">("home");
+  const [theme, setThemeState] = useState<"light" | "dark">("light");
   const activeId = params.get("doc");
   const [pending, setPending] = useState<{ action: string; from: string | null } | null>(null);
 
@@ -78,12 +79,34 @@ export function Workbench({ wid }: { wid: string }) {
     return () => clearInterval(t);
   }, [reloadDocs]);
 
-  // Default to the most recent document on desktop.
+  // Remembered choices: the theme, and whether Ask AI stays open beside documents (desktop).
   useEffect(() => {
-    if (!activeId && docs?.length && window.innerWidth > 960) {
-      router.replace(`/app/${wid}?doc=${docs[0].id}`, { scroll: false });
-    }
-  }, [activeId, docs, router, wid]);
+    try {
+      if (localStorage.getItem("pdftek-theme") === "dark") setThemeState("dark");
+      if (localStorage.getItem("pdftek-ai-open") === "1" && window.innerWidth > 960) setAiOpenState(true);
+    } catch {}
+  }, []);
+  const setAiOpen = useCallback((v: boolean) => {
+    setAiOpenState(v);
+    try {
+      if (window.innerWidth > 960) localStorage.setItem("pdftek-ai-open", v ? "1" : "0");
+    } catch {}
+  }, []);
+  const setTheme = useCallback((t: "light" | "dark") => {
+    setThemeState(t);
+    try {
+      localStorage.setItem("pdftek-theme", t);
+    } catch {}
+  }, []);
+  // On a phone Ask AI covers the screen, so going to a page (a citation, a search hit) closes it.
+  const showView = useCallback(
+    (v: "library" | "document" | "assistant") => {
+      setMobileView(v);
+      if (v === "assistant") setAiOpen(true);
+      else if (window.innerWidth <= 960 && aiOpen) setAiOpenState(false);
+    },
+    [aiOpen, setAiOpen],
+  );
 
   const active = useMemo(() => docs?.find((d) => d.id === activeId) ?? null, [docs, activeId]);
 
@@ -98,10 +121,10 @@ export function Workbench({ wid }: { wid: string }) {
   const openDoc = useCallback(
     (id: string | null, f?: Omit<Flash, "nonce">) => {
       router.replace(id ? `/app/${wid}?doc=${id}` : `/app/${wid}`, { scroll: false });
-      if (id) setMobileView("document");
+      if (id) showView("document");
       if (f) setTimeout(() => setFlash({ ...f, nonce: Date.now() }), 250);
     },
-    [router, wid],
+    [router, wid, showView],
   );
 
   const upsertDoc = useCallback((d: Doc) => {
@@ -115,10 +138,13 @@ export function Workbench({ wid }: { wid: string }) {
     });
   }, []);
 
-  const jump = useCallback((page: number, text?: string) => {
-    setFlash({ page, text, nonce: Date.now() });
-    setMobileView("document");
-  }, []);
+  const jump = useCallback(
+    (page: number, text?: string) => {
+      setFlash({ page, text, nonce: Date.now() });
+      showView("document");
+    },
+    [showView],
+  );
 
   const requirePro = useCallback(
     (feature: string) => {
@@ -133,7 +159,7 @@ export function Workbench({ wid }: { wid: string }) {
 
   if (!info || !docs) {
     return (
-      <div className="app">
+      <div className="app mk wb2" data-theme={theme}>
         <div className="empty" style={{ margin: "auto" }}>
           <span className="spinner spinner-lg" />
         </div>
@@ -158,37 +184,57 @@ export function Workbench({ wid }: { wid: string }) {
       setPending({ action, from: activeId });
       setUploadOpen("upload");
     },
-    setMobileView,
+    setMobileView: showView,
     assistantTab,
     setAssistantTab,
+    aiOpen,
+    openAI: (tab) => {
+      if (tab) setAssistantTab(tab);
+      setMobileView("assistant");
+      setAiOpen(true);
+    },
+    closeAI: () => {
+      setAiOpen(false);
+      setMobileView(activeId ? "document" : "library");
+    },
+    section,
+    setSection: (v) => {
+      setSection(v);
+      if (activeId) openDoc(null);
+    },
+    theme,
+    setTheme,
   };
 
   return (
     <WorkbenchContext.Provider value={ctx}>
-      <div className="app">
-        <TopBar />
+      <div className="app mk wb2" data-theme={theme} data-mode={active ? "doc" : "home"}>
+        {!active && <TopBar />}
         {info.me.is_guest && <GuestBanner paid={info.billing.membership || info.billing.credits > 0} />}
         {!info.me.is_guest && info.me.email_verified === false && info.capabilities.accountEmail && <VerifyBanner email={info.me.email} />}
         {!info.me.is_guest && <TrialBanner wid={wid} info={info} />}
-        <div className="main" data-view={mobileView}>
-          <Library />
-          <DocumentPane key={active?.id ?? "none"} />
-          <Assistant />
+        <div className="main wb-main" data-ai={aiOpen || undefined}>
+          <DocumentPane key={active?.id ?? (activeId ? `pending-${activeId}` : "none")} />
         </div>
-        <nav className="mobile-nav">
-          {(
-            [
-              ["library", "Library", <I.folder key="i" size={18} />],
-              ["document", "Document", <I.file key="i" size={18} />],
-              ["assistant", "Assistant", <I.sparkle key="i" size={18} />],
-            ] as const
-          ).map(([v, label, icon]) => (
-            <button key={v} className={mobileView === v ? "active" : ""} onClick={() => setMobileView(v)}>
-              {icon}
-              {label}
+        {!active && (
+          <nav className="wb-bnav show-mobile" aria-label="Main">
+            <button className={section === "home" ? "on" : ""} onClick={() => setSection("home")}>
+              <span className="wb-pill"><I.home size={20} /></span>Home
             </button>
-          ))}
-        </nav>
+            <button className={section === "documents" ? "on" : ""} onClick={() => setSection("documents")}>
+              <span className="wb-pill"><I.folder size={20} /></span>Files
+            </button>
+            <button className="big" onClick={() => setUploadOpen("scan")}>
+              <span className="wb-pill"><I.camera size={24} /></span>Scan
+            </button>
+            <Link href={`/app/${wid}/clients`}>
+              <span className="wb-pill"><I.users size={20} /></span>Clients
+            </Link>
+            <Link href={`/app/${wid}/settings?tab=profile`}>
+              <span className="wb-pill"><I.user size={20} /></span>Account
+            </Link>
+          </nav>
+        )}
         {uploadOpen && (
           <UploadModal
             initialTab={uploadOpen}
