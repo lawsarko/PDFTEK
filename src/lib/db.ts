@@ -1,0 +1,804 @@
+import "server-only";
+import { DatabaseSync, type SQLInputValue } from "node:sqlite";
+import fs from "node:fs";
+import path from "node:path";
+
+export const DATA_DIR = path.resolve(process.env.DATA_DIR || "./data");
+
+const SCHEMA = `
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  expires_at INTEGER NOT NULL,
+  created_at INTEGER NOT NULL,
+  user_agent TEXT
+);
+
+CREATE TABLE IF NOT EXISTS workspaces (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  plan TEXT NOT NULL DEFAULT 'free',
+  trial_ends_at INTEGER,
+  stripe_customer_id TEXT,
+  stripe_subscription_id TEXT,
+  playbook TEXT NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS memberships (
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  role TEXT NOT NULL DEFAULT 'member',
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (workspace_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS invites (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  email TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'member',
+  token TEXT NOT NULL UNIQUE,
+  invited_by TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  accepted_at INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS documents (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  current_version_id TEXT,
+  page_count INTEGER NOT NULL DEFAULT 0,
+  size INTEGER NOT NULL DEFAULT 0,
+  source_type TEXT NOT NULL DEFAULT 'pdf',
+  status TEXT NOT NULL DEFAULT 'ready',
+  scanned INTEGER NOT NULL DEFAULT 0,
+  tags TEXT NOT NULL DEFAULT '[]',
+  checked_out_by TEXT,
+  checked_out_at INTEGER,
+  assigned_to TEXT,
+  draft_json TEXT,
+  created_by TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  deleted_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_documents_ws ON documents(workspace_id, deleted_at, updated_at);
+
+CREATE TABLE IF NOT EXISTS document_versions (
+  id TEXT PRIMARY KEY,
+  document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+  version INTEGER NOT NULL,
+  storage_key TEXT NOT NULL,
+  size INTEGER NOT NULL,
+  sha256 TEXT NOT NULL,
+  page_count INTEGER NOT NULL DEFAULT 0,
+  note TEXT NOT NULL DEFAULT '',
+  created_by TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_versions_doc ON document_versions(document_id, version);
+
+CREATE VIRTUAL TABLE IF NOT EXISTS page_text USING fts5(
+  document_id UNINDEXED,
+  workspace_id UNINDEXED,
+  page UNINDEXED,
+  body,
+  tokenize = 'unicode61 remove_diacritics 2'
+);
+
+CREATE TABLE IF NOT EXISTS extractions (
+  id TEXT PRIMARY KEY,
+  document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+  preset TEXT NOT NULL,
+  title TEXT NOT NULL,
+  result_json TEXT NOT NULL,
+  created_by TEXT,
+  created_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  document_id TEXT,
+  user_id TEXT NOT NULL,
+  role TEXT NOT NULL,
+  content TEXT NOT NULL,
+  citations_json TEXT NOT NULL DEFAULT '[]',
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_chat_scope ON chat_messages(workspace_id, document_id, user_id, created_at);
+
+CREATE TABLE IF NOT EXISTS activity (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  user_id TEXT,
+  actor_label TEXT,
+  action TEXT NOT NULL,
+  document_id TEXT,
+  meta_json TEXT NOT NULL DEFAULT '{}',
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_activity_ws ON activity(workspace_id, created_at);
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  workspace_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  body TEXT NOT NULL DEFAULT '',
+  link TEXT,
+  read_at INTEGER,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, read_at, created_at);
+
+CREATE TABLE IF NOT EXISTS doc_requests (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL DEFAULT '',
+  recipient_name TEXT NOT NULL,
+  recipient_email TEXT NOT NULL,
+  due_date TEXT,
+  token TEXT NOT NULL UNIQUE,
+  status TEXT NOT NULL DEFAULT 'pending',
+  document_id TEXT,
+  created_by TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  viewed_at INTEGER,
+  completed_at INTEGER,
+  last_reminded_at INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS signature_requests (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+  version_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'draft',
+  sequential INTEGER NOT NULL DEFAULT 0,
+  created_by TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  sent_at INTEGER,
+  completed_at INTEGER,
+  signed_version_id TEXT
+);
+
+CREATE TABLE IF NOT EXISTS signers (
+  id TEXT PRIMARY KEY,
+  request_id TEXT NOT NULL REFERENCES signature_requests(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  order_index INTEGER NOT NULL DEFAULT 0,
+  token TEXT NOT NULL UNIQUE,
+  status TEXT NOT NULL DEFAULT 'pending',
+  viewed_at INTEGER,
+  signed_at INTEGER,
+  ip TEXT,
+  user_agent TEXT,
+  signature_png TEXT,
+  decline_reason TEXT,
+  last_reminded_at INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS signature_fields (
+  id TEXT PRIMARY KEY,
+  request_id TEXT NOT NULL REFERENCES signature_requests(id) ON DELETE CASCADE,
+  signer_id TEXT NOT NULL REFERENCES signers(id) ON DELETE CASCADE,
+  page INTEGER NOT NULL,
+  x REAL NOT NULL,
+  y REAL NOT NULL,
+  w REAL NOT NULL,
+  h REAL NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'signature',
+  value TEXT
+);
+
+CREATE TABLE IF NOT EXISTS automations (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  enabled INTEGER NOT NULL DEFAULT 1,
+  trigger_type TEXT NOT NULL,
+  trigger_json TEXT NOT NULL DEFAULT '{}',
+  actions_json TEXT NOT NULL DEFAULT '[]',
+  created_by TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  last_run_at INTEGER,
+  next_run_at INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS automation_runs (
+  id TEXT PRIMARY KEY,
+  automation_id TEXT NOT NULL REFERENCES automations(id) ON DELETE CASCADE,
+  status TEXT NOT NULL,
+  log TEXT NOT NULL DEFAULT '',
+  document_id TEXT,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_runs_auto ON automation_runs(automation_id, created_at);
+
+CREATE TABLE IF NOT EXISTS reminders_sent (
+  key TEXT PRIMARY KEY,
+  created_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS rate_limits (
+  key TEXT PRIMARY KEY,
+  count INTEGER NOT NULL,
+  window_start INTEGER NOT NULL
+);
+
+-- Free-tier metering: completed tasks per subject (workspace or guest IP) per UTC day.
+-- A guest workspace merged into an account when its owner signs in: old links (the address the
+-- person was on, bookmarks) are sent on to the account's workspace.
+CREATE TABLE IF NOT EXISTS workspace_moves (
+  from_id TEXT PRIMARY KEY,
+  to_id TEXT NOT NULL,
+  at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS usage_daily (
+  subject TEXT NOT NULL,
+  day TEXT NOT NULL,
+  tasks INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (subject, day)
+);
+
+-- Every completed payment, keyed by the Stripe Checkout session so fulfilment is idempotent.
+CREATE TABLE IF NOT EXISTS purchases (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL,
+  product TEXT NOT NULL,
+  amount_cents INTEGER NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'usd',
+  email TEXT,
+  stripe_session_id TEXT UNIQUE,
+  created_at INTEGER NOT NULL
+);
+
+-- Credit movements (purchases, monthly allowances, AI usage, extra tasks) for a transparent history.
+CREATE TABLE IF NOT EXISTS credit_ledger (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL,
+  delta INTEGER NOT NULL,
+  reason TEXT NOT NULL,
+  meta_json TEXT NOT NULL DEFAULT '{}',
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS credit_ledger_ws ON credit_ledger(workspace_id, created_at);
+
+-- One-time sign-in links (e.g. recovering a purchase made without an account). Stored hashed.
+CREATE TABLE IF NOT EXISTS login_tokens (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  expires_at INTEGER NOT NULL,
+  used_at INTEGER
+);
+
+-- Form filler: reusable answers (one person can keep several, e.g. "Me", "My child", "My company").
+CREATE TABLE IF NOT EXISTS form_profiles (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'person',
+  data_json TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS form_profiles_user ON form_profiles(user_id);
+
+-- The fields found on a form (by the PDF itself, AI, or by hand), so it can be filled again instantly.
+CREATE TABLE IF NOT EXISTS form_templates (
+  document_id TEXT PRIMARY KEY REFERENCES documents(id) ON DELETE CASCADE,
+  workspace_id TEXT NOT NULL,
+  version_id TEXT NOT NULL,
+  fields_json TEXT NOT NULL,
+  summary_json TEXT,
+  acro INTEGER NOT NULL DEFAULT 0,
+  detected_by TEXT NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
+-- Answers in progress, so a half-filled form survives a closed tab. Sensitive answers are never kept.
+CREATE TABLE IF NOT EXISTS form_drafts (
+  document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  values_json TEXT NOT NULL,
+  profile_id TEXT,
+  updated_at INTEGER NOT NULL,
+  PRIMARY KEY (document_id, user_id)
+);
+
+-- One AI-filled form a month on the house, so everyone can try it.
+CREATE TABLE IF NOT EXISTS form_free_uses (
+  workspace_id TEXT NOT NULL,
+  month TEXT NOT NULL,
+  document_id TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (workspace_id, month)
+);
+
+-- Statements & invoices to Excel: AI results per document version (re-downloads are free).
+CREATE TABLE IF NOT EXISTS fin_extractions (
+  document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+  version_id TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  result_json TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (document_id, version_id, kind)
+);
+
+-- One statement or invoice document a month on the house.
+CREATE TABLE IF NOT EXISTS fin_free_uses (
+  workspace_id TEXT NOT NULL,
+  month TEXT NOT NULL,
+  document_id TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (workspace_id, month)
+);
+
+-- Interface translations. Every English string shown on the site is a source; the translator fills
+-- in i18n_text for each language (see lib/i18n/worker.ts).
+CREATE TABLE IF NOT EXISTS i18n_source (
+  text TEXT PRIMARY KEY,
+  origin TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS i18n_text (
+  locale TEXT NOT NULL,
+  source TEXT NOT NULL,
+  text TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (locale, source)
+);
+
+-- Languages people are reading the site in right now (translated first), and translator state.
+CREATE TABLE IF NOT EXISTS i18n_demand (
+  locale TEXT PRIMARY KEY,
+  at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS i18n_state (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  at INTEGER NOT NULL
+);
+
+-- Document requests: the checklist of files asked for, and an audit trail of everything that
+-- happened on the request (opened, verified, uploaded, returned…).
+CREATE TABLE IF NOT EXISTS doc_request_items (
+  id TEXT PRIMARY KEY,
+  request_id TEXT NOT NULL REFERENCES doc_requests(id) ON DELETE CASCADE,
+  position INTEGER NOT NULL DEFAULT 0,
+  label TEXT NOT NULL,
+  note TEXT NOT NULL DEFAULT '',
+  required INTEGER NOT NULL DEFAULT 1,
+  accept TEXT NOT NULL DEFAULT 'any',
+  status TEXT NOT NULL DEFAULT 'needed',
+  document_id TEXT,
+  file_names TEXT NOT NULL DEFAULT '',
+  feedback TEXT,
+  uploaded_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS doc_request_items_request ON doc_request_items(request_id, position);
+
+CREATE TABLE IF NOT EXISTS doc_request_events (
+  id TEXT PRIMARY KEY,
+  request_id TEXT NOT NULL REFERENCES doc_requests(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL,
+  detail TEXT NOT NULL DEFAULT '',
+  ip TEXT,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS doc_request_events_request ON doc_request_events(request_id, created_at);
+
+-- A recipient who passed the request's verification (only a hash of the cookie is kept).
+CREATE TABLE IF NOT EXISTS doc_request_sessions (
+  id TEXT PRIMARY KEY,
+  request_id TEXT NOT NULL REFERENCES doc_requests(id) ON DELETE CASCADE,
+  expires_at INTEGER NOT NULL
+);
+
+-- Messages from the contact form, kept even when email delivery fails.
+CREATE TABLE IF NOT EXISTS contact_messages (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  topic TEXT NOT NULL,
+  message TEXT NOT NULL,
+  user_id TEXT,
+  ip TEXT,
+  emailed INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL
+);
+
+-- E-signature templates: a document with signer roles and their fields, reused to send envelopes.
+CREATE TABLE IF NOT EXISTS sign_templates (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  document_id TEXT NOT NULL,
+  version_id TEXT NOT NULL,
+  page_count INTEGER NOT NULL DEFAULT 1,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL DEFAULT '',
+  sequential INTEGER NOT NULL DEFAULT 0,
+  roles_json TEXT NOT NULL,
+  fields_json TEXT NOT NULL,
+  created_by TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS sign_templates_ws ON sign_templates(workspace_id, updated_at);
+
+-- Public signing links: anyone with the link signs their own copy of a template.
+CREATE TABLE IF NOT EXISTS sign_links (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  template_id TEXT NOT NULL REFERENCES sign_templates(id) ON DELETE CASCADE,
+  slug TEXT NOT NULL UNIQUE,
+  title TEXT NOT NULL,
+  role_key TEXT NOT NULL,
+  fixed_json TEXT NOT NULL DEFAULT '{}',
+  verify_email INTEGER NOT NULL DEFAULT 1,
+  payment_cents INTEGER,
+  payment_currency TEXT,
+  payment_desc TEXT,
+  max_uses INTEGER,
+  uses INTEGER NOT NULL DEFAULT 0,
+  expires_at INTEGER,
+  active INTEGER NOT NULL DEFAULT 1,
+  created_by TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS sign_links_ws ON sign_links(workspace_id, created_at);
+
+-- One-time codes that confirm a signing-link visitor's email address.
+CREATE TABLE IF NOT EXISTS sign_link_codes (
+  id TEXT PRIMARY KEY,
+  link_id TEXT NOT NULL REFERENCES sign_links(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  code_hash TEXT NOT NULL,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  expires_at INTEGER NOT NULL,
+  created_at INTEGER NOT NULL
+);
+
+-- Bulk sends: one envelope per spreadsheet row.
+CREATE TABLE IF NOT EXISTS sign_batches (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  template_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  total INTEGER NOT NULL,
+  sent INTEGER NOT NULL DEFAULT 0,
+  created_by TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+
+-- Cloud storage accounts (Google Drive, Dropbox, OneDrive) a person connected. Tokens are
+-- encrypted at rest (see lib/cloud.ts).
+CREATE TABLE IF NOT EXISTS cloud_connections (
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL,
+  account TEXT NOT NULL DEFAULT '',
+  access_enc TEXT NOT NULL,
+  refresh_enc TEXT,
+  expires_at INTEGER,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (user_id, provider)
+);
+CREATE TABLE IF NOT EXISTS oauth_states (
+  state TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  return_to TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+
+-- Email in: each workspace can get a private address; attachments sent to it land in the library.
+CREATE TABLE IF NOT EXISTS email_inboxes (
+  workspace_id TEXT PRIMARY KEY REFERENCES workspaces(id) ON DELETE CASCADE,
+  token TEXT NOT NULL UNIQUE,
+  allow TEXT NOT NULL DEFAULT 'members',
+  created_by TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS inbound_messages (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  sender TEXT NOT NULL,
+  subject TEXT NOT NULL DEFAULT '',
+  files INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL,
+  detail TEXT NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS inbound_messages_ws ON inbound_messages(workspace_id, created_at);
+
+-- Firms and their clients (tax preparers, accountants): client records, portal access,
+-- engagements by tax year, messages and the files exchanged with each client.
+CREATE TABLE IF NOT EXISTS clients (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL DEFAULT 'individual',
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  phone TEXT NOT NULL DEFAULT '',
+  spouse_name TEXT NOT NULL DEFAULT '',
+  spouse_email TEXT NOT NULL DEFAULT '',
+  company TEXT NOT NULL DEFAULT '',
+  tags TEXT NOT NULL DEFAULT '[]',
+  assigned_to TEXT,
+  notes TEXT NOT NULL DEFAULT '',
+  invited_at INTEGER,
+  last_login_at INTEGER,
+  created_by TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  archived_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS clients_ws ON clients(workspace_id, archived_at, name);
+CREATE INDEX IF NOT EXISTS clients_email ON clients(email);
+
+CREATE TABLE IF NOT EXISTS client_engagements (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  client_id TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  year INTEGER NOT NULL,
+  service TEXT NOT NULL DEFAULT 'Tax return',
+  status TEXT NOT NULL DEFAULT 'not_started',
+  due_date TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  UNIQUE (client_id, year, service)
+);
+CREATE INDEX IF NOT EXISTS client_engagements_ws ON client_engagements(workspace_id, year, status);
+
+CREATE TABLE IF NOT EXISTS client_messages (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  client_id TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  author TEXT NOT NULL,
+  author_id TEXT,
+  author_name TEXT NOT NULL,
+  body TEXT NOT NULL,
+  internal INTEGER NOT NULL DEFAULT 0,
+  read_at INTEGER,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS client_messages_client ON client_messages(client_id, created_at);
+
+-- Documents filed under a client: what they uploaded and what the firm shared with them.
+CREATE TABLE IF NOT EXISTS client_files (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  client_id TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  document_id TEXT NOT NULL,
+  year INTEGER,
+  category TEXT NOT NULL DEFAULT '',
+  source TEXT NOT NULL DEFAULT 'client',
+  shared INTEGER NOT NULL DEFAULT 0,
+  ai_json TEXT,
+  pay_cents INTEGER,
+  pay_currency TEXT,
+  pay_desc TEXT,
+  pay_session TEXT,
+  paid_at INTEGER,
+  client_viewed_at INTEGER,
+  created_by TEXT,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS client_files_client ON client_files(client_id, year, created_at);
+CREATE UNIQUE INDEX IF NOT EXISTS client_files_doc ON client_files(client_id, document_id);
+
+-- Client portal sign-in: a code and a one-click link, both emailed; only hashes are kept.
+CREATE TABLE IF NOT EXISTS client_login_codes (
+  id TEXT PRIMARY KEY,
+  client_id TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  code_hash TEXT NOT NULL,
+  link_hash TEXT NOT NULL,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  expires_at INTEGER NOT NULL,
+  used_at INTEGER,
+  created_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS client_sessions (
+  id TEXT PRIMARY KEY,
+  client_id TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  expires_at INTEGER NOT NULL,
+  created_at INTEGER NOT NULL
+);
+
+-- Requests sent again on a schedule (monthly statements for bookkeeping clients…).
+CREATE TABLE IF NOT EXISTS request_schedules (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  client_id TEXT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  every TEXT NOT NULL,
+  spec_json TEXT NOT NULL,
+  next_run_at INTEGER NOT NULL,
+  last_run_at INTEGER,
+  active INTEGER NOT NULL DEFAULT 1,
+  created_by TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+
+-- Optional feedback from the workbench ("did pdftek give you what you needed?").
+CREATE TABLE IF NOT EXISTS feedback (
+  id TEXT PRIMARY KEY,
+  user_id TEXT,
+  workspace_id TEXT,
+  answer TEXT NOT NULL,
+  looking_for TEXT NOT NULL DEFAULT '',
+  message TEXT NOT NULL DEFAULT '',
+  tier TEXT,
+  locale TEXT,
+  page TEXT,
+  emailed INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS feedback_created ON feedback(created_at);
+`;
+
+/** Columns added after the first release; created on startup when missing. */
+const ADDED_COLUMNS: [table: string, column: string, ddl: string, backfill?: string][] = [
+  ["users", "is_guest", "INTEGER NOT NULL DEFAULT 0"],
+  ["workspaces", "pass_until", "INTEGER"],
+  ["workspaces", "credits", "INTEGER NOT NULL DEFAULT 0"],
+  ["workspaces", "allowance_credits", "INTEGER NOT NULL DEFAULT 0"],
+  ["workspaces", "allowance_expires_at", "INTEGER"],
+  ["workspaces", "billing_interval", "TEXT"],
+  // Accounts created before email verification existed are treated as verified.
+  ["users", "email_verified_at", "INTEGER", "UPDATE users SET email_verified_at = created_at WHERE is_guest = 0"],
+  // Supabase Auth user id (see src/lib/supabase.ts).
+  ["users", "supabase_id", "TEXT"],
+  ["login_tokens", "purpose", "TEXT NOT NULL DEFAULT 'restore'"],
+  // Secure document requests.
+  ["doc_requests", "verify", "TEXT NOT NULL DEFAULT 'none'"],
+  ["doc_requests", "access_code_hash", "TEXT"],
+  ["doc_requests", "otp_hash", "TEXT"],
+  ["doc_requests", "otp_expires_at", "INTEGER"],
+  ["doc_requests", "otp_sent_at", "INTEGER"],
+  ["doc_requests", "failed_attempts", "INTEGER NOT NULL DEFAULT 0"],
+  ["doc_requests", "locked_until", "INTEGER"],
+  ["doc_requests", "expires_at", "INTEGER"],
+  ["doc_requests", "auto_remind", "INTEGER NOT NULL DEFAULT 0"],
+  ["doc_requests", "reminders_sent", "INTEGER NOT NULL DEFAULT 0"],
+  ["doc_requests", "packet", "INTEGER NOT NULL DEFAULT 0"],
+  ["doc_requests", "packet_document_id", "TEXT"],
+  // Free trial: once per account; which reminder emails went out (1 = ending soon, 2 = ended).
+  ["users", "trial_used_at", "INTEGER"],
+  ["workspaces", "trial_notice", "INTEGER NOT NULL DEFAULT 0"],
+  // E-signature templates, bulk sends and public signing links (with optional payment).
+  ["signature_requests", "template_id", "TEXT"],
+  ["signature_requests", "link_id", "TEXT"],
+  ["signature_requests", "batch_id", "TEXT"],
+  ["signers", "auth", "TEXT NOT NULL DEFAULT 'email_link'"],
+  ["signers", "payment_status", "TEXT"],
+  ["signers", "payment_cents", "INTEGER"],
+  ["signers", "payment_currency", "TEXT"],
+  ["signers", "payment_desc", "TEXT"],
+  ["signers", "payment_session", "TEXT"],
+  ["signers", "paid_at", "INTEGER"],
+  // Stripe Connect account that receives payments collected through signing links.
+  ["workspaces", "stripe_account_id", "TEXT"],
+  ["workspaces", "stripe_account_ready", "INTEGER NOT NULL DEFAULT 0"],
+  // Firms: their own portal address (slug.pdftek.com), branding and document retention.
+  ["workspaces", "firm_slug", "TEXT"],
+  ["workspaces", "firm_name", "TEXT"],
+  ["workspaces", "brand_color", "TEXT"],
+  ["workspaces", "brand_logo_key", "TEXT"],
+  ["workspaces", "retention_years", "INTEGER"],
+  // Requests sent to a client, for a tax year; checklist items a client marks "doesn't apply" and AI checks.
+  ["doc_requests", "client_id", "TEXT"],
+  ["doc_requests", "year", "INTEGER"],
+  ["doc_request_items", "ai_status", "TEXT"],
+  ["doc_request_items", "ai_json", "TEXT"],
+  ["doc_request_items", "na_reason", "TEXT"],
+];
+
+type GlobalWithDb = typeof globalThis & { __pdftekDb?: DatabaseSync };
+
+/** On a server, files and accounts must live on a persistent disk or every deploy erases them. */
+function warnIfNotPersistent() {
+  if (process.env.NODE_ENV !== "production" || process.platform !== "linux") return;
+  try {
+    const mounts = fs.readFileSync("/proc/mounts", "utf8").split("\n").map((l) => l.split(" ")[1]);
+    const onDisk = mounts.some((m) => m && m !== "/" && (DATA_DIR === m || DATA_DIR.startsWith(m + "/")));
+    if (!onDisk) console.warn(`[pdftek] WARNING: ${DATA_DIR} is not on a persistent disk. Uploaded files, accounts and purchases will be lost on every deploy or restart. On Render, add a Disk with mount path ${DATA_DIR}.`);
+    else console.info(`[pdftek] data directory ${DATA_DIR} is on a persistent disk`);
+  } catch {}
+}
+
+function open(): DatabaseSync {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+  warnIfNotPersistent();
+  const db = new DatabaseSync(path.join(DATA_DIR, "pdftek.db"));
+  db.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;");
+  db.exec(SCHEMA);
+  for (const [table, column, ddl, backfill] of ADDED_COLUMNS) {
+    const cols = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+    if (!cols.some((c) => c.name === column)) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddl}`);
+      if (backfill) db.exec(backfill);
+    }
+  }
+  // Requests made before checklists existed become a one-item checklist.
+  db.exec(`INSERT INTO doc_request_items (id, request_id, position, label, status, document_id, uploaded_at)
+    SELECT 'itm_' || r.id, r.id, 0, r.title, CASE WHEN r.status = 'complete' THEN 'uploaded' ELSE 'needed' END, r.document_id, r.completed_at
+      FROM doc_requests r WHERE NOT EXISTS (SELECT 1 FROM doc_request_items i WHERE i.request_id = r.id)`);
+  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS users_supabase_id ON users(supabase_id) WHERE supabase_id IS NOT NULL");
+  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS workspaces_firm_slug ON workspaces(firm_slug) WHERE firm_slug IS NOT NULL");
+  db.exec("CREATE INDEX IF NOT EXISTS doc_requests_client ON doc_requests(client_id, created_at)");
+  return db;
+}
+
+export function getDb(): DatabaseSync {
+  const g = globalThis as GlobalWithDb;
+  if (!g.__pdftekDb) g.__pdftekDb = open();
+  return g.__pdftekDb;
+}
+
+type Params = SQLInputValue[];
+
+function norm(params: unknown[]): Params {
+  return params.map((p) => {
+    if (p === undefined) return null;
+    if (typeof p === "boolean") return p ? 1 : 0;
+    return p as SQLInputValue;
+  });
+}
+
+export function all<T>(sql: string, ...params: unknown[]): T[] {
+  return getDb().prepare(sql).all(...norm(params)) as T[];
+}
+
+export function get<T>(sql: string, ...params: unknown[]): T | undefined {
+  return getDb().prepare(sql).get(...norm(params)) as T | undefined;
+}
+
+export function run(sql: string, ...params: unknown[]) {
+  return getDb().prepare(sql).run(...norm(params));
+}
+
+export function tx<T>(fn: () => T): T {
+  const db = getDb();
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const out = fn();
+    db.exec("COMMIT");
+    return out;
+  } catch (err) {
+    db.exec("ROLLBACK");
+    throw err;
+  }
+}
+
+/** Insert a row from a plain object. Column names are trusted (never user input). */
+export function insert(table: string, row: Record<string, unknown>) {
+  const cols = Object.keys(row);
+  const sql = `INSERT INTO ${table} (${cols.join(",")}) VALUES (${cols.map(() => "?").join(",")})`;
+  return run(sql, ...cols.map((c) => row[c]));
+}
+
+/** Update a row by id from a plain object. Column names are trusted (never user input). */
+export function update(table: string, id: string, patch: Record<string, unknown>) {
+  const cols = Object.keys(patch);
+  if (!cols.length) return;
+  const sql = `UPDATE ${table} SET ${cols.map((c) => `${c} = ?`).join(", ")} WHERE id = ?`;
+  return run(sql, ...cols.map((c) => patch[c]), id);
+}
